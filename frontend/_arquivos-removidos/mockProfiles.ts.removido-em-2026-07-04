@@ -1,0 +1,246 @@
+export type BondType =
+  | 'family'
+  | 'professional'
+  | 'interest'
+  | 'preference'
+  | 'service'
+  | 'friendship'
+  | 'support';
+
+export type VerificationStatus =
+  | 'verified'
+  | 'pending'
+  | 'unverified'
+  | 'rejected';
+
+export type ProfileKind = 'Pessoa' | 'Empresa' | 'Serviço';
+
+export type MockProfile = {
+  id: string;
+  name: string;
+  initials: string;
+  kind: ProfileKind;
+  type: string;
+  location: string;
+  distance?: string;
+  headline: string;
+  company?: string;
+  avatarUrl?: string;
+  bonds: BondType[];
+  verified: boolean;
+  verificationStatus: VerificationStatus;
+  daysWithoutVerification?: number;
+  canRequestContact: boolean;
+  canViewFullProfile: boolean;
+  isLimited: boolean;
+};
+
+export const BOND_COLORS: Record<BondType, string> = {
+  family: '#2D64FF',
+  professional: '#D9B46A',
+  interest: '#20D6B5',
+  preference: '#8A3FFC',
+  service: '#A9BED8',
+  friendship: '#7E8EA6',
+  support: '#FF9F1C',
+};
+
+export const BOND_LABELS: Record<BondType, string> = {
+  family: 'Família',
+  professional: 'Profissional',
+  interest: 'Interesse',
+  preference: 'Preferência',
+  service: 'Serviço',
+  friendship: 'Amizade',
+  support: 'Apoio',
+};
+
+export function getBondColor(bond: BondType) {
+  return BOND_COLORS[bond] ?? '#8FB3FF';
+}
+
+export function getBondLabel(bond: BondType) {
+  return BOND_LABELS[bond] ?? 'Vínculo';
+}
+
+export const currentUserProfile: MockProfile = {
+  id: 'cleber-fernandes',
+  name: 'Cleber Fernandes',
+  initials: 'CF',
+  kind: 'Pessoa',
+  type: 'Presença pessoal',
+  location: 'Itamarandiba · MG',
+  distance: 'Você',
+  headline: 'Construindo uma rede contextual de conexões humanas reais.',
+  company: 'ELUS',
+  avatarUrl:
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=600&auto=format&fit=crop',
+  bonds: ['family', 'professional', 'interest', 'preference', 'service'],
+  verified: false,
+  verificationStatus: 'pending',
+  daysWithoutVerification: 1,
+  canRequestContact: false,
+  canViewFullProfile: true,
+  isLimited: true,
+};
+
+export const mockProfiles: MockProfile[] = [
+  {
+    id: 'ana-martins',
+    name: 'Ana Martins',
+    initials: 'AM',
+    kind: 'Pessoa',
+    type: 'Presença pessoal',
+    location: 'Itamarandiba · MG',
+    distance: '1,2 km',
+    headline: 'Design, presença local e conexões criativas.',
+    company: 'Ana Studio',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=600&auto=format&fit=crop',
+    bonds: ['interest', 'preference', 'service'],
+    verified: true,
+    verificationStatus: 'verified',
+    canRequestContact: true,
+    canViewFullProfile: true,
+    isLimited: false,
+  },
+  {
+    id: 'rafael-costa',
+    name: 'Rafael Costa',
+    initials: 'RC',
+    kind: 'Serviço',
+    type: 'Oferece serviço',
+    location: 'Centro · MG',
+    distance: '2,4 km',
+    headline: 'Manutenção residencial, elétrica e pequenos reparos.',
+    company: 'Costa Serviços',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=600&auto=format&fit=crop',
+    bonds: ['professional', 'service', 'support'],
+    verified: true,
+    verificationStatus: 'verified',
+    canRequestContact: true,
+    canViewFullProfile: true,
+    isLimited: false,
+  },
+  {
+    id: 'studio-orion',
+    name: 'Studio Orion',
+    initials: 'SO',
+    kind: 'Empresa',
+    type: 'Empresa local',
+    location: 'Itamarandiba · MG',
+    distance: '3,1 km',
+    headline: 'Arquitetura, interiores e identidade visual para negócios.',
+    company: 'Studio Orion',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=80&w=600&auto=format&fit=crop',
+    bonds: ['professional', 'interest', 'service'],
+    verified: true,
+    verificationStatus: 'verified',
+    canRequestContact: true,
+    canViewFullProfile: true,
+    isLimited: false,
+  },
+  {
+    id: 'joao-fernandes',
+    name: 'João Fernandes',
+    initials: 'JF',
+    kind: 'Pessoa',
+    type: 'Presença pessoal',
+    location: 'Itamarandiba · MG',
+    distance: '4,2 km',
+    headline: 'Família, apoio e presença próxima.',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600&auto=format&fit=crop',
+    bonds: ['family', 'support', 'friendship'],
+    verified: true,
+    verificationStatus: 'verified',
+    canRequestContact: true,
+    canViewFullProfile: true,
+    isLimited: false,
+  },
+  {
+    id: 'julia-andrade',
+    name: 'Júlia Andrade',
+    initials: 'JA',
+    kind: 'Empresa',
+    type: 'Oferece serviço',
+    location: 'Diamantina · MG',
+    distance: '5,8 km',
+    headline: 'Arquitetura, interiores e projetos personalizados.',
+    company: 'Andrade Projetos',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=600&auto=format&fit=crop',
+    bonds: ['professional', 'interest'],
+    verified: true,
+    verificationStatus: 'verified',
+    canRequestContact: true,
+    canViewFullProfile: true,
+    isLimited: false,
+  },
+  {
+    id: 'grupo-nexus',
+    name: 'Grupo Nexus',
+    initials: 'GN',
+    kind: 'Empresa',
+    type: 'Comunidade',
+    location: 'Belo Horizonte · MG',
+    distance: '7,4 km',
+    headline: 'Comunidade de inovação, negócios e conexões estratégicas.',
+    company: 'Grupo Nexus',
+    avatarUrl:
+      'https://images.unsplash.com/photo-1556761175-b413da4baf72?q=80&w=600&auto=format&fit=crop',
+    bonds: ['professional', 'interest', 'friendship'],
+    verified: true,
+    verificationStatus: 'verified',
+    canRequestContact: true,
+    canViewFullProfile: true,
+    isLimited: false,
+  },
+  {
+    id: 'perfil-em-validacao',
+    name: 'Presença em validação',
+    initials: 'EL',
+    kind: 'Pessoa',
+    type: 'Perfil limitado',
+    location: 'Próximo · MG',
+    distance: '8,1 km',
+    headline: 'Perfil aguardando confirmação de identidade.',
+    company: undefined,
+    avatarUrl: undefined,
+    bonds: ['preference', 'interest'],
+    verified: false,
+    verificationStatus: 'unverified',
+    daysWithoutVerification: 4,
+    canRequestContact: false,
+    canViewFullProfile: false,
+    isLimited: true,
+  },
+];
+
+export function getProfileById(id?: string) {
+  if (!id) return undefined;
+
+  return mockProfiles.find((profile) => profile.id === id);
+}
+
+export function getPublicProfiles() {
+  return mockProfiles;
+}
+
+export function getVerifiedProfiles() {
+  return mockProfiles.filter((profile) => profile.verified);
+}
+
+export function getLimitedProfiles() {
+  return mockProfiles.filter((profile) => profile.isLimited);
+}
+
+export function canProfileRequestContact(profile: MockProfile) {
+  return profile.verified && profile.canRequestContact && !profile.isLimited;
+}
+
+export function canProfileViewFullProfile(profile: MockProfile) {
+  return profile.verified && profile.canViewFullProfile && !profile.isLimited;
+}

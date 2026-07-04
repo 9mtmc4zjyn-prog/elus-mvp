@@ -1,0 +1,67 @@
+import type { Profile, ProfileKind, ProfileStatus } from '../data/profiles';
+import type { AppUser } from '../context/AppContext';
+
+export function appUserToProfile(appUser: AppUser): Profile {
+  const kindMap: Record<string, ProfileKind> = {
+    person: 'Pessoa',
+    business: 'Empresa',
+    assisted: 'Pessoa',
+  };
+
+  const statusMap: Record<string, ProfileStatus> = {
+    verified: 'verified',
+    in_review: 'in_review',
+    pending: 'unverified',
+    unverified: 'unverified',
+  };
+
+  return {
+    id: appUser.id,
+    aliases: [],
+    name: appUser.name,
+    firstName: appUser.name.split(' ')[0] || appUser.name,
+    kind: kindMap[appUser.profileType] ?? 'Pessoa',
+    status: statusMap[appUser.verificationStatus ?? 'unverified'] ?? 'unverified',
+    avatar: appUser.photo || '',
+    photoUrl: appUser.photo || '',
+    isOnline: false,
+    role: appUser.service || appUser.companyName || '',
+    location: [appUser.city, appUser.state].filter(Boolean).join(' • '),
+    city: appUser.city || '',
+    state: appUser.state || '',
+    connections: 0,
+    area: appUser.service || '',
+    purpose: '',
+    bio: '',
+    interests: appUser.interests,
+    basicInfo: [],
+    aiReasons: [],
+  };
+}
+
+export function adaptSupabaseProfileToProfile(raw: Record<string, any>): Profile {
+  return {
+    id: String(raw.id ?? ''),
+    aliases: Array.isArray(raw.aliases) ? raw.aliases : [],
+    name: String(raw.name ?? ''),
+    firstName: String(raw.name ?? '').split(' ')[0] ?? '',
+    kind: raw.profile_type === 'business' ? 'Empresa' : 'Pessoa',
+    status: raw.visibility_status === 'verified' ? 'verified'
+      : raw.visibility_status === 'in_review' ? 'in_review'
+      : 'unverified',
+    avatar: String(raw.photo_url ?? ''),
+    photoUrl: String(raw.photo_url ?? ''),
+    isOnline: raw.is_online === true,
+    role: String(raw.role ?? ''),
+    location: [raw.city, raw.state].filter(Boolean).join(' • '),
+    city: String(raw.city ?? ''),
+    state: String(raw.state ?? ''),
+    connections: 0,
+    area: String(raw.area ?? ''),
+    purpose: String(raw.purpose ?? ''),
+    bio: String(raw.bio ?? ''),
+    interests: Array.isArray(raw.interests) ? raw.interests : [],
+    basicInfo: Array.isArray(raw.basic_info) ? raw.basic_info : [],
+    aiReasons: Array.isArray(raw.ai_reasons) ? raw.ai_reasons : [],
+  };
+}

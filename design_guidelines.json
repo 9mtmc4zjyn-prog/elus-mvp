@@ -1,0 +1,132 @@
+{
+  "project": {
+    "name": "ELUS",
+    "slogan": "Uma internet mais humana.",
+    "description": "Contextual human presence platform connecting people, businesses, and services. It is an atmospheric, premium digital human infrastructure, completely avoiding common social network tropes (no infinite feed, no likes, no chat).",
+    "theme_mode": "dark",
+    "archetype": "Archetype 5 (Jewel & Luxury) with Archetype 4 (Swiss/High-Contrast) discipline.",
+    "aesthetic_direction": "Hybrid Atmospheric. Premium, dark, minimalist, sophisticated, but human. Graphite/Deep Blue background, discreet glow (no gamer neon), soft particles. Clean look."
+  },
+  "colors": {
+    "background": {
+      "base": "#0B101A",
+      "surface": "#141A26",
+      "surface_elevated": "#1C2433",
+      "glass": "rgba(11, 16, 26, 0.75)"
+    },
+    "brand": {
+      "cyan_discreet": "#5E9EAB",
+      "cyan_glow": "rgba(94, 158, 171, 0.15)",
+      "silver_cold": "#A1A9B8",
+      "white_matte": "#EDEDED"
+    },
+    "text": {
+      "primary": "#EDEDED",
+      "secondary": "#A1A9B8",
+      "tertiary": "#6B7280"
+    },
+    "status": {
+      "success": "#4A9A65",
+      "warning": "#C49A45",
+      "error": "#B85C5C"
+    },
+    "radar_intensities": {
+      "high_compatibility": {
+        "color": "#EDEDED",
+        "opacity": 1.0,
+        "glow": "0 0 16px rgba(237, 237, 237, 0.4)"
+      },
+      "medium_compatibility": {
+        "color": "#5E9EAB",
+        "opacity": 0.6,
+        "glow": "0 0 8px rgba(94, 158, 171, 0.2)"
+      },
+      "low_compatibility": {
+        "color": "#A1A9B8",
+        "opacity": 0.2,
+        "glow": "none"
+      }
+    }
+  },
+  "typography": {
+    "primary_font": "Satoshi, SF Pro Display, sans-serif",
+    "secondary_font": "Inter, sans-serif",
+    "rules": {
+      "h1": "text-4xl font-light tracking-tight text-[#EDEDED]",
+      "h2": "text-2xl font-medium tracking-tight text-[#EDEDED]",
+      "h3": "text-xl font-normal text-[#EDEDED]",
+      "body": "text-base font-normal leading-relaxed text-[#A1A9B8]",
+      "label": "text-xs font-semibold tracking-[0.1em] uppercase text-[#A1A9B8]"
+    }
+  },
+  "surfaces": {
+    "glassmorphism": {
+      "className": "backdrop-blur-xl bg-[#0B101A]/75 border border-white/5",
+      "usage": "Bottom navigation, Floating headers, Sticky action bars"
+    },
+    "neumorphism_dark": {
+      "className": "bg-[#141A26] shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-white/5 rounded-2xl",
+      "usage": "Profile cards, Request items, Modals"
+    }
+  },
+  "components": {
+    "field_of_presence_radar": {
+      "type": "Custom Canvas / React Force Graph 2D",
+      "description": "Dynamic radar visualization (NOT a standard geographic map). A dark atmospheric void where nodes (humans/businesses) float.",
+      "visuals": "Graphite/Deep blue background with subtle nebula scattering and soft particles. Nodes pulse gently (0.5s breathing animation).",
+      "logic": "Visual prominence maps exactly to compatibility. High compatibility = white, opaque, glowing. Low compatibility = silver, highly transparent."
+    },
+    "bottom_navigation": {
+      "type": "Glassmorphism Bar",
+      "items": ["Presença", "Busca", "Solicitações", "Conexões", "Perfil"],
+      "styling": "Fixed bottom, mx-4 mb-6 rounded-full backdrop-blur-2xl bg-[#0B101A]/80 border border-white/10 shadow-2xl flex justify-around py-4"
+    },
+    "buttons": {
+      "primary": "bg-[#5E9EAB] text-white rounded-full px-8 py-4 font-medium hover:bg-[#4A8591] transition-all shadow-[0_0_20px_rgba(94,158,171,0.2)]",
+      "secondary": "bg-transparent border border-[#A1A9B8]/30 text-[#EDEDED] rounded-full px-8 py-4 hover:bg-white/5 transition-all",
+      "ghost": "text-[#A1A9B8] hover:text-[#EDEDED] px-4 py-2 transition-colors"
+    },
+    "public_profile": {
+      "layout": "Bento-box grid style. No social feeds.",
+      "blocked_info": "Sensitive data (WhatsApp, CV, etc.) uses 'blur-md' utility + 30% opacity, overlaid with a lock icon. User clicks 'Solicitar Acesso' to request.",
+      "granular_permissions": "List of toggle switches for each requested data point, allowing the owner to approve/deny individually."
+    },
+    "monetization_cards": {
+      "free": "Basic dark neumorphism card.",
+      "premium_person": "Dark card with subtle 'Prata Fria' (Cold Silver) metallic gradient border/overlay.",
+      "premium_business": "Dark card with 'Ciano Discreto' (Discreet Cyan) glow and glassmorphism inner layers."
+    }
+  },
+  "motion": {
+    "radar_sweep": "Slow, cinematic rotation (e.g., 10s per full rotation) with a soft conic-gradient mask using framer-motion.",
+    "page_transition": "Fade in with a slight Y-axis lift (framer-motion: initial opacity 0, y 10 -> animate opacity 1, y 0).",
+    "hover_states": "Micro-lift (-translate-y-0.5) and subtle text brightness. No violent scale jumps or bouncy springs."
+  },
+  "media_urls": {
+    "splash_background": {
+      "url": "https://images.unsplash.com/photo-1774434923581-91ed9d8ee79b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODF8MHwxfHNlYXJjaHwxfHxkYXJrJTIwYXRtb3NwaGVyaWMlMjBnbG93aW5nJTIwcGFydGljbGVzfGVufDB8fHx8MTc3ODY0MjEwM3ww&ixlib=rb-4.1.0&q=85",
+      "description": "Abstract blue smoke-like particles swirling against black background. Used for the Splash Screen behind the slogan 'Uma internet mais humana.'"
+    },
+    "premium_plan_texture": {
+      "url": "https://images.unsplash.com/photo-1759185301790-e079e2970809?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MDV8MHwxfHNlYXJjaHwyfHxzaWx2ZXIlMjBhYnN0cmFjdCUyMG1pbmltYWxpc3QlMjB0ZXh0dXJlfGVufDB8fHx8MTc3ODY0MjEwM3ww&ixlib=rb-4.1.0&q=85",
+      "description": "Brushed silver metal texture. Use with blend-mode-overlay on the Premium Person/Business cards to create a sophisticated 'prata fria' metallic look."
+    },
+    "radar_particle_texture": {
+      "url": "https://images.pexels.com/photos/9667557/pexels-photo-9667557.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Close-up of particles against a dark background. Useful as a subtle background pattern for the Field of Presence radar."
+    }
+  },
+  "accessibility_and_testing": {
+    "testing_attributes": "All interactive and key informational elements MUST include a `data-testid` attribute using kebab-case and role-based naming (e.g., `data-testid='login-submit-button'`, `data-testid='request-access-whatsapp-toggle'`).",
+    "contrast": "Ensure minimum 4.5:1 contrast ratio for all text. Use Matte White (#EDEDED) on the Graphite background (#0B101A) to easily pass WCAG."
+  },
+  "instructions_to_main_agent": [
+    "This is a React Native Expo web app setup but using Tailwind CSS and Shadcn UI in the specified environment. Map the UI accordingly.",
+    "Extend tailwind.config.js with the custom colors defined here. Use the exact hex codes for deep blue/graphite (#0B101A), cyan (#5E9EAB), and silver (#A1A9B8).",
+    "Prioritize 'Satoshi' font if available, fallback to 'SF Pro Display' or Inter.",
+    "The 'Field of Presence' (Radar) MUST NOT look like a Google Map or typical social feed. Use a dark canvas with nodes of varying opacity based on compatibility.",
+    "Data privacy is central. Implement the blurred info visual effectively: `blur-md` on text content overlayed with an SVG lock icon.",
+    "Forms and inputs must avoid the 'default UI' look. Use the 'neumorphism_dark' styling (subtle borders, deep background) instead of flat white inputs.",
+    "Do NOT use bright red notifications or pure neon colors. Keep the UI atmospheric, calm, and human."
+  ]
+}

@@ -1,0 +1,823 @@
+// frontend/src/data/profiles.ts
+
+// =====================================================
+// Tipos principais dos perfis do ELUS
+// =====================================================
+
+export type ProfileStatus = "verified" | "unverified" | "in_review";
+
+// Mantido separado para não quebrar telas atuais.
+// O app hoje continua usando apenas: verified, unverified e in_review.
+// O status oficial protegido será ativado futuramente quando as telas estiverem prontas.
+export type FutureProfileStatus = ProfileStatus | "official_protected";
+
+export type VerificationPhase =
+  | "verification_pending"
+  | "waiting_verification"
+  | "verification_completed";
+
+export type VerificationMessageTone = "red" | "light_blue" | "green";
+
+export type PublicIdentityMode =
+  | "real_photo"
+  | "elus_unverified_symbol";
+
+export interface ProfileVerificationAccess {
+  canRequestContact: boolean;
+  canViewFullProfiles: boolean;
+  canAppearWithRealPhoto: boolean;
+  canCreateRealConnections: boolean;
+  canSeeConnectionBorders: boolean;
+  canUseFullApp: boolean;
+}
+
+export interface ProfileVerificationState {
+  status: ProfileStatus;
+  phase: VerificationPhase;
+
+  title: string;
+  profileLabel: string;
+  shortLabel: string;
+  description: string;
+  restrictedMessage: string;
+  actionLabel: string;
+
+  messageTone: VerificationMessageTone;
+  messageColor: string;
+
+  publicIdentityMode: PublicIdentityMode;
+  publicAvatarColor: string;
+
+  isApproved: boolean;
+  isRestricted: boolean;
+
+  access: ProfileVerificationAccess;
+}
+
+export type ProfileKind =
+  | "Pessoa"
+  | "Empresa"
+  | "Grupo"
+  | "Perfil Público Protegido";
+
+export type ProtectedProfileVisibilityMode =
+  | "not_applicable"
+  | "controlled";
+
+export type ProtectedProfileConnectionMode =
+  | "not_applicable"
+  | "filtered_approval";
+
+export type ProtectedProfileRelationshipType =
+  | "restricted"
+  | "professional"
+  | "institutional";
+
+export type ProtectedPublicProfileStatus =
+  | "not_applicable"
+  | "requested"
+  | "in_review"
+  | "approved";
+
+export interface ProtectedPublicProfileConfig {
+  enabled: boolean;
+  displayLabel: "Perfil público protegido" | "Perfil oficial protegido";
+  officialProtectionStatus: ProtectedPublicProfileStatus;
+
+  officialVerificationRequired: boolean;
+  hideExactLocation: boolean;
+  hidePreciseDistance: boolean;
+  hideDirectContact: boolean;
+
+  visibilityMode: ProtectedProfileVisibilityMode;
+  connectionMode: ProtectedProfileConnectionMode;
+  representativeAllowed: boolean;
+
+  allowedRelationshipTypes: ProtectedProfileRelationshipType[];
+
+  appTexts: {
+    profileLabel: string;
+    protectedLocation: string;
+    approvalRequired: string;
+    protectedContact: string;
+    filteredRequests: string;
+  };
+}
+
+export interface Profile {
+  id: string;
+  aliases: string[];
+
+  name: string;
+  firstName: string;
+  kind: ProfileKind;
+  status: ProfileStatus;
+
+  avatar: string;
+  photoUrl: string;
+
+  isOnline: boolean;
+  role: string;
+  location: string;
+  city: string;
+  state: string;
+  connections: number;
+
+  area: string;
+  purpose: string;
+  bio: string;
+
+  interests: string[];
+  basicInfo: string[];
+  aiReasons: string[];
+
+  // Preparação estrutural para o futuro Perfil Público Protegido.
+  // Não altera nenhuma tela enquanto enabled não for true.
+  publicProtection?: ProtectedPublicProfileConfig;
+}
+
+// =====================================================
+// Cores oficiais dos estados de verificação
+// =====================================================
+
+export const PROFILE_VERIFICATION_COLORS = {
+  pending: "#FF6B6B",
+  waiting: "#9DBBFF",
+  completed: "#36D399",
+
+  // Mesmo em análise, o perfil ainda não é aprovado.
+  // Por isso, quando for exibido publicamente sem foto real,
+  // o símbolo de perfil não verificado continua usando vermelho.
+  restrictedPublicAvatar: "#FF4D5E",
+};
+
+// =====================================================
+// Fonte única da verdade da verificação
+// =====================================================
+
+export const PROFILE_VERIFICATION_STATE_BY_STATUS: Record<
+  ProfileStatus,
+  ProfileVerificationState
+> = {
+  unverified: {
+    status: "unverified",
+    phase: "verification_pending",
+
+    title: "Verificação pendente",
+    profileLabel: "Perfil não verificado",
+    shortLabel: "Não verificado",
+    description:
+      "Finalize a verificação com selfie segurando documento oficial com foto.",
+    restrictedMessage:
+      "Enquanto o perfil não for validado, o uso continua limitado: sem solicitação de contato, sem dados completos de outros perfis e sem exibição pública com foto real.",
+    actionLabel: "Verificar identidade agora",
+
+    messageTone: "red",
+    messageColor: PROFILE_VERIFICATION_COLORS.pending,
+
+    publicIdentityMode: "elus_unverified_symbol",
+    publicAvatarColor: PROFILE_VERIFICATION_COLORS.restrictedPublicAvatar,
+
+    isApproved: false,
+    isRestricted: true,
+
+    access: {
+      canRequestContact: false,
+      canViewFullProfiles: false,
+      canAppearWithRealPhoto: false,
+      canCreateRealConnections: false,
+      canSeeConnectionBorders: false,
+      canUseFullApp: false,
+    },
+  },
+
+  in_review: {
+    status: "in_review",
+    phase: "waiting_verification",
+
+    title: "Aguardando verificação",
+    profileLabel: "Aguardando verificação",
+    shortLabel: "Em análise",
+    description:
+      "Sua selfie com documento foi enviada para análise. Até a aprovação final, seu perfil continua não verificado e com uso limitado.",
+    restrictedMessage:
+      "Sua verificação foi enviada, mas ainda depende de aprovação. Até a confirmação, o perfil continua sem privilégios completos e com uso limitado.",
+    actionLabel: "Ver status da análise",
+
+    messageTone: "light_blue",
+    messageColor: PROFILE_VERIFICATION_COLORS.waiting,
+
+    publicIdentityMode: "elus_unverified_symbol",
+    publicAvatarColor: PROFILE_VERIFICATION_COLORS.restrictedPublicAvatar,
+
+    isApproved: false,
+    isRestricted: true,
+
+    access: {
+      canRequestContact: false,
+      canViewFullProfiles: false,
+      canAppearWithRealPhoto: false,
+      canCreateRealConnections: false,
+      canSeeConnectionBorders: false,
+      canUseFullApp: false,
+    },
+  },
+
+  verified: {
+    status: "verified",
+    phase: "verification_completed",
+
+    title: "Verificação concluída",
+    profileLabel: "Identidade verificada",
+    shortLabel: "Verificado",
+    description:
+      "Sua identidade foi aprovada. O ELUS não pedirá documento em todo login.",
+    restrictedMessage:
+      "Perfil verificado com acesso completo às funções permitidas pelo plano.",
+    actionLabel: "Ver status da verificação",
+
+    messageTone: "green",
+    messageColor: PROFILE_VERIFICATION_COLORS.completed,
+
+    publicIdentityMode: "real_photo",
+    publicAvatarColor: PROFILE_VERIFICATION_COLORS.completed,
+
+    isApproved: true,
+    isRestricted: false,
+
+    access: {
+      canRequestContact: true,
+      canViewFullProfiles: true,
+      canAppearWithRealPhoto: true,
+      canCreateRealConnections: true,
+      canSeeConnectionBorders: true,
+      canUseFullApp: true,
+    },
+  },
+};
+
+export function getProfileVerificationState(
+  profileOrStatus: Profile | ProfileStatus
+): ProfileVerificationState {
+  const status =
+    typeof profileOrStatus === "string"
+      ? profileOrStatus
+      : profileOrStatus.status;
+
+  return PROFILE_VERIFICATION_STATE_BY_STATUS[status];
+}
+
+export function isProfileVerified(profile: Pick<Profile, "status">): boolean {
+  return profile.status === "verified";
+}
+
+export function isProfileUnverified(profile: Pick<Profile, "status">): boolean {
+  return profile.status === "unverified";
+}
+
+export function isProfileInReview(profile: Pick<Profile, "status">): boolean {
+  return profile.status === "in_review";
+}
+
+export function isProfileRestrictedByVerification(
+  profile: Pick<Profile, "status">
+): boolean {
+  return profile.status !== "verified";
+}
+
+export function profileCanRequestContact(
+  profile: Pick<Profile, "status">
+): boolean {
+  return getProfileVerificationState(profile.status).access.canRequestContact;
+}
+
+export function profileCanViewFullProfiles(
+  profile: Pick<Profile, "status">
+): boolean {
+  return getProfileVerificationState(profile.status).access.canViewFullProfiles;
+}
+
+export function profileCanAppearWithRealPhoto(
+  profile: Pick<Profile, "status">
+): boolean {
+  return getProfileVerificationState(profile.status).access.canAppearWithRealPhoto;
+}
+
+export function profileCanCreateRealConnections(
+  profile: Pick<Profile, "status">
+): boolean {
+  return getProfileVerificationState(profile.status).access.canCreateRealConnections;
+}
+
+export function profileCanSeeConnectionBorders(
+  profile: Pick<Profile, "status">
+): boolean {
+  return getProfileVerificationState(profile.status).access.canSeeConnectionBorders;
+}
+
+export function profileCanUseFullApp(
+  profile: Pick<Profile, "status">
+): boolean {
+  return getProfileVerificationState(profile.status).access.canUseFullApp;
+}
+
+export function shouldShowRealPhotoPublicly(
+  profile: Pick<Profile, "status">
+): boolean {
+  return getProfileVerificationState(profile.status).publicIdentityMode === "real_photo";
+}
+
+export function shouldUseUnverifiedPublicSymbol(
+  profile: Pick<Profile, "status">
+): boolean {
+  return (
+    getProfileVerificationState(profile.status).publicIdentityMode ===
+    "elus_unverified_symbol"
+  );
+}
+
+export function getPublicProfileDisplayName(profile: Profile): string {
+  if (isProfileVerified(profile)) {
+    return profile.name;
+  }
+
+  return profile.firstName;
+}
+
+export function getPublicProfileLocation(profile: Profile): string {
+  if (isProfileVerified(profile)) {
+    return profile.location;
+  }
+
+  return "Localização limitada";
+}
+
+export function getPublicProfileRole(profile: Profile): string {
+  if (isProfileVerified(profile)) {
+    return profile.role;
+  }
+
+  if (profile.status === "in_review") {
+    return "Perfil em análise";
+  }
+
+  return "Perfil não verificado";
+}
+
+export function getRestrictedProfileText(profile: Pick<Profile, "status">): string {
+  return getProfileVerificationState(profile.status).restrictedMessage;
+}
+
+// =====================================================
+// Configuração estrutural futura do Perfil Público Protegido
+// =====================================================
+
+export const protectedPublicProfileDefaultConfig: ProtectedPublicProfileConfig = {
+  enabled: false,
+  displayLabel: "Perfil público protegido",
+  officialProtectionStatus: "not_applicable",
+
+  officialVerificationRequired: true,
+  hideExactLocation: true,
+  hidePreciseDistance: true,
+  hideDirectContact: true,
+
+  visibilityMode: "controlled",
+  connectionMode: "filtered_approval",
+  representativeAllowed: true,
+
+  allowedRelationshipTypes: ["restricted", "professional", "institutional"],
+
+  appTexts: {
+    profileLabel: "Perfil oficial protegido",
+    protectedLocation: "Localização protegida",
+    approvalRequired: "Solicitações passam por aprovação",
+    protectedContact: "Contato direto não é exibido por segurança",
+    filteredRequests: "Este perfil recebe apenas solicitações filtradas",
+  },
+};
+
+export const protectedPublicProfilePlanning = {
+  title: "Perfil Público Protegido",
+  implementationStatus: "planned_not_active",
+
+  coreRule:
+    "O Perfil Público Protegido deve preservar segurança, privacidade, localização protegida, contato protegido e aprovação antes de qualquer vínculo real.",
+
+  rules: [
+    "Não mostrar localização exata.",
+    "Não mostrar distância precisa.",
+    "Não exibir telefone, WhatsApp ou e-mail pessoal.",
+    "Não liberar contato direto automaticamente.",
+    "Permitir visibilidade controlada no radar/mapa.",
+    "Permitir solicitação de conexão sempre com aprovação.",
+    "Permitir vínculos restritos, profissionais ou institucionais.",
+    "Permitir representante autorizado ou equipe gerenciando o perfil.",
+    "Exigir verificação reforçada antes de aparecer como perfil oficial.",
+    "Manter identidade verificada, segurança e privacidade como pilares.",
+  ],
+
+  userFacingTexts: [
+    "Perfil oficial protegido",
+    "Localização protegida",
+    "Solicitações passam por aprovação",
+    "Contato direto não é exibido por segurança",
+    "Este perfil recebe apenas solicitações filtradas",
+  ],
+};
+
+// =====================================================
+// Helpers estruturais para uso futuro
+// =====================================================
+
+export function isProtectedPublicProfile(profile: Profile): boolean {
+  return (
+    profile.kind === "Perfil Público Protegido" ||
+    profile.publicProtection?.enabled === true
+  );
+}
+
+export function shouldHideExactLocation(profile: Profile): boolean {
+  if (!isProtectedPublicProfile(profile)) {
+    return false;
+  }
+
+  return profile.publicProtection?.hideExactLocation ?? true;
+}
+
+export function shouldHidePreciseDistance(profile: Profile): boolean {
+  if (!isProtectedPublicProfile(profile)) {
+    return false;
+  }
+
+  return profile.publicProtection?.hidePreciseDistance ?? true;
+}
+
+export function shouldHideDirectContact(profile: Profile): boolean {
+  if (!isProtectedPublicProfile(profile)) {
+    return false;
+  }
+
+  return profile.publicProtection?.hideDirectContact ?? true;
+}
+
+export function getProtectedProfileDisplayLabel(profile: Profile): string {
+  if (!isProtectedPublicProfile(profile)) {
+    return profile.kind;
+  }
+
+  return (
+    profile.publicProtection?.displayLabel ??
+    protectedPublicProfileDefaultConfig.displayLabel
+  );
+}
+
+// =====================================================
+// Fonte única de verdade dos perfis do ELUS
+// =====================================================
+
+export const profiles: Profile[] = [
+  {
+    id: "ana",
+    aliases: [
+      "ana",
+      "ana-martins",
+      "ana_martins",
+      "ana martins",
+      "ana-clara",
+      "ana_clara",
+      "ana clara",
+      "ana-clara-martins",
+      "ana_clara_martins",
+      "ana clara martins",
+    ],
+
+    name: "Ana Martins",
+    firstName: "Ana",
+    kind: "Pessoa",
+    status: "verified",
+
+    avatar:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&auto=format&fit=crop&q=80",
+    photoUrl:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&auto=format&fit=crop&q=80",
+
+    isOnline: true,
+    role: "Presença pessoal",
+    location: "Itamarandiba • MG",
+    city: "Itamarandiba",
+    state: "MG",
+    connections: 128,
+
+    area: "Design, presença local e conexões",
+    purpose: "Criar conexões com pessoas, empresas e projetos com impacto humano.",
+    bio: "Ana atua com negócios locais e busca conexões reais para fortalecer projetos da cidade.",
+
+    interests: ["Negócios locais", "Comunidade", "Projetos humanos", "Tecnologia"],
+    basicInfo: ["Perfil validado", "Pessoa real", "Disponível para conexões profissionais"],
+    aiReasons: [
+      "Essa conexão apareceu porque vocês compartilham interesse em negócios locais.",
+      "Existe proximidade de contexto e cidade.",
+      "O perfil tem potencial de conexão humana e profissional.",
+    ],
+  },
+
+  {
+    id: "rafael",
+    aliases: [
+      "rafael",
+      "rafael-costa",
+      "rafael_costa",
+      "rafael costa",
+      "rafael-souza",
+      "rafael_souza",
+      "rafael souza",
+    ],
+
+    name: "Rafael Costa",
+    firstName: "Rafael",
+    kind: "Pessoa",
+    status: "unverified",
+
+    avatar:
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=900&auto=format&fit=crop&q=80",
+    photoUrl:
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=900&auto=format&fit=crop&q=80",
+
+    isOnline: false,
+    role: "Verificação pendente",
+    location: "Itamarandiba • MG",
+    city: "Itamarandiba",
+    state: "MG",
+    connections: 37,
+
+    area: "Presença local e perfil pessoal",
+    purpose: "Encontrar oportunidades e conexões locais.",
+    bio: "Rafael ainda não concluiu a validação oficial de identidade no ELUS.",
+
+    interests: ["Presença local", "Rede local", "Conexões seguras"],
+    basicInfo: [
+      "Perfil não verificado",
+      "Dados completos bloqueados",
+      "Contato bloqueado",
+      "Foto real não exibida publicamente",
+    ],
+    aiReasons: [
+      "O perfil aparece por proximidade e contexto local.",
+      "Há relação com presença e contexto na região.",
+      "A conexão só deve avançar após validação oficial.",
+    ],
+  },
+
+  {
+    id: "joao",
+    aliases: [
+      "joao",
+      "joão",
+      "joao-fernandes",
+      "joao_fernandes",
+      "joão-fernandes",
+      "joão_fernandes",
+      "joao fernandes",
+      "joão fernandes",
+      "joao-pedro",
+      "joao_pedro",
+      "joão-pedro",
+      "joão_pedro",
+      "joao pedro",
+      "joão pedro",
+    ],
+
+    name: "João Fernandes",
+    firstName: "João",
+    kind: "Pessoa",
+    status: "in_review",
+
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900&auto=format&fit=crop&q=80",
+    photoUrl:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900&auto=format&fit=crop&q=80",
+
+    isOnline: true,
+    role: "Aguardando verificação",
+    location: "Itamarandiba • MG",
+    city: "Itamarandiba",
+    state: "MG",
+    connections: 83,
+
+    area: "Família, apoio e presença próxima",
+    purpose: "Manter presença local com conexões seguras e identidade em análise.",
+    bio: "João enviou a selfie com documento oficial e aguarda aprovação da verificação de identidade.",
+
+    interests: ["Família", "Apoio", "Presença próxima", "Segurança"],
+    basicInfo: [
+      "Selfie com documento enviada",
+      "Aguardando aprovação final",
+      "Perfil ainda não verificado",
+      "Uso completo bloqueado",
+      "Foto real não exibida publicamente",
+    ],
+    aiReasons: [
+      "O perfil aparece por proximidade local e vínculo de contexto.",
+      "A verificação foi enviada, mas ainda depende de aprovação.",
+      "Até a aprovação final, o perfil continua não verificado e com uso limitado.",
+    ],
+  },
+
+  {
+    id: "studio",
+    aliases: [
+      "studio",
+      "studio-orion",
+      "studio_orion",
+      "studio orion",
+      "studio-criativo",
+      "studio_criativo",
+      "studio criativo",
+      "studio-arquitetura",
+      "studio_arquitetura",
+      "studio arquitetura",
+    ],
+
+    name: "Studio Orion",
+    firstName: "Studio",
+    kind: "Empresa",
+    status: "verified",
+
+    avatar:
+      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&auto=format&fit=crop&q=80",
+    photoUrl:
+      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&auto=format&fit=crop&q=80",
+
+    isOnline: false,
+    role: "Empresa local",
+    location: "Diamantina • MG",
+    city: "Diamantina",
+    state: "MG",
+    connections: 211,
+
+    area: "Arquitetura, interiores e identidade visual",
+    purpose: "Conectar empresas, criadores e projetos com identidade forte.",
+    bio: "Empresa focada em criação visual, arquitetura, conteúdo e presença digital para negócios locais.",
+
+    interests: ["Design", "Arquitetura", "Conteúdo", "Empresas", "Presença digital"],
+    basicInfo: ["Empresa validada", "Atuação profissional", "Conexões comerciais"],
+    aiReasons: [
+      "A conexão apareceu por interesse em marca, arquitetura e negócios.",
+      "O perfil combina com projetos de impacto visual.",
+      "Pode haver sinergia entre tecnologia, marca e presença local.",
+    ],
+  },
+
+  {
+    id: "julia",
+    aliases: [
+      "julia",
+      "júlia",
+      "julia-andrade",
+      "julia_andrade",
+      "júlia-andrade",
+      "júlia_andrade",
+      "julia andrade",
+      "júlia andrade",
+      "julia-martins",
+      "julia_martins",
+      "júlia-martins",
+      "júlia_martins",
+    ],
+
+    name: "Júlia Andrade",
+    firstName: "Júlia",
+    kind: "Empresa",
+    status: "verified",
+
+    avatar:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&auto=format&fit=crop&q=80",
+    photoUrl:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=900&auto=format&fit=crop&q=80",
+
+    isOnline: true,
+    role: "Oferece serviço",
+    location: "Diamantina • MG",
+    city: "Diamantina",
+    state: "MG",
+    connections: 154,
+
+    area: "Arquitetura, interiores e projetos personalizados",
+    purpose: "Criar conexões com projetos criativos, marcas, tecnologia e construção.",
+    bio: "Júlia trabalha com projetos de arquitetura, interiores e experiências visuais para marcas e negócios.",
+
+    interests: ["Design", "Arquitetura", "Marca", "Tecnologia", "Experiência digital"],
+    basicInfo: ["Perfil validado", "Empresa real", "Atuação criativa"],
+    aiReasons: [
+      "Vocês compartilham interesse em construção, tecnologia e projetos visuais.",
+      "O perfil tem ligação com serviços, arquitetura e presença digital.",
+      "A conexão pode ajudar no amadurecimento visual de projetos.",
+    ],
+  },
+
+  {
+    id: "grupo",
+    aliases: [
+      "grupo",
+      "grupo-nexus",
+      "grupo_nexus",
+      "grupo nexus",
+      "grupo-elus",
+      "grupo_elus",
+      "grupo elus",
+      "comunidade",
+      "comunidade-elus",
+      "comunidade_elus",
+      "grupo-conexoes",
+      "grupo_conexoes",
+      "grupo conexoes",
+    ],
+
+    name: "Grupo Nexus",
+    firstName: "Grupo",
+    kind: "Grupo",
+    status: "verified",
+
+    avatar:
+      "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=900&auto=format&fit=crop&q=80",
+    photoUrl:
+      "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=900&auto=format&fit=crop&q=80",
+
+    isOnline: true,
+    role: "Comunidade",
+    location: "Belo Horizonte • MG",
+    city: "Belo Horizonte",
+    state: "MG",
+    connections: 320,
+
+    area: "Comunidade, negócios e tecnologia",
+    purpose: "Reunir pessoas, empresas e serviços em conexões reais e verificadas.",
+    bio: "Espaço para conexões humanas, negócios locais, tecnologia e projetos com impacto real.",
+
+    interests: ["Comunidade", "Negócios", "Tecnologia", "Conexões reais"],
+    basicInfo: ["Grupo validado", "Comunidade ELUS", "Conexões com propósito"],
+    aiReasons: [
+      "Este grupo reúne interesses próximos aos seus.",
+      "Há relação com tecnologia, negócios locais e impacto humano.",
+      "A conexão ajuda a fortalecer a rede ELUS.",
+    ],
+  },
+];
+
+// =====================================================
+// Listas derivadas para uso futuro nas telas
+// =====================================================
+
+export const verifiedProfiles = profiles.filter(
+  (profile) => profile.status === "verified"
+);
+
+export const unverifiedProfiles = profiles.filter(
+  (profile) => profile.status === "unverified"
+);
+
+export const inReviewProfiles = profiles.filter(
+  (profile) => profile.status === "in_review"
+);
+
+export const restrictedProfiles = profiles.filter((profile) =>
+  isProfileRestrictedByVerification(profile)
+);
+
+export const protectedPublicProfiles = profiles.filter((profile) =>
+  isProtectedPublicProfile(profile)
+);
+
+// =====================================================
+// Bloco de verificação estrutural
+// =====================================================
+
+export const profilesVerification = {
+  totalProfiles: profiles.length,
+  canonicalIds: profiles.map((profile) => profile.id),
+  verifiedIds: verifiedProfiles.map((profile) => profile.id),
+  unverifiedIds: unverifiedProfiles.map((profile) => profile.id),
+  inReviewIds: inReviewProfiles.map((profile) => profile.id),
+  restrictedIds: restrictedProfiles.map((profile) => profile.id),
+  protectedPublicIds: protectedPublicProfiles.map((profile) => profile.id),
+
+  verificationStates: profiles.reduce<Record<string, ProfileVerificationState>>(
+    (acc, profile) => {
+      acc[profile.id] = getProfileVerificationState(profile);
+      return acc;
+    },
+    {}
+  ),
+
+  aliasesMapped: profiles.reduce<Record<string, string[]>>((acc, profile) => {
+    acc[profile.id] = profile.aliases;
+    return acc;
+  }, {}),
+};
+
+// =====================================================
+// Exportação padrão
+// =====================================================
+
+export default profiles;

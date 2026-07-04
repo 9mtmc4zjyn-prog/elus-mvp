@@ -1,0 +1,53 @@
+{
+  "summary": "ELUS iteration 3 frontend verification: splash, login (mocked), 5 renamed tabs, atmospheric Presença field with particles + breathing halo (no radar beam, no rigid rings), textual resonance labels (zero %), public profiles locked with layered dots + lock icons, request-access grouped by CAMADA 02/03/04 with group toggles, connected banner after sendRequest revealing real fields. 95% of acceptance criteria pass. One bug found: business profile (p4 Estúdio Ático) does NOT render the CAMADA 04 'Informações privadas' block (whatsapp/email) on the public profile view because the layer filter drops fields the mock profile lacks; spec requires the layer to appear locked anyway.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "app/profile/[id].tsx (PublicProfile)",
+        "issue": "Para p4 (Estúdio Ático), o bloco CAMADA 04 'Informações privadas' não é renderizado porque o filtro `fieldsForLayer(...).filter((f) => (profile as any)[f])` remove todos os campos quando o mock não tem `whatsapp` nem `email`. Resultado: campos field-whatsapp e field-email NÃO existem no DOM público da empresa. A spec exige: 'Campos category/services/products/location/description/portfolio/links/whatsapp/email todos bloqueados em camadas' para qualquer perfil business. Em essência, o visualizador público não deveria conseguir inferir a ausência de dados — toda camada definida pelo tipo deveria aparecer como bloqueada (••••••).",
+        "testID": "field-whatsapp, field-email (p4)",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": [
+      {
+        "component": "Vários (Animated, BlurView etc.)",
+        "issue": "Warnings 'useNativeDriver is not supported' e 'props.pointerEvents is deprecated. Use style.pointerEvents' aparecem repetidamente nos logs (web). Não bloqueia execução, mas vale mover pointerEvents para style."
+      }
+    ]
+  },
+  "verifications_passed": [
+    "Splash: testID=splash-screen + splash-logo 'ELUS' + slogan + halo respirando + partículas; auto-redirect /login após ~2.8s",
+    "Tab bar com 5 nomes UPPERCASE: PRESENÇA, EXPLORAR, ACESSOS, VÍNCULOS, EU",
+    "Presence (testID=presence-screen): radar-canvas presente, 3 camadas de profundidade, 56 partículas em deriva, halo central pulsante. Sem feixe rotativo de radar técnico, sem 4 anéis rígidos",
+    "Lista de presenças exibe somente etiquetas textuais (Alta ressonância / Afinidade próxima / Contexto compatível / Presença relevante) — regex /\\d+\\s*%/ retornou ZERO matches em presence, perfil p1 e perfil p4",
+    "/profile/p1 (Mariana): apenas foto + nome + tag de ressonância pública; 3 camadas (02/03/04) com headers e ícone de cadeado; field-bio/city/profession/interests/skills/cv/instagram/linkedin/whatsapp/email todos exibindo '••••••••••••'",
+    "/profile/p4 (Estúdio Ático): logo + nome + tag pública; CAMADA 02 (category/services/products/location) e CAMADA 03 (description/portfolio/links) bloqueadas em dots",
+    "/request-access/p1 (pessoa): 3 grupos CAMADA 02/03/04 + request-group-toggle-initial/relational/private; campos bio/city/profession/interests/skills em 02, cv/instagram/linkedin em 03, whatsapp/email em 04",
+    "/request-access/p4 (empresa): 3 grupos com category/services/products/location em 02, description/portfolio/links em 03, whatsapp/email em 04",
+    "Após send-request-button volta automaticamente para /profile/p1 e exibe connected-banner com 'Vínculo estabelecido com esta presença.'; field-bio revela texto real ('Designer apaixonada por experiências humanas.') sem dots",
+    "Aba Acessos > Enviadas: card mostra 'Para: Estúdio Ático' (resolvido via profiles.find(...).name no requests.tsx, nameFor()); persistência confirmada quando navegação via tab bar (não page.goto)",
+    "Aba Eu: NÃO mostra email do usuário publicamente (não aparece 'teste@elus.com' no DOM); stats card 3º item usa profileTypeLabel.replace('Perfil ', '') → 'Completo' quando profileType=complete"
+  ],
+  "test_report_links": ["/app/test_reports/iteration_3.json"],
+  "action_items": [
+    "Corrigir /app/frontend/app/profile/[id].tsx: ao renderizar perfil público de não-conectado, NÃO filtrar campos por `(profile as any)[f]`. Mostrar TODOS os campos definidos pelo `fieldsForLayer(layer.key, profile.kind)` como bloqueados — independentemente de existirem no mock. Isso garante que p4 mostre Camada 04 (whatsapp/email) bloqueada e mantém a regra da spec: o público não infere ausência de dados. Sugestão: usar o filtro de existência APENAS quando `isConnected` for true (campos vazios não devem aparecer após conexão).",
+    "(Opcional, recomendado pela spec) Adicionar whatsapp/email ao mock de p4 e a outros perfis business para consistência visual após connect.",
+    "Substituir props.pointerEvents por style.pointerEvents nos componentes Animated (warning recorrente do React Native Web)."
+  ],
+  "critical_code_review_comments": [
+    "profile/[id].tsx linha 56: filtro `fields.filter((f) => (profile as any)[f])` quebra a regra de camadas progressivas quando o perfil-fonte não tem todos os campos. Deveria ser aplicado só no estado conectado.",
+    "AppContext.tsx: estado é puramente em memória (resetado em hard navigation); para uso real considerar AsyncStorage. Não bloqueia spec atual.",
+    "request-access/[id].tsx: import `Switch` ok; submit() chama setSent → router.back() em 1.4s; UX coerente."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A", "frontend": "92%"},
+  "seed_data_creation": "Nenhum seed criado; auth mockado.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Após o fix em profile/[id].tsx, retestar especificamente: (1) /profile/p4 deve mostrar field-whatsapp e field-email com dots; (2) após connect (sendAccessRequest com whatsapp+email), esses campos podem aparecer com valor real OU permanecer ocultos (depende da decisão de UX para campos vazios pós-conexão). Reconfirmar que p1 ainda funciona pós-fix.",
+  "rca_of_issue": "Bug no PublicProfile: o map de camadas chama fieldsForLayer(layer, kind) (retorna lista canônica por tipo) e em seguida aplica `.filter((f) => (profile as any)[f])`. Para um perfil cujos dados-fonte (mock) não possuem todos os campos canônicos da camada, o array fica vazio e a camada inteira é descartada via `if (fields.length === 0) return null;`. Isso quebra a regra arquitetural de 'todo perfil mostra as 3 camadas como zonas bloqueadas independentemente do que o dono já preencheu'. Mitigação: condicionar o filtro a `isConnected` (filtra só após o usuário ter acesso real)."
+}

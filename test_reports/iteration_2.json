@@ -1,0 +1,47 @@
+{
+  "summary": "Frontend smoke-tested 10 acceptance criteria of iteration 2 (ELUS filosofia ajustes). Mobile viewport 390x844. Login → Profile-type Completo → Presença. Verified public profile p1 hides ALL personal data behind dots+lock, no percentages anywhere, atmospheric radar, request flow with skills toggle, sent tab shows name not ID, profile tab without email, stats label 'Completo' (not 'C'). 10/10 acceptance criteria PASS. One minor i18n inconsistency found (English field labels on connected business profile).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "profile/[id].tsx (business connected view)",
+        "issues": [
+          "FIELD_LABELS missing entries for 'description', 'category', 'services', 'products' — these render as raw English keys uppercased: 'DESCRIPTION', 'CATEGORY', 'SERVICES'. Also affects locked-state labels on p1 (DESCRIPTION instead of 'Descrição'). Minor i18n polish; doesn't break philosophy rules."
+        ]
+      }
+    ],
+    "react_native_issues": [
+      {"component": "Animations (radar breath/shimmer)", "issue": "Console warning: 'Animated: useNativeDriver is not supported, falling back to JS-based animation'. Expected on web preview; harmless. Will use native driver on iOS/Android."}
+    ]
+  },
+  "acceptance_criteria_results": {
+    "1_public_profile_p1_only_photo_name_resonance": "PASS — Mariana Costa shows photo, name, 'Alta ressonância' tag. All 10 fields (description, city, profession, interests, skills, cv, whatsapp, email, instagram, linkedin) render as 14× '•' with lock icon. No bio/profession/email/% leaked.",
+    "2_no_numeric_percentages_anywhere": "PASS — radar, list, p1 profile, p4 profile, sent tab and profile tab regex-scanned for /\\d{1,3}\\s*%/ → 0 matches on every screen.",
+    "3_textual_resonance_labels_in_list": "PASS — 'Alta ressonância', 'Contexto compatível', 'Presença relevante' all rendered correctly per compatibility thresholds.",
+    "4_request_field_skills_toggle": "PASS — testID='request-field-skills' present and tappable on /request-access/[id].",
+    "5_sent_tab_shows_real_name": "PASS — Sent card shows 'Para: Estúdio Ático'. 'Para: p4' NOT present.",
+    "6_profile_tab_no_email_public_area": "PASS — No 'test@example.com' rendered. Header shows name 'test' + 'PERFIL COMPLETO' tag + 'Gratuito' plan badge only.",
+    "7_stats_card_completo_not_C": "PASS — third stat reads 'Completo' / label 'Presença'. No isolated 'C'.",
+    "8_atmospheric_radar": "PASS — radar-canvas renders particles + single breathing horizon + center halo + center dot. No 4 concentric rings. High-compat nodes (c>0.7) wrapped in soft halo View.",
+    "9_full_request_flow": "PASS — navigated /profile/p4 → 'Solicitar acesso' → toggled skills → 'Enviar solicitação' → returned to p4 profile → connected-banner visible.",
+    "10_fields_unlock_after_accept": "PASS — After auto-approve, p4 shows actual values (Estúdio de arquitetura residencial., Arquitetura, Projetos/Reformas, São Paulo). Dots disappeared."
+  },
+  "test_report_links": [],
+  "action_items": [
+    "(Optional polish) Add Portuguese labels for 'description', 'category', 'services', 'products', 'links' in /app/frontend/src/theme.ts FIELD_LABELS so locked-state and connected-state labels appear in PT (Descrição/Categoria/Serviços/Produtos/Links) instead of uppercased English keys."
+  ],
+  "critical_code_review_comments": [
+    "AppContext.sendAccessRequest auto-adds toUserId to connections immediately (simulated auto-approve). Demo-correct but real app should wait for owner accept. Fine for this mock iteration.",
+    "profile/[id].tsx hides description for non-essential profiles via lock dots — matches philosophy rule #1.",
+    "Resonance labels duplicated in 2 files (profile/[id].tsx & (tabs)/index.tsx). Consider extracting to /src/utils/resonance.ts (DRY)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only request)", "frontend": "100% (10/10 acceptance criteria)"},
+  "seed_data_creation": "None. App uses MOCK_PROFILES in AppContext.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Auth is mocked client-side; any email/password works via /login. AppContext state is in-memory: page.goto() resets it — always navigate via in-app taps. Bottom tab bar buttons aren't easily selectable by text (multi-line); use coordinate clicks at y≈818 with x={39,117,195,273,351} for the 5 tabs on 390px width. testIDs used here: login-email-input, login-password-input, login-submit-button, profile-type-complete-card, presence-screen, radar-canvas, presence-item-{id}, public-profile-screen, field-{key}, request-access-button, request-field-{key}, send-request-button, connected-banner, requests-screen, tab-sent, profile-screen.",
+  "rca_of_issue": "N/A — no functional bugs. Only minor i18n labels inconsistency reported."
+}

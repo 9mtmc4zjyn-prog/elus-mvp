@@ -1,0 +1,223 @@
+import { profiles, type Profile, type ProfileKind } from "../data/profiles";
+
+// Normaliza texto para busca e comparação: remove acentos, padroniza espaços/hífens e deixa minúsculo.
+function normalizeStr(str: string): string {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[_-]+/g, " ")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ");
+}
+
+// Retorna o último nome útil do perfil para ajudar em slugs como joao-fernandes.
+function getLastName(name: string): string {
+  const parts = name.trim().split(" ").filter(Boolean);
+
+  if (parts.length <= 1) {
+    return "";
+  }
+
+  return parts[parts.length - 1];
+}
+
+// Cria as chaves válidas de identificação de um perfil:
+// ID canônico + aliases + nome completo + primeiro nome + primeiro/último nome.
+function getProfileSearchKeys(profile: Profile): string[] {
+  const firstName = profile.firstName || profile.name.split(" ").filter(Boolean)[0] || "";
+  const lastName = getLastName(profile.name);
+
+  const rawKeys = [
+    profile.id,
+    profile.name,
+    profile.firstName,
+    firstName,
+    lastName ? `${firstName} ${lastName}` : "",
+    ...profile.aliases,
+  ];
+
+  const normalizedKeys = rawKeys
+    .filter(Boolean)
+    .map((key) => normalizeStr(key));
+
+  return Array.from(new Set(normalizedKeys));
+}
+
+// Verifica se uma string corresponde exatamente ao ID canônico, alias ou nome normalizado do perfil.
+function profileMatchesId(profile: Profile, id: string): boolean {
+  const normalizedId = normalizeStr(id);
+
+  if (!normalizedId) {
+    return false;
+  }
+
+  return getProfileSearchKeys(profile).includes(normalizedId);
+}
+
+// Monta o texto principal de nome para busca curta e inteligente.
+function getProfileNameSearchText(profile: Profile): string {
+  return normalizeStr(
+    [
+      profile.name,
+      profile.firstName,
+      profile.id,
+      ...profile.aliases,
+    ].join(" ")
+  );
+}
+
+// Monta o texto pesquisável completo do perfil para buscas maiores.
+function getProfileSearchText(profile: Profile): string {
+  return normalizeStr(
+    [
+      profile.id,
+      ...profile.aliases,
+      profile.name,
+      profile.firstName,
+      profile.kind,
+      profile.role,
+      profile.location,
+      profile.city,
+      profile.state,
+      profile.area,
+      profile.purpose,
+      profile.bio,
+      ...profile.interests,
+      ...profile.basicInfo,
+      ...profile.aiReasons,
+    ].join(" ")
+  );
+}
+
+// Calcula a relevância da busca: nomes que começam com o termo aparecem antes.
+function getSearchScore(
+  profile: Profile,
+  normalizedQuery: string,
+  queryTokens: string[]
+): number | null {
+  const nameText = getProfileNameSearchText(profile);
+  const nameWords = nameText.split(" ").filter(Boolean);
+
+  const fullNameStartsWithQuery = nameText.startsWith(normalizedQuery);
+  const someNameWordStartsWithQuery = nameWords.some((word) =>
+    word.startsWith(normalizedQuery)
+  );
+
+  if (fullNameStartsWithQuery) {
+    return 0;
+  }
+
+  if (someNameWordStartsWithQuery) {
+    return 1;
+  }
+
+  // Busca com 1 letra deve mostrar apenas nomes que começam com essa letra.
+  if (normalizedQuery.length === 1) {
+    return null;
+  }
+
+  const nameContainsQuery = nameText.includes(normalizedQuery);
+  const allTokensStartSomeNameWord = queryTokens.every((token) =>
+    nameWords.some((word) => word.startsWith(token))
+  );
+  const allTokensExistInName = queryTokens.every((token) =>
+    nameText.includes(token)
+  );
+
+  // A partir de 2 letras, permite sílabas dentro do nome: "za" encontra "Vanuza" e "Creuza".
+  if (nameContainsQuery) {
+    return 2;
+  }
+
+  if (allTokensStartSomeNameWord) {
+    return 3;
+  }
+
+  if (allTokensExistInName) {
+    return 4;
+  }
+
+  // Para buscas maiores, também procura em profissão, bio, cidade, interesses e contexto.
+  if (normalizedQuery.length < 3) {
+    return null;
+  }
+
+  const searchableText = getProfileSearchText(profile);
+  const directTextMatch = searchableText.includes(normalizedQuery);
+  const tokenTextMatch = queryTokens.every((token) =>
+    searchableText.includes(token)
+  );
+
+  if (directTextMatch) {
+    return 5;
+  }
+
+  if (tokenTextMatch) {
+    return 6;
+  }
+
+  return null;
+}
+
+// Retorna o perfil correto a partir de um ID canônico, alias ou slug gerado pelo nome.
+export function getProfileById(id: string): Profile | null {
+  const profile = profiles.find((item) => profileMatchesId(item, id));
+
+  return profile ?? null;
+}
+
+// Retorna todos os perfis cadastrados, sem filtro.
+export function getAllProfiles(): Profile[] {
+  return profiles;
+}
+
+// Retorna apenas perfis com status verified.
+export function getVerifiedProfiles(): Profile[] {
+  return profiles.filter((profile) => profile.status === "verified");
+}
+
+// Retorna perfis filtrados pelo tipo: Pessoa, Empresa ou Grupo.
+export function getProfilesByKind(kind: ProfileKind): Profile[] {
+  return profiles.filter((profile) => profile.kind === kind);
+}
+
+// Retorna apenas perfis marcados como online.
+export function getOnlineProfiles(): Profile[] {
+  return profiles.filter((profile) => profile.isOnline === true);
+}
+
+// Busca perfis por nome, sílaba, ID, alias e, em buscas maiores, por contexto.
+export function searchProfiles(query: string): Profile[] {
+  const normalizedQuery = normalizeStr(query);
+
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const queryTokens = normalizedQuery.split(" ").filter(Boolean);
+
+  return profiles
+    .map((profile) => ({
+      profile,
+      score: getSearchScore(profile, normalizedQuery, queryTokens),
+    }))
+    .filter(
+      (item): item is { profile: Profile; score: number } =>
+        item.score !== null
+    )
+    .sort((a, b) => {
+      if (a.score !== b.score) {
+        return a.score - b.score;
+      }
+
+      return a.profile.name.localeCompare(b.profile.name);
+    })
+    .map((item) => item.profile);
+}
+
+// Retorna true se o ID, alias ou slug gerado pelo nome existir em qualquer perfil.
+export function isValidProfileId(id: string): boolean {
+  return getProfileById(id) !== null;
+}

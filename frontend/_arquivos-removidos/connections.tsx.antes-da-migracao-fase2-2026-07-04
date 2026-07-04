@@ -1,0 +1,1590 @@
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Image,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+
+import { useApp } from '../../src/context/AppContext';
+import { getAllProfiles } from '../../src/utils/profileUtils';
+import type { Profile } from '../../src/data/profiles';
+
+const ELUS_SYMBOL = require('../../assets/brand/elus_symbol_main.png');
+const ELUS_UNVERIFIED_RED = require('../../assets/images/elus-unverified-red.png');
+const ELUS_VERIFIED_GREEN = require('../../assets/images/elus-verified-green.png');
+
+const COLORS = {
+  background: '#03040A',
+  card: 'rgba(12,15,27,0.94)',
+  cardSoft: 'rgba(255,255,255,0.055)',
+  border: 'rgba(255,255,255,0.12)',
+  text: '#FFFFFF',
+  muted: 'rgba(255,255,255,0.68)',
+  soft: 'rgba(255,255,255,0.44)',
+  blue: '#2D64FF',
+  blueLight: '#9DBBFF',
+  cyan: '#22D3EE',
+  gold: '#D9B46A',
+  green: '#36D399',
+  danger: '#FF6B6B',
+};
+
+type VerificationPhase = 'verified' | 'in_review' | 'unverified';
+
+type ActiveConnectionItem = {
+  id: string;
+  profile: Profile;
+  label: string;
+  color: string;
+};
+
+function normalizeText(value: string) {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function normalizeId(value: string) {
+  return normalizeText(value)
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
+function normalizeUserVerificationStatus(
+  verificationStatus?: string,
+  legacyVerified?: boolean
+): VerificationPhase {
+  const status = normalizeText(String(verificationStatus ?? ''));
+
+  const verifiedStatuses = ['verified', 'verificado', 'approved', 'aprovado'];
+
+  const inReviewStatuses = [
+    'in_review',
+    'review',
+    'under_review',
+    'awaiting',
+    'awaiting_review',
+    'aguardando',
+    'aguardando_verificacao',
+    'aguardando_verificação',
+    'em_analise',
+    'em_análise',
+    'analysis_submitted',
+    'submitted',
+    'document_submitted',
+    'documento_enviado',
+    'doc_sent',
+  ];
+
+  const unverifiedStatuses = [
+    '',
+    'none',
+    'unverified',
+    'not_verified',
+    'nao_verificado',
+    'não_verificado',
+    'pending',
+    'pendente',
+    'verification_pending',
+    'verificacao_pendente',
+    'verificação_pendente',
+    'rejected',
+    'recusado',
+  ];
+
+  if (inReviewStatuses.includes(status)) {
+    return 'in_review';
+  }
+
+  if (verifiedStatuses.includes(status)) {
+    return 'verified';
+  }
+
+  if (unverifiedStatuses.includes(status)) {
+    return 'unverified';
+  }
+
+  if (legacyVerified === true) {
+    return 'verified';
+  }
+
+  return 'unverified';
+}
+
+function getCurrentUserStatusColor(status: VerificationPhase) {
+  if (status === 'verified') {
+    return COLORS.green;
+  }
+
+  if (status === 'in_review') {
+    return COLORS.blueLight;
+  }
+
+  return COLORS.danger;
+}
+
+function getCurrentUserStatusSymbol(status: VerificationPhase) {
+  if (status === 'verified') {
+    return ELUS_VERIFIED_GREEN;
+  }
+
+  if (status === 'in_review') {
+    return ELUS_SYMBOL;
+  }
+
+  return ELUS_UNVERIFIED_RED;
+}
+
+function getStatusTitle(status: VerificationPhase) {
+  if (status === 'verified') {
+    return 'Conta verificada';
+  }
+
+  if (status === 'in_review') {
+    return 'Aguardando verificação';
+  }
+
+  return 'Verificação pendente';
+}
+
+function getStatusText(status: VerificationPhase) {
+  if (status === 'verified') {
+    return 'Você pode acompanhar solicitações, respostas e vínculos reais nesta central.';
+  }
+
+  if (status === 'in_review') {
+    return 'Sua verificação está em análise. Quando houver avanço, solicitações e vínculos aparecerão aqui.';
+  }
+
+  return 'Conclua a verificação para ativar solicitações, respostas e vínculos reais no ELUS.';
+}
+
+function getProfileName(profile: Profile) {
+  const rawProfile = profile as any;
+
+  return String(rawProfile.name ?? rawProfile.fullName ?? 'Perfil ELUS');
+}
+
+function getFirstName(profile: Profile) {
+  const rawProfile = profile as any;
+  const firstName = rawProfile.firstName;
+
+  if (firstName) {
+    return String(firstName);
+  }
+
+  return getProfileName(profile).split(' ')[0] || getProfileName(profile);
+}
+
+function getProfilePhotoUrl(profile: Profile) {
+  const rawProfile = profile as any;
+
+  return rawProfile.photoUrl ?? rawProfile.avatarUrl ?? rawProfile.imageUrl ?? '';
+}
+
+function getProfileConnectionCandidates(profile: Profile) {
+  const rawProfile = profile as any;
+  const profileId = String(rawProfile.id ?? '');
+  const firstName = getFirstName(profile);
+  const fullName = getProfileName(profile);
+
+  const baseCandidates = [
+    rawProfile.id,
+    rawProfile.userId,
+    rawProfile.profileId,
+    rawProfile.targetUserId,
+    rawProfile.targetId,
+    profileId,
+    normalizeId(profileId),
+    normalizeId(firstName),
+    normalizeId(fullName),
+  ]
+    .filter(Boolean)
+    .map((item) => String(item));
+
+  const expandedCandidates = baseCandidates.flatMap((item) => {
+    const normalized = normalizeId(item);
+
+    return [item, normalized, `user_${normalized}`];
+  });
+
+  return Array.from(new Set(expandedCandidates.filter(Boolean)));
+}
+
+function getConnectionUserIds(connection: unknown) {
+  if (typeof connection === 'string' || typeof connection === 'number') {
+    return [String(connection)];
+  }
+
+  if (connection && typeof connection === 'object') {
+    const value = connection as Record<string, unknown>;
+
+    return [
+      value.profileId,
+      value.targetProfileId,
+      value.targetId,
+      value.userId,
+      value.fromUserId,
+      value.toUserId,
+      value.id,
+    ]
+      .filter(Boolean)
+      .map((item) => String(item));
+  }
+
+  return [];
+}
+
+function isAcceptedConnectionRecord(connection: unknown) {
+  if (!connection || typeof connection !== 'object') {
+    return false;
+  }
+
+  const value = connection as Record<string, unknown>;
+
+  const rawStatus = normalizeText(
+    String(
+      value.status ??
+        value.state ??
+        value.connectionStatus ??
+        value.requestStatus ??
+        ''
+    )
+  );
+
+  const acceptedByStatus =
+    rawStatus === 'accepted' ||
+    rawStatus === 'approved' ||
+    rawStatus === 'active' ||
+    rawStatus === 'connected' ||
+    rawStatus === 'aceita' ||
+    rawStatus === 'aceito' ||
+    rawStatus === 'aprovada' ||
+    rawStatus === 'aprovado' ||
+    rawStatus === 'ativa' ||
+    rawStatus === 'ativo' ||
+    rawStatus === 'conectado';
+
+  const acceptedByBoolean =
+    value.accepted === true ||
+    value.approved === true ||
+    value.isAccepted === true ||
+    value.isApproved === true ||
+    value.isActive === true;
+
+  return acceptedByStatus || acceptedByBoolean;
+}
+
+function branchHasAcceptedProfile(branch: any, profile: Profile) {
+  if (!Array.isArray(branch?.connections)) {
+    return false;
+  }
+
+  const profileCandidates = getProfileConnectionCandidates(profile);
+
+  return branch.connections.some((connection: unknown) => {
+    const connectionUserIds = getConnectionUserIds(connection);
+    const profileIdMatches = connectionUserIds.some((id) =>
+      profileCandidates.includes(id)
+    );
+
+    return profileIdMatches && isAcceptedConnectionRecord(connection);
+  });
+}
+
+function getAcceptedConnectionsCount(connectionBranches: any[]) {
+  return connectionBranches.reduce((total, branch) => {
+    if (!Array.isArray(branch?.connections)) {
+      return total;
+    }
+
+    return (
+      total +
+      branch.connections.filter((connection: unknown) =>
+        isAcceptedConnectionRecord(connection)
+      ).length
+    );
+  }, 0);
+}
+
+function getConnectionLabel(branch: any, connection: unknown) {
+  const rawConnection = connection as Record<string, unknown>;
+  const kind = normalizeText(String(rawConnection?.kind ?? branch?.kind ?? ''));
+
+  if (kind === 'family') {
+    return 'Família';
+  }
+
+  if (kind === 'company' || kind === 'professional') {
+    return 'Profissional';
+  }
+
+  if (kind === 'interest') {
+    return 'Interesse';
+  }
+
+  if (kind === 'preference') {
+    return 'Preferência';
+  }
+
+  if (kind === 'service') {
+    return 'Serviço';
+  }
+
+  if (kind === 'friend' || kind === 'friendship') {
+    return 'Amizade';
+  }
+
+  if (kind === 'assisted' || kind === 'support') {
+    return 'Apoio';
+  }
+
+  return String(branch?.title ?? 'Vínculo');
+}
+
+function getConnectionColor(branch: any, connection: unknown) {
+  const rawConnection = connection as Record<string, unknown>;
+  const kind = normalizeText(String(rawConnection?.kind ?? branch?.kind ?? ''));
+
+  if (kind === 'family') {
+    return COLORS.blue;
+  }
+
+  if (kind === 'company' || kind === 'professional') {
+    return COLORS.gold;
+  }
+
+  if (kind === 'interest') {
+    return '#2DD4BF';
+  }
+
+  if (kind === 'preference') {
+    return '#A855F7';
+  }
+
+  if (kind === 'service') {
+    return '#A8C4DA';
+  }
+
+  if (kind === 'friend' || kind === 'friendship') {
+    return '#94A3B8';
+  }
+
+  if (kind === 'assisted' || kind === 'support') {
+    return '#F59E0B';
+  }
+
+  return String(branch?.color ?? COLORS.green);
+}
+
+function getAcceptedConnectionItems({
+  connectionBranches,
+  profiles,
+}: {
+  connectionBranches: any[];
+  profiles: Profile[];
+}) {
+  const items: ActiveConnectionItem[] = [];
+  const usedProfileIds = new Set<string>();
+
+  connectionBranches.forEach((branch) => {
+    if (!Array.isArray(branch?.connections)) {
+      return;
+    }
+
+    branch.connections.forEach((connection: unknown) => {
+      if (!isAcceptedConnectionRecord(connection)) {
+        return;
+      }
+
+      const matchedProfile = profiles.find((profile) =>
+        branchHasAcceptedProfile(
+          {
+            ...branch,
+            connections: [connection],
+          },
+          profile
+        )
+      );
+
+      if (!matchedProfile) {
+        return;
+      }
+
+      const profileId = String(
+        (matchedProfile as any).id ?? getProfileName(matchedProfile)
+      );
+
+      if (usedProfileIds.has(profileId)) {
+        return;
+      }
+
+      usedProfileIds.add(profileId);
+
+      items.push({
+        id: `${profileId}-${String((connection as any)?.id ?? items.length)}`,
+        profile: matchedProfile,
+        label: getConnectionLabel(branch, connection),
+        color: getConnectionColor(branch, connection),
+      });
+    });
+  });
+
+  return items;
+}
+
+function ConnectionCoreIcon({
+  color,
+  locked = false,
+}: {
+  color: string;
+  locked?: boolean;
+}) {
+  return (
+    <View style={styles.connectionCoreIcon}>
+      <View style={[styles.connectionOrbitOuter, { borderColor: `${color}44` }]} />
+      <View style={[styles.connectionOrbitInner, { borderColor: `${color}26` }]} />
+      <View style={[styles.connectionLineHorizontal, { backgroundColor: `${color}48` }]} />
+      <View style={[styles.connectionLineDiagonalOne, { backgroundColor: `${color}38` }]} />
+      <View style={[styles.connectionLineDiagonalTwo, { backgroundColor: `${color}38` }]} />
+
+      <View
+        style={[
+          styles.connectionNodeCenter,
+          {
+            borderColor: `${color}A8`,
+            backgroundColor: `${color}1F`,
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.connectionNodeDot,
+            {
+              backgroundColor: color,
+              opacity: locked ? 0.68 : 1,
+            },
+          ]}
+        />
+      </View>
+
+      <View
+        style={[
+          styles.connectionNodeSmall,
+          styles.connectionNodeTop,
+          {
+            backgroundColor: color,
+            opacity: locked ? 0.55 : 0.9,
+          },
+        ]}
+      />
+
+      <View
+        style={[
+          styles.connectionNodeSmall,
+          styles.connectionNodeLeft,
+          {
+            backgroundColor: color,
+            opacity: locked ? 0.45 : 0.75,
+          },
+        ]}
+      />
+
+      <View
+        style={[
+          styles.connectionNodeSmall,
+          styles.connectionNodeRight,
+          {
+            backgroundColor: color,
+            opacity: locked ? 0.45 : 0.75,
+          },
+        ]}
+      />
+    </View>
+  );
+}
+
+function RequestFlowIcon({ color }: { color: string }) {
+  return (
+    <View style={styles.requestFlowIcon}>
+      <View style={[styles.requestFlowLineTop, { backgroundColor: `${color}46` }]} />
+      <View style={[styles.requestFlowLineBottom, { backgroundColor: `${color}34` }]} />
+
+      <View
+        style={[
+          styles.requestFlowNode,
+          styles.requestFlowNodeLeft,
+          {
+            borderColor: `${color}78`,
+            backgroundColor: `${color}18`,
+          },
+        ]}
+      >
+        <View style={[styles.requestFlowDot, { backgroundColor: color }]} />
+      </View>
+
+      <View
+        style={[
+          styles.requestFlowNode,
+          styles.requestFlowNodeRight,
+          {
+            borderColor: `${color}78`,
+            backgroundColor: `${color}18`,
+          },
+        ]}
+      >
+        <View style={[styles.requestFlowDot, { backgroundColor: color }]} />
+      </View>
+
+      <View
+        style={[
+          styles.requestFlowNodeCenter,
+          {
+            borderColor: `${color}A0`,
+            backgroundColor: `${color}22`,
+          },
+        ]}
+      >
+        <View style={[styles.requestFlowDotCenter, { backgroundColor: color }]} />
+      </View>
+    </View>
+  );
+}
+
+function PlainAvatar({ profile, size = 54 }: { profile: Profile; size?: number }) {
+  const photoUrl = getProfilePhotoUrl(profile);
+  const innerSize = size - 6;
+
+  return (
+    <View
+      style={[
+        styles.avatarShell,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+        },
+      ]}
+    >
+      {photoUrl ? (
+        <Image
+          source={{ uri: photoUrl }}
+          style={{
+            width: innerSize,
+            height: innerSize,
+            borderRadius: innerSize / 2,
+          }}
+          resizeMode="cover"
+        />
+      ) : (
+        <Text style={styles.avatarFallbackText}>
+          {getFirstName(profile).slice(0, 2).toUpperCase()}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+function ConnectionsSummary({
+  currentUserVerified,
+  currentUserStatus,
+  activeConnectionsCount,
+  onOpenActiveConnections,
+}: {
+  currentUserVerified: boolean;
+  currentUserStatus: VerificationPhase;
+  activeConnectionsCount: number;
+  onOpenActiveConnections?: () => void;
+}) {
+  const statusColor = currentUserVerified
+    ? COLORS.cyan
+    : getCurrentUserStatusColor(currentUserStatus);
+
+  const summaryContent = (
+    <>
+      <View
+        style={[
+          styles.summaryIconCircle,
+          {
+            borderColor: `${statusColor}36`,
+            backgroundColor: `${statusColor}10`,
+          },
+        ]}
+      >
+        <ConnectionCoreIcon color={statusColor} locked={!currentUserVerified} />
+      </View>
+
+      <View style={styles.summaryTextBox}>
+        <Text
+          style={[
+            styles.summaryTitle,
+            {
+              color: statusColor,
+            },
+          ]}
+        >
+          {activeConnectionsCount === 1
+            ? '1 conexão real ativa'
+            : `${activeConnectionsCount} conexões reais ativas`}
+        </Text>
+
+        <Text style={styles.summaryText}>
+          Quando um vínculo for aprovado, ele aparecerá aqui com tipo, status e
+          acesso ao perfil.
+        </Text>
+      </View>
+    </>
+  );
+
+  if (activeConnectionsCount > 0) {
+    return (
+      <Pressable
+        style={({ pressed }) => [
+          styles.summaryCard,
+          {
+            borderColor: `${statusColor}34`,
+          },
+          pressed ? styles.pressedSmall : null,
+        ]}
+        onPress={onOpenActiveConnections}
+      >
+        {summaryContent}
+      </Pressable>
+    );
+  }
+
+  return (
+    <View
+      style={[
+        styles.summaryCard,
+        {
+          borderColor: `${statusColor}34`,
+        },
+      ]}
+    >
+      {summaryContent}
+    </View>
+  );
+}
+
+function AccountStatusCard({
+  currentUserStatus,
+  onPressVerification,
+}: {
+  currentUserStatus: VerificationPhase;
+  onPressVerification: () => void;
+}) {
+  const statusColor = getCurrentUserStatusColor(currentUserStatus);
+  const statusSymbol = getCurrentUserStatusSymbol(currentUserStatus);
+  const verified = currentUserStatus === 'verified';
+
+  return (
+    <View
+      style={[
+        styles.statusCard,
+        {
+          backgroundColor: `${statusColor}10`,
+          borderColor: `${statusColor}34`,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.statusIconBox,
+          {
+            backgroundColor: `${statusColor}12`,
+            borderColor: `${statusColor}32`,
+          },
+        ]}
+      >
+        <Image source={statusSymbol} style={styles.statusIcon} resizeMode="contain" />
+      </View>
+
+      <View style={styles.statusTextBox}>
+        <Text style={styles.cardKicker}>Status da conta</Text>
+
+        <Text
+          style={[
+            styles.statusTitle,
+            {
+              color: statusColor,
+            },
+          ]}
+        >
+          {getStatusTitle(currentUserStatus)}
+        </Text>
+
+        <Text style={styles.statusText}>{getStatusText(currentUserStatus)}</Text>
+
+        <Text style={styles.statusGuide}>
+          Acompanhe tudo por aqui. Quando houver avanço, o status aparecerá nas
+          áreas de solicitações e vínculos.
+        </Text>
+
+        {!verified ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.verificationButton,
+              pressed ? styles.pressed : null,
+            ]}
+            onPress={onPressVerification}
+          >
+            <Text style={styles.verificationButtonText}>
+              Ver status da verificação →
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function RequestsAccessCard({
+  currentUserVerified,
+  currentUserStatus,
+  onOpenRequests,
+}: {
+  currentUserVerified: boolean;
+  currentUserStatus: VerificationPhase;
+  onOpenRequests: () => void;
+}) {
+  const statusColor = currentUserVerified
+    ? COLORS.green
+    : getCurrentUserStatusColor(currentUserStatus);
+
+  return (
+    <View
+      style={[
+        styles.requestsAccessCard,
+        {
+          borderColor: `${statusColor}34`,
+          backgroundColor: `${statusColor}10`,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.requestsAccessIconBox,
+          {
+            borderColor: `${statusColor}38`,
+            backgroundColor: `${statusColor}12`,
+          },
+        ]}
+      >
+        <RequestFlowIcon color={statusColor} />
+      </View>
+
+      <View style={styles.requestsAccessInfo}>
+        <Text style={styles.cardKicker}>Solicitações</Text>
+
+        <Text
+          style={[
+            styles.requestsAccessTitle,
+            {
+              color: statusColor,
+            },
+          ]}
+        >
+          Solicitações em acompanhamento
+        </Text>
+
+        <Text style={styles.requestsAccessText}>
+          Abra para acompanhar pedidos recebidos, enviados e informações
+          compartilhadas quando existirem.
+        </Text>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.requestsAccessButton,
+            pressed ? styles.pressedSmall : null,
+          ]}
+          onPress={onOpenRequests}
+        >
+          <Text style={styles.requestsAccessButtonText}>
+            Abrir solicitações →
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function ActiveConnectionsList({
+  items,
+  onOpenProfile,
+  onLayout,
+}: {
+  items: ActiveConnectionItem[];
+  onOpenProfile: (profileId: string) => void;
+  onLayout: (event: any) => void;
+}) {
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <View style={styles.activeConnectionsSection} onLayout={onLayout}>
+      <Text style={styles.sectionTitle}>Conexões reais ativas</Text>
+
+      <Text style={styles.sectionHint}>
+        Vínculos aprovados ficam organizados aqui com tipo e acesso ao perfil.
+      </Text>
+
+      {items.map((item) => (
+        <Pressable
+          key={item.id}
+          style={({ pressed }) => [
+            styles.activeConnectionCard,
+            pressed ? styles.pressedSmall : null,
+          ]}
+          onPress={() => onOpenProfile(String((item.profile as any).id))}
+        >
+          <PlainAvatar profile={item.profile} size={54} />
+
+          <View style={styles.activeConnectionInfo}>
+            <Text style={styles.activeConnectionName} numberOfLines={1}>
+              {getProfileName(item.profile)}
+            </Text>
+
+            <Text style={styles.activeConnectionMeta} numberOfLines={1}>
+              {item.label} · Conexão aceita
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.activeConnectionBadge,
+              {
+                borderColor: `${item.color}55`,
+                backgroundColor: `${item.color}12`,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.activeConnectionBadgeText,
+                {
+                  color: item.color,
+                },
+              ]}
+            >
+              Ativa
+            </Text>
+          </View>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+function ConnectionsErrorCard({ onRetry }: { onRetry: () => void }) {
+  return (
+    <View
+      style={[
+        styles.statusCard,
+        {
+          backgroundColor: `${COLORS.danger}10`,
+          borderColor: `${COLORS.danger}34`,
+          marginTop: 26,
+        },
+      ]}
+    >
+      <View style={styles.statusTextBox}>
+        <Text style={styles.cardKicker}>Erro de carregamento</Text>
+
+        <Text style={[styles.statusTitle, { color: COLORS.danger }]}>
+          Não foi possível carregar suas conexões
+        </Text>
+
+        <Text style={styles.statusText}>
+          Verifique sua conexão com a internet e tente novamente. Se o problema persistir, reabra o aplicativo.
+        </Text>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.requestsAccessButton,
+            pressed ? styles.pressedSmall : null,
+          ]}
+          onPress={onRetry}
+        >
+          <Text style={styles.requestsAccessButtonText}>
+            Tentar novamente →
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function HistoryCard() {
+  return (
+    <View style={styles.historyCard}>
+      <Text style={styles.historyKicker}>Histórico</Text>
+
+      <Text style={styles.historyTitle}>
+        Tudo que virar vínculo aparece nesta tela.
+      </Text>
+
+      <Text style={styles.historyText}>
+        Use esta área para acompanhar conexões ativas, solicitações enviadas,
+        pedidos recebidos, informações compartilhadas e próximos passos.
+      </Text>
+    </View>
+  );
+}
+
+export default function ConnectionsScreen() {
+  const router = useRouter();
+  const scrollRef = useRef<ScrollView | null>(null);
+  const activeConnectionsY = useRef(0);
+
+  const { user, getConnectionBranches } = useApp() as any;
+
+  const currentUserStatus = normalizeUserVerificationStatus(
+    user?.verificationStatus,
+    user?.verified
+  );
+
+  const currentUserVerified = currentUserStatus === 'verified';
+
+  const allProfiles = getAllProfiles() as Profile[];
+
+  const [retryCount, setRetryCount] = useState(0);
+  const [loadError, setLoadError] = useState(false);
+  const [connectionBranches, setConnectionBranches] = useState<any[]>([]);
+
+  useEffect(() => {
+    setLoadError(false);
+    try {
+      if (typeof getConnectionBranches !== 'function') {
+        setConnectionBranches([]);
+        return;
+      }
+      const branches = getConnectionBranches();
+      if (!Array.isArray(branches)) {
+        setConnectionBranches([]);
+        return;
+      }
+      setConnectionBranches(
+        branches.filter((branch: any) => Array.isArray(branch?.connections))
+      );
+    } catch {
+      setLoadError(true);
+      setConnectionBranches([]);
+    }
+  }, [getConnectionBranches, retryCount]);
+
+  const activeConnectionsCount = currentUserVerified
+    ? getAcceptedConnectionsCount(connectionBranches)
+    : 0;
+
+  const activeConnectionItems = useMemo(() => {
+    if (!currentUserVerified) {
+      return [];
+    }
+
+    return getAcceptedConnectionItems({
+      connectionBranches,
+      profiles: allProfiles,
+    });
+  }, [connectionBranches, currentUserVerified, allProfiles]);
+
+  function openProfile(profileId: string) {
+    router.push(`/profile/${profileId}` as never);
+  }
+
+  function openVerification() {
+    router.push('/verification' as never);
+  }
+
+  function openRequests() {
+    router.push('/(tabs)/requests' as never);
+  }
+
+  function openActiveConnections() {
+    if (activeConnectionItems.length === 0) {
+      return;
+    }
+
+    scrollRef.current?.scrollTo({
+      y: Math.max(activeConnectionsY.current - 18, 0),
+      animated: true,
+    });
+  }
+
+  return (
+    <SafeAreaView style={styles.screen}>
+      <StatusBar barStyle="light-content" />
+
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.topBrandRow}>
+          <Text style={styles.pageKicker}>ELUS</Text>
+
+          <Image
+            source={ELUS_SYMBOL}
+            style={styles.headerBrandSymbol}
+            resizeMode="contain"
+          />
+        </View>
+
+        <Text style={styles.pageTitle}>Vínculos</Text>
+
+        <Text style={styles.pageSubtitle}>
+          Acompanhe conexões reais, solicitações recebidas, solicitações enviadas
+          e histórico em um só painel.
+        </Text>
+
+        {loadError ? (
+          <ConnectionsErrorCard onRetry={() => setRetryCount((c) => c + 1)} />
+        ) : (
+          <>
+            <ConnectionsSummary
+              currentUserVerified={currentUserVerified}
+              currentUserStatus={currentUserStatus}
+              activeConnectionsCount={activeConnectionsCount}
+              onOpenActiveConnections={openActiveConnections}
+            />
+
+            <AccountStatusCard
+              currentUserStatus={currentUserStatus}
+              onPressVerification={openVerification}
+            />
+
+            <RequestsAccessCard
+              currentUserVerified={currentUserVerified}
+              currentUserStatus={currentUserStatus}
+              onOpenRequests={openRequests}
+            />
+
+            <ActiveConnectionsList
+              items={activeConnectionItems}
+              onOpenProfile={openProfile}
+              onLayout={(event) => {
+                activeConnectionsY.current = event.nativeEvent.layout.y;
+              }}
+            />
+
+            <HistoryCard />
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+
+  scroll: {
+    flex: 1,
+  },
+
+  content: {
+    paddingTop: 34,
+    paddingHorizontal: 18,
+    paddingBottom: 122,
+  },
+
+  topBrandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  pageKicker: {
+    color: COLORS.cyan,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 4,
+    textTransform: 'uppercase',
+  },
+
+  headerBrandSymbol: {
+    width: 34,
+    height: 34,
+    opacity: 0.92,
+  },
+
+  pageTitle: {
+    marginTop: 12,
+    color: COLORS.text,
+    fontSize: 42,
+    lineHeight: 48,
+    fontWeight: '300',
+    letterSpacing: -1.1,
+  },
+
+  pageSubtitle: {
+    marginTop: 12,
+    color: COLORS.muted,
+    fontSize: 18,
+    lineHeight: 28,
+  },
+
+  summaryCard: {
+    marginTop: 26,
+    padding: 18,
+    borderRadius: 28,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  summaryIconCircle: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 15,
+  },
+
+  connectionCoreIcon: {
+    width: 40,
+    height: 40,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  connectionOrbitOuter: {
+    position: 'absolute',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+  },
+
+  connectionOrbitInner: {
+    position: 'absolute',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1,
+  },
+
+  connectionLineHorizontal: {
+    position: 'absolute',
+    width: 25,
+    height: 2,
+    borderRadius: 999,
+    left: 8,
+    top: 19,
+  },
+
+  connectionLineDiagonalOne: {
+    position: 'absolute',
+    width: 24,
+    height: 2,
+    borderRadius: 999,
+    left: 8,
+    top: 14,
+    transform: [{ rotate: '34deg' }],
+  },
+
+  connectionLineDiagonalTwo: {
+    position: 'absolute',
+    width: 24,
+    height: 2,
+    borderRadius: 999,
+    left: 8,
+    top: 24,
+    transform: [{ rotate: '-34deg' }],
+  },
+
+  connectionNodeCenter: {
+    position: 'absolute',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  connectionNodeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+
+  connectionNodeSmall: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+
+  connectionNodeTop: {
+    top: 3,
+    left: 17,
+  },
+
+  connectionNodeLeft: {
+    left: 4,
+    top: 25,
+  },
+
+  connectionNodeRight: {
+    right: 4,
+    top: 25,
+  },
+
+  summaryTextBox: {
+    flex: 1,
+  },
+
+  summaryTitle: {
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '900',
+  },
+
+  summaryText: {
+    marginTop: 6,
+    color: COLORS.muted,
+    fontSize: 15,
+    lineHeight: 23,
+    fontWeight: '700',
+  },
+
+  statusCard: {
+    marginTop: 18,
+    padding: 18,
+    borderRadius: 30,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+
+  statusIconBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 15,
+  },
+
+  statusIcon: {
+    width: 38,
+    height: 38,
+  },
+
+  statusTextBox: {
+    flex: 1,
+  },
+
+  cardKicker: {
+    color: COLORS.gold,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 2.6,
+    textTransform: 'uppercase',
+  },
+
+  statusTitle: {
+    marginTop: 7,
+    fontSize: 26,
+    lineHeight: 32,
+    fontWeight: '900',
+  },
+
+  statusText: {
+    marginTop: 9,
+    color: COLORS.muted,
+    fontSize: 15,
+    lineHeight: 23,
+    fontWeight: '700',
+  },
+
+  statusGuide: {
+    marginTop: 12,
+    color: COLORS.text,
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: '800',
+  },
+
+  verificationButton: {
+    marginTop: 16,
+    minHeight: 48,
+    borderRadius: 18,
+    backgroundColor: COLORS.blue,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  verificationButtonText: {
+    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+
+  requestsAccessCard: {
+    marginTop: 18,
+    padding: 17,
+    borderRadius: 28,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+
+  requestsAccessIconBox: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+
+  requestFlowIcon: {
+    width: 38,
+    height: 38,
+    position: 'relative',
+  },
+
+  requestFlowLineTop: {
+    position: 'absolute',
+    width: 23,
+    height: 2,
+    borderRadius: 999,
+    left: 8,
+    top: 13,
+    transform: [{ rotate: '18deg' }],
+  },
+
+  requestFlowLineBottom: {
+    position: 'absolute',
+    width: 24,
+    height: 2,
+    borderRadius: 999,
+    left: 8,
+    top: 24,
+    transform: [{ rotate: '-18deg' }],
+  },
+
+  requestFlowNode: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  requestFlowNodeLeft: {
+    left: 1,
+    top: 17,
+  },
+
+  requestFlowNodeRight: {
+    right: 1,
+    top: 17,
+  },
+
+  requestFlowNodeCenter: {
+    position: 'absolute',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1,
+    left: 10,
+    top: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  requestFlowDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+
+  requestFlowDotCenter: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+
+  requestsAccessInfo: {
+    flex: 1,
+  },
+
+  requestsAccessTitle: {
+    marginTop: 6,
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '900',
+  },
+
+  requestsAccessText: {
+    marginTop: 7,
+    color: COLORS.muted,
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: '700',
+  },
+
+  requestsAccessButton: {
+    marginTop: 14,
+    minHeight: 44,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  requestsAccessButtonText: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+
+  activeConnectionsSection: {
+    marginTop: 22,
+  },
+
+  sectionTitle: {
+    color: COLORS.text,
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: '900',
+  },
+
+  sectionHint: {
+    marginTop: 6,
+    marginBottom: 12,
+    color: COLORS.muted,
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: '700',
+  },
+
+  activeConnectionCard: {
+    padding: 15,
+    borderRadius: 24,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: 'rgba(52,211,153,0.28)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  avatarShell: {
+    backgroundColor: '#05060A',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.20)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+
+  avatarFallbackText: {
+    color: COLORS.text,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+
+  activeConnectionInfo: {
+    flex: 1,
+    marginLeft: 12,
+    minWidth: 0,
+  },
+
+  activeConnectionName: {
+    color: COLORS.text,
+    fontSize: 18,
+    lineHeight: 23,
+    fontWeight: '900',
+  },
+
+  activeConnectionMeta: {
+    marginTop: 3,
+    color: COLORS.muted,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+  },
+
+  activeConnectionBadge: {
+    marginLeft: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+
+  activeConnectionBadgeText: {
+    fontSize: 12,
+    fontWeight: '900',
+  },
+
+  historyCard: {
+    marginTop: 22,
+    padding: 20,
+    borderRadius: 28,
+    backgroundColor: 'rgba(217,180,106,0.075)',
+    borderWidth: 1,
+    borderColor: 'rgba(217,180,106,0.24)',
+  },
+
+  historyKicker: {
+    color: COLORS.gold,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+  },
+
+  historyTitle: {
+    marginTop: 10,
+    color: COLORS.text,
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '900',
+  },
+
+  historyText: {
+    marginTop: 10,
+    color: COLORS.muted,
+    fontSize: 15,
+    lineHeight: 24,
+    fontWeight: '700',
+  },
+
+  pressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.99 }],
+  },
+
+  pressedSmall: {
+    opacity: 0.72,
+    transform: [{ scale: 0.97 }],
+  },
+});

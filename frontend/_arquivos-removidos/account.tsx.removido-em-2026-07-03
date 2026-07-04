@@ -1,0 +1,631 @@
+import React from 'react';
+import {
+  Alert,
+  Image,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+
+import { useApp } from '../src/context/AppContext';
+import { supabase } from '../src/lib/supabase';
+
+const ELUS_LOGO = require('../assets/images/elus-logo.png');
+const ELUS_UNVERIFIED = require('../assets/images/elus-unverified.png');
+const ELUS_VERIFIED_GREEN = require('../assets/images/elus-verified-green.png');
+const ELUS_SECURITY_ORANGE = require('../assets/images/elus-symbol-orange.png');
+const ELUS_CENTER_SYMBOL = require('../assets/images/elus-symbol-cyan-purple.png');
+
+const COLORS = {
+  background: '#05070D',
+  panel: '#0B1020',
+  panelSoft: '#10182A',
+  panelDeep: '#080C16',
+  border: 'rgba(255,255,255,0.10)',
+  borderStrong: 'rgba(255,255,255,0.16)',
+  text: '#F5F7FB',
+  muted: '#8D98AA',
+  mutedSoft: '#BAC2D0',
+  blue: '#2D64FF',
+  blueSoft: 'rgba(45,100,255,0.14)',
+  cyan: '#26D9FF',
+  cyanSoft: 'rgba(38,217,255,0.10)',
+  gold: '#F2A93B',
+  goldSoft: 'rgba(242,169,59,0.12)',
+  green: '#31D6A3',
+  greenSoft: 'rgba(49,214,163,0.12)',
+  danger: '#FF6B6B',
+  dangerSoft: 'rgba(255,107,107,0.10)',
+};
+
+function getVerificationData(userVerified: boolean, verificationStatus?: string) {
+  const status = verificationStatus || (userVerified ? 'verified' : 'unverified');
+
+  if (status === 'verified') {
+    return {
+      status,
+      title: 'Perfil verificado',
+      label: 'Identidade aprovada',
+      description:
+        'Sua identidade foi validada. Seu perfil tem acesso completo às funções liberadas pelo seu plano.',
+      color: COLORS.green,
+      backgroundColor: COLORS.greenSoft,
+      borderColor: 'rgba(49,214,163,0.30)',
+      image: ELUS_VERIFIED_GREEN,
+    };
+  }
+
+  if (status === 'in_review') {
+    return {
+      status,
+      title: 'Verificação em análise',
+      label: 'Aguardando aprovação',
+      description:
+        'Sua selfie com documento foi enviada para análise. Até a aprovação, seu perfil continua como não verificado e com uso limitado.',
+      color: COLORS.gold,
+      backgroundColor: COLORS.goldSoft,
+      borderColor: 'rgba(242,169,59,0.30)',
+      image: ELUS_SECURITY_ORANGE,
+    };
+  }
+
+  return {
+    status,
+    title: 'Perfil não verificado',
+    label: 'Identidade pendente',
+    description:
+      'Valide sua identidade para ter acesso completo, solicitar contatos e aparecer com mais confiança dentro do ELUS.',
+    color: COLORS.danger,
+    backgroundColor: COLORS.dangerSoft,
+    borderColor: 'rgba(255,107,107,0.30)',
+    image: ELUS_UNVERIFIED,
+  };
+}
+
+function AccountRow({
+  icon,
+  title,
+  description,
+  onPress,
+  color = COLORS.cyan,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  description: string;
+  onPress: () => void;
+  color?: string;
+}) {
+  return (
+    <Pressable style={({ pressed }) => [styles.accountRow, pressed && styles.pressed]} onPress={onPress}>
+      <View style={[styles.rowIconBox, { borderColor: `${color}55`, backgroundColor: `${color}14` }]}>
+        <Ionicons name={icon} size={20} color={color} />
+      </View>
+
+      <View style={styles.rowTextBox}>
+        <Text style={styles.rowTitle}>{title}</Text>
+        <Text style={styles.rowDescription}>{description}</Text>
+      </View>
+
+      <Ionicons name="chevron-forward" size={20} color={COLORS.muted} />
+    </Pressable>
+  );
+}
+
+export default function AccountScreen() {
+  const router = useRouter();
+  const { user, logout } = useApp();
+
+  const verification = getVerificationData(user.verified, user.verificationStatus);
+
+  const locationText =
+    user.city && user.state ? `${user.city} · ${user.state}` : user.city || user.state || 'Local não informado';
+
+  function goBack() {
+    router.back();
+  }
+
+  function openVerification() {
+    router.push('/verification' as never);
+  }
+
+  function openProfileSetup() {
+    router.push('/profile-setup' as never);
+  }
+
+  function openProfileType() {
+    router.push('/profile-type' as never);
+  }
+
+  function openPlans() {
+    router.push('/plans' as never);
+  }
+
+  function openPrivacy() {
+    router.push('/privacy' as never);
+  }
+
+  async function signOut() {
+    Alert.alert('[DEBUG]', 'signOut() foi chamado');
+    const { error } = await supabase.auth.signOut();
+    console.log('[DEBUG] signOut() error:', error);
+    const { data: sessionCheck } = await supabase.auth.getSession();
+    console.log(
+      '[DEBUG] getSession() logo após signOut():',
+      sessionCheck.session ? 'SESSÃO AINDA PRESENTE' : 'null (ok)'
+    );
+    logout();
+    router.replace('/login' as never);
+  }
+
+  return (
+    <SafeAreaView style={styles.screen}>
+      <StatusBar barStyle="light-content" />
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.topBar}>
+          <Pressable style={styles.backButton} onPress={goBack}>
+            <Ionicons name="chevron-back" size={26} color={COLORS.text} />
+          </Pressable>
+
+          <Image source={ELUS_LOGO} style={styles.topLogo} resizeMode="contain" />
+
+          <View style={styles.backButtonGhost} />
+        </View>
+
+        <View style={styles.hero}>
+          <View style={styles.heroGlowOne} />
+          <View style={styles.heroGlowTwo} />
+
+          <View style={styles.avatarWrap}>
+            {user.photo ? (
+              <Image source={{ uri: user.photo }} style={styles.avatarImage} />
+            ) : (
+              <Image source={ELUS_CENTER_SYMBOL} style={styles.avatarSymbol} resizeMode="contain" />
+            )}
+
+            <View style={[styles.avatarStatus, { borderColor: verification.color }]}>
+              <Image source={verification.image} style={styles.avatarStatusImage} resizeMode="contain" />
+            </View>
+          </View>
+
+          <Text style={styles.heroEyebrow}>Conta ELUS</Text>
+          <Text style={styles.heroTitle}>{user.name || 'Seu perfil'}</Text>
+          <Text style={styles.heroDescription}>{user.email || 'E-mail não informado'}</Text>
+          <Text style={styles.heroLocation}>{locationText}</Text>
+        </View>
+
+        <View
+          style={[
+            styles.verificationCard,
+            {
+              backgroundColor: verification.backgroundColor,
+              borderColor: verification.borderColor,
+            },
+          ]}
+        >
+          <View style={styles.verificationTop}>
+            <View style={[styles.verificationIconBox, { borderColor: `${verification.color}55` }]}>
+              <Image source={verification.image} style={styles.verificationIcon} resizeMode="contain" />
+            </View>
+
+            <View style={styles.verificationTextBox}>
+              <Text style={[styles.verificationLabel, { color: verification.color }]}>
+                {verification.label}
+              </Text>
+              <Text style={styles.verificationTitle}>{verification.title}</Text>
+            </View>
+          </View>
+
+          <Text style={styles.verificationDescription}>{verification.description}</Text>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.verificationButton,
+              { backgroundColor: verification.status === 'verified' ? COLORS.green : COLORS.blue },
+              pressed && styles.pressed,
+            ]}
+            onPress={openVerification}
+          >
+            <Text style={styles.verificationButtonText}>
+              {verification.status === 'verified'
+                ? 'Ver status de identidade'
+                : verification.status === 'in_review'
+                ? 'Acompanhar verificação'
+                : 'Validar identidade'}
+            </Text>
+
+            <Ionicons name="arrow-forward" size={20} color={COLORS.text} />
+          </Pressable>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionEyebrow}>Perfil</Text>
+
+          <AccountRow
+            icon="person-circle-outline"
+            title="Meu perfil"
+            description="Visualize e organize as informações principais da sua presença."
+            onPress={openProfileSetup}
+            color={COLORS.cyan}
+          />
+
+          <AccountRow
+            icon="create-outline"
+            title="Editar perfil"
+            description="Atualize nome, foto, cidade, interesses, preferências e dados públicos."
+            onPress={openProfileSetup}
+            color={COLORS.blue}
+          />
+
+          <AccountRow
+            icon="git-branch-outline"
+            title="Tipo de perfil"
+            description="Configure se o perfil é pessoa, empresa ou perfil assistido."
+            onPress={openProfileType}
+            color={COLORS.gold}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionEyebrow}>Segurança e acesso</Text>
+
+          <AccountRow
+            icon="shield-checkmark-outline"
+            title="Verificação de identidade"
+            description="Documento oficial, selfie e status de aprovação do perfil."
+            onPress={openVerification}
+            color={COLORS.gold}
+          />
+
+          <AccountRow
+            icon="lock-closed-outline"
+            title="Privacidade"
+            description="Entenda como dados, contatos e documentos devem ser protegidos."
+            onPress={openPrivacy}
+            color={COLORS.green}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionEyebrow}>Plano e configurações</Text>
+
+          <AccountRow
+            icon="diamond-outline"
+            title="Plano ELUS"
+            description="Veja plano atual, benefícios e opções premium."
+            onPress={openPlans}
+            color={COLORS.gold}
+          />
+
+          <Pressable style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]} onPress={signOut}>
+            <Ionicons name="log-out-outline" size={21} color={COLORS.danger} />
+            <Text style={styles.logoutText}>Sair da conta</Text>
+          </Pressable>
+        </View>
+
+        <Text style={styles.footer}>ELUS · Identidade real · Conexões reais · Segurança real.</Text>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+
+  scroll: {
+    flex: 1,
+  },
+
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 34,
+  },
+
+  topBar: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+
+  backButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  backButtonGhost: {
+    width: 46,
+    height: 46,
+  },
+
+  topLogo: {
+    width: 82,
+    height: 30,
+    opacity: 0.94,
+  },
+
+  hero: {
+    borderRadius: 32,
+    backgroundColor: COLORS.panelDeep,
+    borderWidth: 1,
+    borderColor: COLORS.borderStrong,
+    padding: 22,
+    alignItems: 'center',
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+
+  heroGlowOne: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: COLORS.cyanSoft,
+    top: -120,
+    right: -80,
+  },
+
+  heroGlowTwo: {
+    position: 'absolute',
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: 'rgba(139,92,255,0.10)',
+    bottom: -150,
+    left: -100,
+  },
+
+  avatarWrap: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: COLORS.panelSoft,
+    borderWidth: 2,
+    borderColor: COLORS.borderStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+
+  avatarImage: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+  },
+
+  avatarSymbol: {
+    width: 58,
+    height: 58,
+  },
+
+  avatarStatus: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#05070D',
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  avatarStatusImage: {
+    width: 22,
+    height: 22,
+  },
+
+  heroEyebrow: {
+    color: COLORS.cyan,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+
+  heroTitle: {
+    color: COLORS.text,
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+
+  heroDescription: {
+    color: COLORS.mutedSoft,
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: 'center',
+  },
+
+  heroLocation: {
+    color: COLORS.muted,
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+    marginTop: 4,
+    fontWeight: '700',
+  },
+
+  verificationCard: {
+    borderRadius: 28,
+    borderWidth: 1,
+    padding: 18,
+    marginBottom: 18,
+  },
+
+  verificationTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+
+  verificationIconBox: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: 'rgba(0,0,0,0.22)',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+
+  verificationIcon: {
+    width: 34,
+    height: 34,
+  },
+
+  verificationTextBox: {
+    flex: 1,
+  },
+
+  verificationLabel: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 2.1,
+    textTransform: 'uppercase',
+    marginBottom: 5,
+  },
+
+  verificationTitle: {
+    color: COLORS.text,
+    fontSize: 22,
+    lineHeight: 27,
+    fontWeight: '900',
+  },
+
+  verificationDescription: {
+    color: COLORS.mutedSoft,
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+
+  verificationButton: {
+    minHeight: 54,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+
+  verificationButtonText: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: '900',
+    marginRight: 8,
+  },
+
+  section: {
+    marginBottom: 20,
+  },
+
+  sectionEyebrow: {
+    color: COLORS.gold,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 2.6,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+
+  accountRow: {
+    minHeight: 82,
+    borderRadius: 24,
+    backgroundColor: COLORS.panel,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: 15,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+
+  rowIconBox: {
+    width: 46,
+    height: 46,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 13,
+  },
+
+  rowTextBox: {
+    flex: 1,
+  },
+
+  rowTitle: {
+    color: COLORS.text,
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+
+  rowDescription: {
+    color: COLORS.muted,
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '700',
+  },
+
+  logoutButton: {
+    minHeight: 58,
+    borderRadius: 24,
+    backgroundColor: COLORS.dangerSoft,
+    borderWidth: 1,
+    borderColor: 'rgba(255,107,107,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+
+  logoutText: {
+    color: COLORS.danger,
+    fontSize: 16,
+    fontWeight: '900',
+    marginLeft: 8,
+  },
+
+  footer: {
+    color: COLORS.muted,
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+
+  pressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.99 }],
+  },
+});

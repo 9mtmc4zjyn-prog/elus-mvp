@@ -1,0 +1,239 @@
+﻿import React, { useEffect } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Stack, usePathname, useRouter, useSegments } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
+
+import { AppProvider, useApp } from '../src/context/AppContext';
+import { supabase } from '../src/lib/supabase';
+
+const COLORS = {
+  background: '#03050A',
+  gold: '#D9B46A',
+  goldDark: '#8A6A2D',
+  text: '#FFFFFF',
+  buttonText: '#1A1200',
+};
+
+function normalizePathname(pathname: string) {
+  if (!pathname) {
+    return '';
+  }
+
+  const withoutQuery = pathname.split('?')[0] || pathname;
+  const normalized = withoutQuery.replace(/\/+$/, '');
+
+  return normalized || '/';
+}
+
+function isPlansRoute(pathname: string) {
+  const path = normalizePathname(pathname);
+
+  return path === '/plans' || path.startsWith('/plans/');
+}
+
+function isPreAppRoute(pathname: string, segments: readonly string[]) {
+  const path = normalizePathname(pathname);
+
+  if (!path || path === '/index') {
+    return true;
+  }
+
+  if (path === '/' && segments[0] !== '(tabs)') {
+    return true;
+  }
+
+  return (
+    path === '/login' ||
+    path === '/signup' ||
+    path === '/onboarding' ||
+    path === '/profile-type' ||
+    path === '/profile-setup' ||
+    path === '/verification'
+  );
+}
+
+function isRestrictedProfileRoute(pathname: string) {
+  const path = normalizePathname(pathname);
+
+  return path.startsWith('/profile/') && path !== '/profile';
+}
+
+function isOwnProfileRoute(pathname: string, segments: readonly string[]) {
+  const path = normalizePathname(pathname);
+
+  if (path === '/profile' || path === '/(tabs)/profile') {
+    return true;
+  }
+
+  return segments[0] === '(tabs)' && segments[1] === 'profile';
+}
+
+function shouldShowGlobalPlansButton({
+  pathname,
+  segments,
+  profileCompleted,
+}: {
+  pathname: string;
+  segments: readonly string[];
+  profileCompleted?: boolean;
+}) {
+  if (isPlansRoute(pathname)) {
+    return false;
+  }
+
+  if (isPreAppRoute(pathname, segments)) {
+    return false;
+  }
+
+  if (isRestrictedProfileRoute(pathname)) {
+    return false;
+  }
+
+  if (profileCompleted !== true) {
+    return false;
+  }
+
+  return true;
+}
+
+function GlobalPlansButton() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const segments = useSegments();
+  const app = useApp();
+
+  const shouldShow = shouldShowGlobalPlansButton({
+    pathname,
+    segments,
+    profileCompleted: app.user?.profileCompleted,
+  });
+
+  if (!shouldShow) {
+    return null;
+  }
+
+  const ownProfileRoute = isOwnProfileRoute(pathname, segments);
+
+  function openPlans() {
+    router.push('/plans' as never);
+  }
+
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.globalPlansButton,
+        ownProfileRoute && styles.globalPlansButtonOnProfile,
+        pressed && styles.globalPlansButtonPressed,
+      ]}
+      onPress={openPlans}
+    >
+      <Ionicons name="diamond" size={15} color={COLORS.buttonText} />
+      <Text style={styles.globalPlansButtonText}>Planos</Text>
+    </Pressable>
+  );
+}
+
+function AppShell() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const segments = useSegments();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const hasSession = !!data.session;
+      const onProtectedRoute = !isPreAppRoute(pathname, segments);
+      if (!hasSession && onProtectedRoute) {
+        router.replace('/login');
+      }
+    });
+  }, [pathname]);
+
+  return (
+    <View style={styles.appShell}>
+      <StatusBar style="light" />
+
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: {
+            backgroundColor: COLORS.background,
+          },
+        }}
+      />
+
+      <View pointerEvents="none" style={styles.statusBarShield} />
+
+      <GlobalPlansButton />
+    </View>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={styles.root}>
+      <AppProvider>
+        <AppShell />
+      </AppProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+
+  appShell: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+
+  statusBarShield: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 50,
+    zIndex: 998,
+    backgroundColor: COLORS.background,
+  },
+
+  globalPlansButton: {
+    position: 'absolute',
+    top: 52,
+    right: 18,
+    zIndex: 999,
+    minHeight: 42,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: COLORS.gold,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.gold,
+    shadowOpacity: 0.36,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
+  },
+
+  globalPlansButtonOnProfile: {
+    right: 78,
+  },
+
+  globalPlansButtonPressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.98 }],
+  },
+
+  globalPlansButtonText: {
+    marginLeft: 6,
+    color: COLORS.buttonText,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+});
