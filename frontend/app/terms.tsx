@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Button } from '../src/components/Button';
 
 const COLORS = {
   background: '#0B101A',
@@ -222,12 +223,7 @@ export default function TermsScreen() {
           ELUS · Conexões que importam.
         </Text>
 
-        <Pressable
-          style={({ pressed }) => [styles.acceptButton, pressed && styles.pressed]}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.acceptButtonText}>Li e aceito ✓</Text>
-        </Pressable>
+        <Button label="Li e aceito ✓" variant="primary" onPress={() => router.back()} />
 
         <View style={styles.bottomSpace} />
       </ScrollView>
@@ -309,18 +305,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 24,
   },
-  acceptButton: {
-    minHeight: 58,
-    borderRadius: 26,
-    backgroundColor: COLORS.blue,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: COLORS.blue,
-    shadowOpacity: 0.40,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  acceptButtonText: { color: COLORS.text, fontSize: 18, fontWeight: '900' },
   bottomSpace: { height: 40 },
   pressed: { opacity: 0.75 },
 });

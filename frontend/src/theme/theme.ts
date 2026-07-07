@@ -44,6 +44,12 @@ export interface ThemeColors {
   success: string;
   warning: string;
   danger: string;
+
+  disabledBackground: string;
+  disabledText: string;
+
+  chipHighlightBorder: string;
+  chipHighlightBackground: string;
 }
 
 const hybrid: ThemeColors = {
@@ -71,6 +77,12 @@ const hybrid: ThemeColors = {
   success: '#4A9A65',
   warning: '#C49A45',
   danger: '#B85C5C',
+
+  disabledBackground: 'rgba(255,255,255,0.13)',
+  disabledText: 'rgba(255,255,255,0.42)',
+
+  chipHighlightBorder: 'rgba(38,217,255,0.42)',
+  chipHighlightBackground: 'rgba(38,217,255,0.10)',
 };
 
 const monoDark: ThemeColors = {
@@ -98,6 +110,12 @@ const monoDark: ThemeColors = {
   success: '#FFFFFF',
   warning: '#BFBFBF',
   danger: '#8A8A8A',
+
+  disabledBackground: 'rgba(255,255,255,0.16)',
+  disabledText: 'rgba(255,255,255,0.45)',
+
+  chipHighlightBorder: 'rgba(255,255,255,0.42)',
+  chipHighlightBackground: 'rgba(255,255,255,0.10)',
 };
 
 const monoLight: ThemeColors = {
@@ -125,6 +143,12 @@ const monoLight: ThemeColors = {
   success: '#1A1A1A',
   warning: '#4A4A4A',
   danger: '#6E6E6E',
+
+  disabledBackground: 'rgba(0,0,0,0.13)',
+  disabledText: 'rgba(0,0,0,0.42)',
+
+  chipHighlightBorder: 'rgba(0,0,0,0.42)',
+  chipHighlightBackground: 'rgba(0,0,0,0.10)',
 };
 
 export const THEMES: Record<ThemeMode, ThemeColors> = {

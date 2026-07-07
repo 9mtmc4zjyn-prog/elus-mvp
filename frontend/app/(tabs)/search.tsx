@@ -18,6 +18,7 @@ import { useApp, type AppUser } from "../../src/context/AppContext";
 import { appUserToProfile } from "../../src/utils/adaptSupabaseProfile";
 import type { Profile } from "../../src/data/profiles";
 import { getLocalAffinityExplanation } from "../../src/utils/elusIntelligenceRules";
+import { Chip } from "../../src/components/Chip";
 
 const ELUS_LOGO = require("../../assets/images/elus-logo.png");
 const ELUS_UNVERIFIED_RED = require("../../assets/images/elus-unverified-red.png");
@@ -1232,25 +1233,14 @@ export default function SearchScreen() {
         />
 
         <View style={styles.filters}>
-          {FILTERS.map((filter) => {
-            const active = activeFilter === filter;
-
-            return (
-              <Pressable
-                key={filter}
-                onPress={() => setActiveFilter(filter)}
-                style={({ pressed }) => [
-                  styles.filterButton,
-                  active ? styles.filterButtonOn : null,
-                  pressed ? styles.pressed : null,
-                ]}
-              >
-                <Text style={[styles.filterText, active ? styles.filterTextOn : null]}>
-                  {filter}
-                </Text>
-              </Pressable>
-            );
-          })}
+          {FILTERS.map((filter) => (
+            <Chip
+              key={filter}
+              label={filter}
+              selected={activeFilter === filter}
+              onPress={() => setActiveFilter(filter)}
+            />
+          ))}
         </View>
 
         {profilesError ? (
@@ -1406,32 +1396,6 @@ const styles = StyleSheet.create({
     rowGap: 9,
     marginTop: 2,
     marginBottom: 22,
-  },
-
-  filterButton: {
-    minHeight: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.darkButton,
-    paddingHorizontal: 13,
-    paddingVertical: 9,
-  },
-
-  filterButtonOn: {
-    borderColor: "rgba(38,217,255,0.42)",
-    backgroundColor: "rgba(38,217,255,0.10)",
-  },
-
-  filterText: {
-    color: COLORS.muted2,
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: "800",
-  },
-
-  filterTextOn: {
-    color: COLORS.cyan,
   },
 
   resultHeader: {
