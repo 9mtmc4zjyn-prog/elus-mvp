@@ -19,37 +19,37 @@ type PrivacyItem = {
 };
 
 const COLORS = {
-  background: '#0B101A',
-  surface: '#141A26',
-  surfaceSoft: '#1C2433',
-  surfaceDeep: '#080D16',
+  background: '#05070D',
+  surface: '#0B1020',
+  surfaceSoft: '#10182A',
+  surfaceDeep: '#080C16',
 
-  text: '#EDEDED',
-  textStrong: '#EDEDED',
-  textMuted: '#A1A9B8',
-  textSoft: '#6B7280',
+  text: '#F5F7FB',
+  textStrong: '#FFFFFF',
+  textMuted: '#BAC2D0',
+  textSoft: '#8D98AA',
 
   border: 'rgba(255,255,255,0.10)',
   borderStrong: 'rgba(255,255,255,0.16)',
 
-  cyan: '#5E9EAB',
-  cyanSoft: 'rgba(94,158,171,0.15)',
-  cyanBorder: 'rgba(94,158,171,0.28)',
+  cyan: '#26D9FF',
+  cyanSoft: 'rgba(38,217,255,0.10)',
+  cyanBorder: 'rgba(38,217,255,0.28)',
 
-  gold: '#C49A45',
-  goldSoft: 'rgba(196,154,69,0.12)',
-  goldBorder: 'rgba(196,154,69,0.30)',
+  gold: '#F2A93B',
+  goldSoft: 'rgba(242,169,59,0.12)',
+  goldBorder: 'rgba(242,169,59,0.30)',
 
-  blueLight: '#8FA3B8',
-  blueLightSoft: 'rgba(143,163,184,0.14)',
-  blueLightBorder: 'rgba(143,163,184,0.34)',
+  blueLight: '#9DBBFF',
+  blueLightSoft: 'rgba(157,187,255,0.12)',
+  blueLightBorder: 'rgba(157,187,255,0.34)',
 
-  green: '#4A9A65',
-  greenSoft: 'rgba(74,154,101,0.12)',
-  greenBorder: 'rgba(74,154,101,0.28)',
+  green: '#31D6A3',
+  greenSoft: 'rgba(49,214,163,0.12)',
+  greenBorder: 'rgba(49,214,163,0.28)',
 
-  danger: '#B85C5C',
-  white: '#EDEDED',
+  danger: '#EF4444',
+  white: '#FFFFFF',
 };
 
 const privacyItems: PrivacyItem[] = [

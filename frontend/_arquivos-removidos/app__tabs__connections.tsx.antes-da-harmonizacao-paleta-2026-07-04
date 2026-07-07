@@ -20,19 +20,19 @@ const ELUS_UNVERIFIED_RED = require('../../assets/images/elus-unverified-red.png
 const ELUS_VERIFIED_GREEN = require('../../assets/images/elus-verified-green.png');
 
 const COLORS = {
-  background: '#0B101A',
-  card: 'rgba(20,26,38,0.94)',
-  cardSoft: 'rgba(255,255,255,0.045)',
+  background: '#03040A',
+  card: 'rgba(12,15,27,0.94)',
+  cardSoft: 'rgba(255,255,255,0.055)',
   border: 'rgba(255,255,255,0.12)',
-  text: '#EDEDED',
-  muted: 'rgba(161,169,184,0.78)',
-  soft: 'rgba(161,169,184,0.55)',
-  blue: '#5E9EAB',
-  blueLight: '#8FA3B8',
-  cyan: '#5E9EAB',
-  gold: '#C49A45',
-  green: '#4A9A65',
-  danger: '#B85C5C',
+  text: '#FFFFFF',
+  muted: 'rgba(255,255,255,0.68)',
+  soft: 'rgba(255,255,255,0.44)',
+  blue: '#2D64FF',
+  blueLight: '#9DBBFF',
+  cyan: '#22D3EE',
+  gold: '#D9B46A',
+  green: '#36D399',
+  danger: '#FF6B6B',
 };
 
 type VerificationPhase = 'verified' | 'in_review' | 'unverified';

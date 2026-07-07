@@ -10,10 +10,10 @@ import { supabase } from '../src/lib/supabase';
 import { ThemeProvider } from '../src/theme/ThemeContext';
 
 const COLORS = {
-  background: '#0B101A',
-  gold: '#C49A45',
-  goldDark: '#8A6E35',
-  text: '#EDEDED',
+  background: '#03050A',
+  gold: '#D9B46A',
+  goldDark: '#8A6A2D',
+  text: '#FFFFFF',
   buttonText: '#1A1200',
 };
 

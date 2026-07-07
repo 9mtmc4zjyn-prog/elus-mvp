@@ -20,19 +20,19 @@ import { supabase } from '../../src/lib/supabase';
 const WATERMARK = require('../../assets/watermark/elus_symbol_watermark_10.png');
 
 const COLORS = {
-  background: '#0B101A',
-  card: 'rgba(20,26,38,0.94)',
+  background: '#03040A',
+  card: 'rgba(12,15,27,0.94)',
   cardSoft: 'rgba(255,255,255,0.045)',
   border: 'rgba(255,255,255,0.12)',
   borderSoft: 'rgba(255,255,255,0.075)',
-  text: '#EDEDED',
-  muted: 'rgba(161,169,184,0.78)',
-  soft: 'rgba(161,169,184,0.55)',
-  blue: '#5E9EAB',
-  blueLight: '#8FA3B8',
-  gold: '#C49A45',
-  green: '#4A9A65',
-  danger: '#B85C5C',
+  text: '#FFFFFF',
+  muted: 'rgba(255,255,255,0.68)',
+  soft: 'rgba(255,255,255,0.44)',
+  blue: '#2D64FF',
+  blueLight: '#8FB3FF',
+  gold: '#D9B46A',
+  green: '#36D399',
+  danger: '#FF6B6B',
 };
 
 const NO_CONNECTION_RING_COLORS = ['transparent'];
@@ -239,7 +239,7 @@ export default function ProfileScreen() {
 
       await supabase
         .from('profiles')
-        .update({ photo_url: publicUrl })
+        .update({ avatar_url: publicUrl })
         .eq('id', user.id);
 
       updateUser({ photo: publicUrl });

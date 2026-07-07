@@ -1233,7 +1233,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     supabase
       .from('contact_requests')
-      .update({ status: 'accepted', shared_fields: normalizedApprovedMethodIds })
+      .update({ status: 'accepted', approved_method_ids: normalizedApprovedMethodIds })
       .eq('id', requestId)
       .then(() => {});
   }

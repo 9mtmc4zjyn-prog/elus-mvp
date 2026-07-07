@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
@@ -25,32 +25,35 @@ const GOLD_SYMBOL = require('../assets/images/elus-symbol-orange.png');
 
 type DocumentType = 'CIN/RG' | 'CNH' | 'Passaporte' | 'CRNM/RNE';
 type VerificationStatus = 'unverified' | 'pending' | 'in_review' | 'verified';
+type VerificationStep = 'document' | 'selfie' | 'selfie_with_document';
 
 const DOCUMENT_TYPES: DocumentType[] = ['CIN/RG', 'CNH', 'Passaporte', 'CRNM/RNE'];
 
+const STEP_ORDER: VerificationStep[] = ['document', 'selfie', 'selfie_with_document'];
+
 const COLORS = {
-  background: '#03040A',
-  card: 'rgba(12,15,27,0.94)',
-  input: 'rgba(3,4,10,0.86)',
-  infoCard: 'rgba(45,100,255,0.10)',
-  warningCard: 'rgba(255,107,107,0.10)',
-  reviewCard: 'rgba(143,179,255,0.10)',
-  verifiedCard: 'rgba(54,211,153,0.10)',
-  goldCard: 'rgba(217,180,106,0.10)',
+  background: '#0B101A',
+  card: 'rgba(20,26,38,0.94)',
+  input: 'rgba(11,16,26,0.86)',
+  infoCard: 'rgba(94,158,171,0.12)',
+  warningCard: 'rgba(184,92,92,0.10)',
+  reviewCard: 'rgba(143,163,184,0.12)',
+  verifiedCard: 'rgba(74,154,101,0.12)',
+  goldCard: 'rgba(196,154,69,0.12)',
   border: 'rgba(255,255,255,0.12)',
-  borderBlue: 'rgba(45,125,255,0.34)',
-  borderReview: 'rgba(143,179,255,0.34)',
-  borderGold: 'rgba(217,180,106,0.30)',
-  borderDanger: 'rgba(255,107,107,0.30)',
-  borderGreen: 'rgba(54,211,153,0.34)',
-  text: '#FFFFFF',
-  muted: 'rgba(255,255,255,0.68)',
-  soft: 'rgba(255,255,255,0.44)',
-  blue: '#2D64FF',
-  blueLight: '#8FB3FF',
-  gold: '#D9B46A',
-  green: '#36D399',
-  danger: '#FF6B6B',
+  borderBlue: 'rgba(94,158,171,0.34)',
+  borderReview: 'rgba(143,163,184,0.34)',
+  borderGold: 'rgba(196,154,69,0.30)',
+  borderDanger: 'rgba(184,92,92,0.30)',
+  borderGreen: 'rgba(74,154,101,0.34)',
+  text: '#EDEDED',
+  muted: 'rgba(161,169,184,0.78)',
+  soft: 'rgba(161,169,184,0.55)',
+  blue: '#5E9EAB',
+  blueLight: '#8FA3B8',
+  gold: '#C49A45',
+  green: '#4A9A65',
+  danger: '#B85C5C',
 };
 
 function isAwaitingVerification(status?: string) {
@@ -83,29 +86,84 @@ export default function VerificationScreen() {
   const router = useRouter();
   const { submitIdentityVerification } = useApp();
 
+  const [currentStep, setCurrentStep] = useState<VerificationStep>('document');
+  const [checkingStatus, setCheckingStatus] = useState(true);
+
   const [selectedDocument, setSelectedDocument] = useState<DocumentType>('CIN/RG');
+  const [documentPhotoUri, setDocumentPhotoUri] = useState<string | null>(null);
   const [selfiePhotoUri, setSelfiePhotoUri] = useState<string | null>(null);
+  const [selfieWithDocumentPhotoUri, setSelfieWithDocumentPhotoUri] = useState<string | null>(null);
+
+  const [documentSent, setDocumentSent] = useState(false);
   const [selfieSent, setSelfieSent] = useState(false);
+  const [selfieWithDocumentSent, setSelfieWithDocumentSent] = useState(false);
+
   const [confirmed, setConfirmed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('unverified');
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadExistingVerification() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data } = await supabase
+          .from('verifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_current', true)
+          .maybeSingle();
+
+        if (!active || !data) return;
+
+        if (data.document_type) setSelectedDocument(data.document_type as DocumentType);
+        if (data.status) setVerificationStatus(data.status as VerificationStatus);
+
+        const hasDocument = Boolean(data.document_storage_path);
+        const hasSelfie = Boolean(data.selfie_storage_path);
+        const hasSelfieWithDocument = Boolean(data.selfie_with_document_storage_path);
+
+        setDocumentSent(hasDocument);
+        setSelfieSent(hasSelfie);
+        setSelfieWithDocumentSent(hasSelfieWithDocument);
+
+        if (!hasDocument) setCurrentStep('document');
+        else if (!hasSelfie) setCurrentStep('selfie');
+        else setCurrentStep('selfie_with_document');
+      } catch {
+        // Mantém estado local (etapa 1) se a busca falhar.
+      } finally {
+        if (active) setCheckingStatus(false);
+      }
+    }
+
+    loadExistingVerification();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const isVerified = verificationStatus === 'verified';
   const isAwaiting = isAwaitingVerification(verificationStatus);
   const isLocked = isVerified || isAwaiting;
   const verificationColor = getVerificationColor(verificationStatus);
-  const canContinue = isVerified || isAwaiting || (selfieSent && confirmed);
+  const canContinue = isVerified || isAwaiting || (selfieWithDocumentSent && confirmed);
   const confirmationChecked = isAwaiting || confirmed;
+  const stepIndex = STEP_ORDER.indexOf(currentStep);
 
   const selfieButtonText = isAwaiting
     ? 'Selfie enviada para análise ✓'
-    : !selfiePhotoUri
+    : !selfieWithDocumentPhotoUri
       ? 'Abrir câmera e tirar selfie'
       : 'Confirmar envio para análise';
 
   const selfieText = isAwaiting
     ? 'Selfie enviada para análise. Até a aprovação final, este perfil continua não verificado e com uso limitado.'
-    : !selfiePhotoUri
+    : !selfieWithDocumentPhotoUri
       ? 'Tire uma foto do seu rosto segurando o documento escolhido.'
       : 'Confira a foto capturada. Se estiver boa, confirme o envio para análise.';
 
@@ -124,11 +182,107 @@ export default function VerificationScreen() {
   }
 
   function selectDocument(document: DocumentType) {
-    if (isLocked) return;
+    if (isLocked || documentSent) return;
     setSelectedDocument(document);
-    setSelfiePhotoUri(null);
-    setSelfieSent(false);
-    setConfirmed(false);
+    setDocumentPhotoUri(null);
+  }
+
+  async function uploadVerificationFile(fileUri: string, fileLabel: 'documento' | 'selfie' | 'selfie_documento') {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      Alert.alert('Sessão expirada', 'Faça login novamente para continuar.');
+      router.replace('/login' as never);
+      return null;
+    }
+
+    const timestamp = Date.now();
+    const storagePath = `verification/${user.id}/${fileLabel}_${timestamp}.jpg`;
+
+    const response = await fetch(fileUri);
+    const blob = await response.blob();
+
+    const { error: uploadError } = await supabase.storage
+      .from('verification-files')
+      .upload(storagePath, blob, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error('Supabase storage error:', JSON.stringify(uploadError, null, 2));
+      Alert.alert(
+        'Erro no upload',
+        uploadError?.message || (uploadError as any)?.error_description || 'Erro desconhecido. Verifique sua conexão.',
+        [{ text: 'OK' }]
+      );
+      return null;
+    }
+
+    return { userId: user.id, storagePath };
+  }
+
+  async function pickDocumentFromCamera() {
+    if (isLocked || documentSent) return;
+
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert('Permissão de câmera necessária', 'Para validar o perfil, permita o acesso à câmera do celular.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: false,
+        quality: 0.75,
+      });
+
+      if (result.canceled) return;
+
+      const capturedUri = result.assets?.[0]?.uri;
+
+      if (!capturedUri) {
+        Alert.alert('Foto não capturada', 'Não foi possível capturar a foto do documento. Tente novamente.');
+        return;
+      }
+
+      setDocumentPhotoUri(capturedUri);
+    } catch {
+      Alert.alert('Não foi possível abrir a câmera', 'Verifique as permissões do celular e tente novamente.');
+    }
+  }
+
+  async function pickDocumentFromGallery() {
+    if (isLocked || documentSent) return;
+
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert('Permissão de galeria necessária', 'Para validar o perfil, permita o acesso às fotos do celular.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: false,
+        quality: 0.75,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      });
+
+      if (result.canceled) return;
+
+      const pickedUri = result.assets?.[0]?.uri;
+
+      if (!pickedUri) {
+        Alert.alert('Foto não selecionada', 'Não foi possível selecionar a foto do documento. Tente novamente.');
+        return;
+      }
+
+      setDocumentPhotoUri(pickedUri);
+    } catch {
+      Alert.alert('Não foi possível abrir a galeria', 'Verifique as permissões do celular e tente novamente.');
+    }
   }
 
   async function takeSelfie() {
@@ -158,73 +312,158 @@ export default function VerificationScreen() {
       }
 
       setSelfiePhotoUri(capturedUri);
-      setSelfieSent(false);
-      setConfirmed(false);
     } catch {
       Alert.alert('Não foi possível abrir a câmera', 'Verifique as permissões do celular e tente novamente.');
     }
   }
 
+  async function takeSelfieWithDocument() {
+    if (isLocked) return;
+
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert('Permissão de câmera necessária', 'Para validar o perfil, permita o acesso à câmera do celular.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: false,
+        quality: 0.75,
+        cameraType: ImagePicker.CameraType.front,
+      });
+
+      if (result.canceled) return;
+
+      const capturedUri = result.assets?.[0]?.uri;
+
+      if (!capturedUri) {
+        Alert.alert('Foto não capturada', 'Não foi possível capturar a selfie. Tente novamente.');
+        return;
+      }
+
+      setSelfieWithDocumentPhotoUri(capturedUri);
+    } catch {
+      Alert.alert('Não foi possível abrir a câmera', 'Verifique as permissões do celular e tente novamente.');
+    }
+  }
+
+  function retakeDocumentPhoto() {
+    if (isLocked || documentSent) return;
+    setDocumentPhotoUri(null);
+  }
+
   function retakeSelfie() {
     if (isLocked) return;
     setSelfiePhotoUri(null);
-    setSelfieSent(false);
-    setConfirmed(false);
   }
 
-  async function confirmSelfieSend() {
-    if (!selfiePhotoUri) {
-      Alert.alert('Selfie necessária', 'Tire uma selfie segurando o documento antes de enviar.');
+  function retakeSelfieWithDocument() {
+    if (isLocked) return;
+    setSelfieWithDocumentPhotoUri(null);
+  }
+
+  async function confirmDocumentSend() {
+    if (!documentPhotoUri) {
+      Alert.alert('Foto necessária', 'Tire ou selecione uma foto do documento antes de enviar.');
       return;
     }
 
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const uploadResult = await uploadVerificationFile(documentPhotoUri, 'documento');
+      if (!uploadResult) return;
 
-      if (!user) {
-        Alert.alert('Sessão expirada', 'Faça login novamente para continuar.');
-        router.replace('/login' as never);
-        return;
-      }
-
-      const timestamp = Date.now();
-      const storagePath = `verification/${user.id}/selfie_${timestamp}.jpg`;
-
-      const response = await fetch(selfiePhotoUri);
-      const blob = await response.blob();
-
-      const { error: uploadError } = await supabase.storage
-        .from('verification-files')
-        .upload(storagePath, blob, {
-          contentType: 'image/jpeg',
-          upsert: true,
-        });
-
-      if (uploadError) {
-        console.error('Supabase storage error:', JSON.stringify(uploadError, null, 2));
-        Alert.alert(
-          'Erro no upload',
-          uploadError?.message || (uploadError as any)?.error_description || 'Erro desconhecido. Verifique sua conexão.',
-          [{ text: 'OK' }]
+      const { error: dbError } = await supabase
+        .from('verifications')
+        .upsert(
+          {
+            user_id: uploadResult.userId,
+            document_type: selectedDocument,
+            document_storage_path: uploadResult.storagePath,
+          },
+          { onConflict: 'user_id' }
         );
+
+      if (dbError) {
+        console.error('DB Error:', JSON.stringify(dbError, null, 2));
+        Alert.alert('Erro', dbError.message || JSON.stringify(dbError));
         return;
       }
+
+      setDocumentSent(true);
+      setCurrentStep('selfie');
+    } catch {
+      Alert.alert('Erro inesperado', 'Tente novamente em instantes.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function confirmSelfieSend() {
+    if (!selfiePhotoUri) {
+      Alert.alert('Selfie necessária', 'Tire uma selfie antes de enviar.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const uploadResult = await uploadVerificationFile(selfiePhotoUri, 'selfie');
+      if (!uploadResult) return;
+
+      const { error: dbError } = await supabase
+        .from('verifications')
+        .upsert(
+          {
+            user_id: uploadResult.userId,
+            selfie_storage_path: uploadResult.storagePath,
+          },
+          { onConflict: 'user_id' }
+        );
+
+      if (dbError) {
+        console.error('DB Error:', JSON.stringify(dbError, null, 2));
+        Alert.alert('Erro', dbError.message || JSON.stringify(dbError));
+        return;
+      }
+
+      setSelfieSent(true);
+      setCurrentStep('selfie_with_document');
+    } catch {
+      Alert.alert('Erro inesperado', 'Tente novamente em instantes.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function confirmSelfieWithDocumentSend() {
+    if (!selfieWithDocumentPhotoUri) {
+      Alert.alert('Selfie necessária', 'Tire a selfie segurando o documento antes de enviar.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const uploadResult = await uploadVerificationFile(selfieWithDocumentPhotoUri, 'selfie_documento');
+      if (!uploadResult) return;
 
       const now = new Date().toISOString();
 
       const { error: dbError } = await supabase
         .from('verifications')
-        .upsert({
-          user_id: user.id,
-          document_type: selectedDocument,
-          selfie_storage_path: storagePath,
-          is_current: true,
-          status: 'pending',
-          created_at: now,
-          submitted_at: now,
-        }, { onConflict: 'user_id' });
+        .upsert(
+          {
+            user_id: uploadResult.userId,
+            selfie_with_document_storage_path: uploadResult.storagePath,
+            status: 'pending',
+            submitted_at: now,
+          },
+          { onConflict: 'user_id' }
+        );
 
       if (dbError) {
         console.error('DB Error:', JSON.stringify(dbError, null, 2));
@@ -234,10 +473,10 @@ export default function VerificationScreen() {
 
       submitIdentityVerification({
         documentType: selectedDocument,
-        selfieUri: selfiePhotoUri,
+        selfieUri: selfieWithDocumentPhotoUri,
       });
 
-      setSelfieSent(true);
+      setSelfieWithDocumentSent(true);
       setConfirmed(true);
       setVerificationStatus('in_review');
 
@@ -307,17 +546,6 @@ export default function VerificationScreen() {
     }
   }
 
-  function handleSelfieButtonPress() {
-    if (isLocked) return;
-    if (!selfiePhotoUri) {
-      takeSelfie();
-      return;
-    }
-    if (!selfieSent) {
-      confirmSelfieSend();
-    }
-  }
-
   const statusTitle = getVerificationTitle(verificationStatus);
   const statusText = getVerificationDescription(verificationStatus);
 
@@ -350,161 +578,323 @@ export default function VerificationScreen() {
           </View>
 
           <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={[styles.cardSymbol, { borderColor: `${verificationColor}55` }]}>
-                <Image source={SYMBOL} style={styles.cardSymbolImage} resizeMode="cover" />
+            {checkingStatus ? (
+              <View style={styles.loadingBox}>
+                <ActivityIndicator color={COLORS.blue} size="large" />
+                <Text style={styles.loadingText}>Carregando sua verificação...</Text>
               </View>
-              <View style={styles.cardHeaderText}>
-                <Text style={styles.kicker}>Segurança ELUS</Text>
-                <Text style={styles.title}>Selfie com documento oficial</Text>
-              </View>
-            </View>
+            ) : (
+              <>
+                <View style={styles.cardHeader}>
+                  <View style={[styles.cardSymbol, { borderColor: `${verificationColor}55` }]}>
+                    <Image source={SYMBOL} style={styles.cardSymbolImage} resizeMode="cover" />
+                  </View>
+                  <View style={styles.cardHeaderText}>
+                    <Text style={styles.kicker}>Segurança ELUS</Text>
+                    <Text style={styles.title}>Verificação de identidade</Text>
+                  </View>
+                </View>
 
-            <View style={styles.goldBox}>
-              <Text style={styles.goldTitle}>Verificação indispensável</Text>
-              <Text style={styles.goldText}>
-                O ELUS valida perfis por selfie segurando um documento oficial
-                com foto. Não pediremos esse documento em todo login após a validação.
-              </Text>
-            </View>
+                <View style={styles.goldBox}>
+                  <Text style={styles.goldTitle}>Verificação indispensável</Text>
+                  <Text style={styles.goldText}>
+                    O ELUS valida perfis em 3 etapas: foto do documento, selfie e
+                    selfie segurando o documento. Não pediremos isso em todo login
+                    após a validação.
+                  </Text>
+                </View>
 
-            <Text style={styles.sectionTitle}>Escolha o documento</Text>
+                <View style={styles.stepIndicatorRow}>
+                  {STEP_ORDER.map((step, index) => {
+                    const isDone = index < stepIndex;
+                    const isActive = index === stepIndex;
+                    return (
+                      <View
+                        key={step}
+                        style={[
+                          styles.stepDot,
+                          isDone && styles.stepDotDone,
+                          isActive && styles.stepDotActive,
+                        ]}
+                      />
+                    );
+                  })}
+                  <Text style={styles.stepLabel}>Etapa {stepIndex + 1} de 3</Text>
+                </View>
 
-            <View style={styles.documentGrid}>
-              {DOCUMENT_TYPES.map((document) => {
-                const selected = selectedDocument === document;
-                return (
+                {currentStep === 'document' ? (
+                  <>
+                    <Text style={styles.sectionTitle}>Escolha o documento</Text>
+
+                    <View style={styles.documentGrid}>
+                      {DOCUMENT_TYPES.map((document) => {
+                        const selected = selectedDocument === document;
+                        return (
+                          <Pressable
+                            key={document}
+                            disabled={isLocked || loading || documentSent}
+                            style={({ pressed }) => [
+                              styles.documentButton,
+                              selected && styles.documentButtonActive,
+                              (isLocked || loading || documentSent) && styles.documentButtonDisabled,
+                              pressed && !isLocked && !documentSent && styles.pressedSmall,
+                            ]}
+                            onPress={() => selectDocument(document)}
+                          >
+                            <Text style={[styles.documentButtonText, selected && styles.documentButtonTextActive]}>
+                              {document}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+
+                    <View style={styles.selfieBox}>
+                      <View style={styles.selfieTopRow}>
+                        <View style={[styles.selfieIconBox, { borderColor: `${verificationColor}55`, backgroundColor: `${verificationColor}10` }]}>
+                          {documentPhotoUri ? (
+                            <Image source={{ uri: documentPhotoUri }} style={styles.selfiePreviewImage} resizeMode="cover" />
+                          ) : (
+                            <Image source={GOLD_SYMBOL} style={styles.selfieSymbolImage} resizeMode="contain" />
+                          )}
+                        </View>
+                        <View style={styles.selfieTextBox}>
+                          <Text style={styles.selfieTitle}>Foto do {selectedDocument}</Text>
+                          <Text style={styles.selfieText}>
+                            {!documentPhotoUri
+                              ? 'Tire uma foto nítida do documento ou escolha uma imagem já salva no celular.'
+                              : 'Confira a foto do documento. Se estiver boa, confirme para ir para a próxima etapa.'}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {!documentPhotoUri ? (
+                        <View style={styles.documentSourceRow}>
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.documentSourceButton,
+                              loading && styles.buttonDisabled,
+                              pressed && !loading && styles.pressed,
+                            ]}
+                            onPress={pickDocumentFromCamera}
+                            disabled={loading}
+                          >
+                            <Text style={styles.documentSourceButtonText}>Tirar foto</Text>
+                          </Pressable>
+
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.documentSourceButton,
+                              loading && styles.buttonDisabled,
+                              pressed && !loading && styles.pressed,
+                            ]}
+                            onPress={pickDocumentFromGallery}
+                            disabled={loading}
+                          >
+                            <Text style={styles.documentSourceButtonText}>Escolher da galeria</Text>
+                          </Pressable>
+                        </View>
+                      ) : (
+                        <>
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.primaryButton,
+                              loading && styles.buttonDisabled,
+                              pressed && !loading && styles.pressed,
+                            ]}
+                            onPress={confirmDocumentSend}
+                            disabled={loading}
+                          >
+                            {loading ? (
+                              <ActivityIndicator color="#FFFFFF" />
+                            ) : (
+                              <Text style={styles.primaryButtonText}>Confirmar documento e continuar</Text>
+                            )}
+                          </Pressable>
+
+                          <Pressable
+                            style={({ pressed }) => [styles.retakeButton, pressed && styles.pressed]}
+                            onPress={retakeDocumentPhoto}
+                            disabled={loading}
+                          >
+                            <Text style={styles.retakeButtonText}>Trocar foto</Text>
+                          </Pressable>
+                        </>
+                      )}
+                    </View>
+                  </>
+                ) : null}
+
+                {currentStep === 'selfie' ? (
+                  <View style={styles.selfieBox}>
+                    <View style={styles.selfieTopRow}>
+                      <View style={[styles.selfieIconBox, { borderColor: `${verificationColor}55`, backgroundColor: `${verificationColor}10` }]}>
+                        {selfiePhotoUri ? (
+                          <Image source={{ uri: selfiePhotoUri }} style={styles.selfiePreviewImage} resizeMode="cover" />
+                        ) : (
+                          <Image source={GOLD_SYMBOL} style={styles.selfieSymbolImage} resizeMode="contain" />
+                        )}
+                      </View>
+                      <View style={styles.selfieTextBox}>
+                        <Text style={styles.selfieTitle}>Selfie</Text>
+                        <Text style={styles.selfieText}>
+                          {!selfiePhotoUri
+                            ? 'Tire uma selfie olhando para a câmera, sem o documento.'
+                            : 'Confira a selfie. Se estiver boa, confirme para ir para a última etapa.'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.primaryButton,
+                        loading && styles.buttonDisabled,
+                        pressed && !loading && styles.pressed,
+                      ]}
+                      onPress={!selfiePhotoUri ? takeSelfie : confirmSelfieSend}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.primaryButtonText}>
+                          {!selfiePhotoUri ? 'Abrir câmera e tirar selfie' : 'Confirmar selfie e continuar'}
+                        </Text>
+                      )}
+                    </Pressable>
+
+                    {selfiePhotoUri ? (
+                      <Pressable
+                        style={({ pressed }) => [styles.retakeButton, pressed && styles.pressed]}
+                        onPress={retakeSelfie}
+                        disabled={loading}
+                      >
+                        <Text style={styles.retakeButtonText}>Refazer foto</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ) : null}
+
+                {currentStep === 'selfie_with_document' ? (
+                  <View style={[
+                    styles.selfieBox,
+                    selfieWithDocumentPhotoUri && !selfieWithDocumentSent && !isLocked && styles.selfieBoxReview,
+                    isAwaiting && styles.selfieBoxAwaiting,
+                    isVerified && styles.selfieBoxVerified,
+                  ]}>
+                    <View style={styles.selfieTopRow}>
+                      <View style={[styles.selfieIconBox, { borderColor: `${verificationColor}55`, backgroundColor: `${verificationColor}10` }]}>
+                        {selfieWithDocumentPhotoUri ? (
+                          <Image source={{ uri: selfieWithDocumentPhotoUri }} style={styles.selfiePreviewImage} resizeMode="cover" />
+                        ) : (
+                          <Image source={GOLD_SYMBOL} style={styles.selfieSymbolImage} resizeMode="contain" />
+                        )}
+                      </View>
+                      <View style={styles.selfieTextBox}>
+                        <Text style={styles.selfieTitle}>Selfie segurando {selectedDocument}</Text>
+                        <Text style={styles.selfieText}>{selfieText}</Text>
+                      </View>
+                    </View>
+
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.primaryButton,
+                        isAwaiting && styles.primaryButtonAwaiting,
+                        isVerified && styles.primaryButtonVerified,
+                        (isLocked || loading) && styles.buttonDisabled,
+                        pressed && !isLocked && !loading && styles.pressed,
+                      ]}
+                      onPress={!selfieWithDocumentPhotoUri ? takeSelfieWithDocument : confirmSelfieWithDocumentSend}
+                      disabled={isLocked || loading}
+                    >
+                      {loading && !selfieWithDocumentSent ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.primaryButtonText}>{selfieButtonText}</Text>
+                      )}
+                    </Pressable>
+
+                    {selfieWithDocumentPhotoUri && !selfieWithDocumentSent && !isLocked ? (
+                      <Pressable
+                        style={({ pressed }) => [styles.retakeButton, pressed && styles.pressed]}
+                        onPress={retakeSelfieWithDocument}
+                        disabled={loading}
+                      >
+                        <Text style={styles.retakeButtonText}>Refazer foto</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ) : null}
+
+                <View style={styles.infoBox}>
+                  <View style={styles.infoIconBox}>
+                    <Text style={styles.infoIcon}>✓</Text>
+                  </View>
+                  <Text style={styles.infoText}>
+                    Seus documentos não serão exibidos publicamente. Após a validação,
+                    o app não pedirá esses documentos em todo login.
+                  </Text>
+                </View>
+
+                {currentStep === 'selfie_with_document' ? (
+                  <>
+                    <View style={[
+                      styles.warningBox,
+                      isAwaiting && styles.reviewBox,
+                      isVerified && styles.verifiedBox,
+                    ]}>
+                      <Text style={[styles.warningTitle, isAwaiting && styles.reviewTitle, isVerified && styles.verifiedTitle]}>
+                        {statusTitle}
+                      </Text>
+                      <Text style={styles.warningText}>{statusText}</Text>
+                      {!isVerified ? (
+                        <Text style={styles.warningText}>
+                          Após 7 dias sem verificação, o perfil poderá ser ocultado, suspenso
+                          ou excluído conforme a política do ELUS.
+                        </Text>
+                      ) : null}
+                    </View>
+
+                    {!isVerified ? (
+                      <Pressable style={styles.confirmRow} onPress={toggleConfirmed} disabled={isAwaiting}>
+                        <View style={[styles.checkbox, confirmationChecked && styles.checkboxActive]}>
+                          {confirmationChecked ? <Text style={styles.checkboxMark}>✓</Text> : null}
+                        </View>
+                        <Text style={styles.confirmText}>{confirmationText}</Text>
+                      </Pressable>
+                    ) : null}
+
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.continueButton,
+                        (!canContinue || loading) && styles.continueButtonDisabled,
+                        pressed && canContinue && !loading && styles.pressed,
+                      ]}
+                      onPress={continueToApp}
+                      disabled={!canContinue || loading}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <Text style={[styles.continueButtonText, !canContinue && styles.continueButtonTextDisabled]}>
+                          {continueButtonText}
+                        </Text>
+                      )}
+                    </Pressable>
+                  </>
+                ) : null}
+
+                {!isAwaiting && !isVerified ? (
                   <Pressable
-                    key={document}
-                    disabled={isLocked || loading}
-                    style={({ pressed }) => [
-                      styles.documentButton,
-                      selected && styles.documentButtonActive,
-                      (isLocked || loading) && styles.documentButtonDisabled,
-                      pressed && !isLocked && styles.pressedSmall,
-                    ]}
-                    onPress={() => selectDocument(document)}
+                    style={({ pressed }) => [styles.limitedButton, pressed && styles.pressed]}
+                    onPress={continueLimited}
+                    disabled={loading}
                   >
-                    <Text style={[styles.documentButtonText, selected && styles.documentButtonTextActive]}>
-                      {document}
-                    </Text>
+                    <Text style={styles.limitedButtonText}>Fazer depois com uso limitado</Text>
                   </Pressable>
-                );
-              })}
-            </View>
-
-            <View style={[
-              styles.selfieBox,
-              selfiePhotoUri && !selfieSent && !isLocked && styles.selfieBoxReview,
-              isAwaiting && styles.selfieBoxAwaiting,
-              isVerified && styles.selfieBoxVerified,
-            ]}>
-              <View style={styles.selfieTopRow}>
-                <View style={[styles.selfieIconBox, { borderColor: `${verificationColor}55`, backgroundColor: `${verificationColor}10` }]}>
-                  {selfiePhotoUri ? (
-                    <Image source={{ uri: selfiePhotoUri }} style={styles.selfiePreviewImage} resizeMode="cover" />
-                  ) : (
-                    <Image source={GOLD_SYMBOL} style={styles.selfieSymbolImage} resizeMode="contain" />
-                  )}
-                </View>
-                <View style={styles.selfieTextBox}>
-                  <Text style={styles.selfieTitle}>Selfie segurando {selectedDocument}</Text>
-                  <Text style={styles.selfieText}>{selfieText}</Text>
-                </View>
-              </View>
-
-              <Pressable
-                style={({ pressed }) => [
-                  styles.primaryButton,
-                  isAwaiting && styles.primaryButtonAwaiting,
-                  isVerified && styles.primaryButtonVerified,
-                  (isLocked || loading) && styles.buttonDisabled,
-                  pressed && !isLocked && !loading && styles.pressed,
-                ]}
-                onPress={handleSelfieButtonPress}
-                disabled={isLocked || loading}
-              >
-                {loading && !selfieSent ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.primaryButtonText}>{selfieButtonText}</Text>
-                )}
-              </Pressable>
-
-              {selfiePhotoUri && !selfieSent && !isLocked ? (
-                <Pressable
-                  style={({ pressed }) => [styles.retakeButton, pressed && styles.pressed]}
-                  onPress={retakeSelfie}
-                  disabled={loading}
-                >
-                  <Text style={styles.retakeButtonText}>Refazer foto</Text>
-                </Pressable>
-              ) : null}
-            </View>
-
-            <View style={styles.infoBox}>
-              <View style={styles.infoIconBox}>
-                <Text style={styles.infoIcon}>✓</Text>
-              </View>
-              <Text style={styles.infoText}>
-                Seu documento não será exibido publicamente. Após a validação, o app
-                não pedirá documento em todo login.
-              </Text>
-            </View>
-
-            <View style={[
-              styles.warningBox,
-              isAwaiting && styles.reviewBox,
-              isVerified && styles.verifiedBox,
-            ]}>
-              <Text style={[styles.warningTitle, isAwaiting && styles.reviewTitle, isVerified && styles.verifiedTitle]}>
-                {statusTitle}
-              </Text>
-              <Text style={styles.warningText}>{statusText}</Text>
-              {!isVerified ? (
-                <Text style={styles.warningText}>
-                  Após 7 dias sem verificação, o perfil poderá ser ocultado, suspenso
-                  ou excluído conforme a política do ELUS.
-                </Text>
-              ) : null}
-            </View>
-
-            {!isVerified ? (
-              <Pressable style={styles.confirmRow} onPress={toggleConfirmed} disabled={isAwaiting}>
-                <View style={[styles.checkbox, confirmationChecked && styles.checkboxActive]}>
-                  {confirmationChecked ? <Text style={styles.checkboxMark}>✓</Text> : null}
-                </View>
-                <Text style={styles.confirmText}>{confirmationText}</Text>
-              </Pressable>
-            ) : null}
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.continueButton,
-                (!canContinue || loading) && styles.continueButtonDisabled,
-                pressed && canContinue && !loading && styles.pressed,
-              ]}
-              onPress={continueToApp}
-              disabled={!canContinue || loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={[styles.continueButtonText, !canContinue && styles.continueButtonTextDisabled]}>
-                  {continueButtonText}
-                </Text>
-              )}
-            </Pressable>
-
-            {!isAwaiting && !isVerified ? (
-              <Pressable
-                style={({ pressed }) => [styles.limitedButton, pressed && styles.pressed]}
-                onPress={continueLimited}
-                disabled={loading}
-              >
-                <Text style={styles.limitedButtonText}>Fazer depois com uso limitado</Text>
-              </Pressable>
-            ) : null}
+                ) : null}
+              </>
+            )}
           </View>
 
           <Text style={styles.footer}>
@@ -529,6 +919,8 @@ const styles = StyleSheet.create({
   logoFull: { width: 235, height: 104 },
   introText: { marginTop: 6, maxWidth: 340, color: COLORS.muted, fontSize: 16, lineHeight: 27, textAlign: 'center' },
   card: { padding: 24, borderRadius: 34, backgroundColor: COLORS.card, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' },
+  loadingBox: { paddingVertical: 60, alignItems: 'center', justifyContent: 'center' },
+  loadingText: { marginTop: 16, color: COLORS.muted, fontSize: 14, fontWeight: '700' },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 18 },
   cardSymbol: { width: 54, height: 54, borderRadius: 27, overflow: 'hidden', backgroundColor: '#05060A', borderWidth: 1, marginRight: 14 },
   cardSymbolImage: { width: '100%', height: '100%' },
@@ -538,6 +930,11 @@ const styles = StyleSheet.create({
   goldBox: { padding: 17, borderRadius: 24, backgroundColor: COLORS.goldCard, borderWidth: 1, borderColor: COLORS.borderGold, marginBottom: 22 },
   goldTitle: { color: COLORS.gold, fontSize: 17, fontWeight: '900', marginBottom: 8 },
   goldText: { color: COLORS.muted, fontSize: 14, lineHeight: 23, fontWeight: '700' },
+  stepIndicatorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 22 },
+  stepDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: 'rgba(255,255,255,0.16)', marginHorizontal: 5 },
+  stepDotActive: { backgroundColor: COLORS.blue, width: 26 },
+  stepDotDone: { backgroundColor: COLORS.green },
+  stepLabel: { marginLeft: 12, color: COLORS.muted, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
   sectionTitle: { color: COLORS.text, fontSize: 18, fontWeight: '900', marginBottom: 12 },
   documentGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   documentButton: { width: '48%', minHeight: 56, borderRadius: 22, backgroundColor: COLORS.input, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
@@ -545,6 +942,9 @@ const styles = StyleSheet.create({
   documentButtonDisabled: { opacity: 0.82 },
   documentButtonText: { color: COLORS.muted, fontSize: 17, fontWeight: '900' },
   documentButtonTextActive: { color: COLORS.blueLight },
+  documentSourceRow: { flexDirection: 'row', gap: 10, marginTop: 20 },
+  documentSourceButton: { flex: 1, minHeight: 58, borderRadius: 24, backgroundColor: COLORS.blue, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, shadowColor: COLORS.blue, shadowOpacity: 0.42, shadowRadius: 22, shadowOffset: { width: 0, height: 0 } },
+  documentSourceButtonText: { color: COLORS.text, fontSize: 14, lineHeight: 19, fontWeight: '900', textAlign: 'center' },
   selfieBox: { marginTop: 8, padding: 17, borderRadius: 26, backgroundColor: COLORS.input, borderWidth: 1, borderColor: COLORS.border },
   selfieBoxReview: { borderColor: COLORS.borderBlue, backgroundColor: 'rgba(45,100,255,0.08)' },
   selfieBoxAwaiting: { borderColor: COLORS.borderReview, backgroundColor: COLORS.reviewCard },

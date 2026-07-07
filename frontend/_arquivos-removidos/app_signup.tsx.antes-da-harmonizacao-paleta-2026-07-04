@@ -22,20 +22,20 @@ const SYMBOL = require('../assets/brand/elus_symbol_main.png');
 const WATERMARK = require('../assets/watermark/elus_symbol_watermark_10.png');
 
 const COLORS = {
-  background: '#0B101A',
-  card: 'rgba(20,26,38,0.94)',
-  infoCard: 'rgba(94,158,171,0.12)',
-  input: 'rgba(11,16,26,0.88)',
+  background: '#03040A',
+  card: 'rgba(12,15,27,0.94)',
+  infoCard: 'rgba(45,100,255,0.10)',
+  input: 'rgba(3,4,10,0.88)',
   border: 'rgba(255,255,255,0.12)',
   borderStrong: 'rgba(255,255,255,0.18)',
-  borderBlue: 'rgba(94,158,171,0.32)',
-  text: '#EDEDED',
-  mutedStrong: 'rgba(237,237,237,0.86)',
-  soft: 'rgba(161,169,184,0.55)',
-  blue: '#5E9EAB',
-  blueLight: '#8FA3B8',
-  cyan: '#5E9EAB',
-  gold: '#C49A45',
+  borderBlue: 'rgba(45,125,255,0.32)',
+  text: '#FFFFFF',
+  mutedStrong: 'rgba(210,218,236,0.86)',
+  soft: 'rgba(255,255,255,0.46)',
+  blue: '#2D64FF',
+  blueLight: '#8FB3FF',
+  cyan: '#26D9FF',
+  gold: '#D9B46A',
 };
 
 // Idade mínima exigida para criar conta no ELUS (ECA Digital — Lei 15.211/2025)

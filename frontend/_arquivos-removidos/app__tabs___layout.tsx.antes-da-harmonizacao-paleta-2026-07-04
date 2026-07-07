@@ -3,9 +3,9 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 const COLORS = {
-  background: '#0B101A',
-  active: '#5E9EAB',
-  inactive: '#6B7280',
+  background: '#05070D',
+  active: '#26D9FF',
+  inactive: '#8D98AA',
   border: 'rgba(255,255,255,0.08)',
 };
 

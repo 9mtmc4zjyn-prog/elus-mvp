@@ -1,7 +1,6 @@
 ﻿import React from 'react';
 import {
   Image,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -23,27 +22,27 @@ const ELUS_CENTER_SYMBOL = require('../../assets/images/elus-symbol-cyan-purple.
 const ELUS_LOGO = require('../../assets/images/elus-logo.png');
 
 const COLORS = {
-  background: '#0B101A',
-  panel: '#141A26',
-  panelSoft: '#1C2433',
-  panelDeep: '#080D16',
+  background: '#05070D',
+  panel: '#0B1020',
+  panelSoft: '#10182A',
+  panelDeep: '#080C16',
   border: 'rgba(255,255,255,0.08)',
   borderStrong: 'rgba(255,255,255,0.14)',
-  text: '#EDEDED',
-  muted: '#6B7280',
-  mutedSoft: '#A1A9B8',
-  cyan: '#5E9EAB',
-  cyanSoft: 'rgba(94,158,171,0.15)',
-  blueLight: '#8FA3B8',
-  blueLightSoft: 'rgba(143,163,184,0.14)',
-  purple: '#8B7EA8',
-  purpleSoft: 'rgba(139,126,168,0.12)',
-  gold: '#C49A45',
-  goldSoft: 'rgba(196,154,69,0.12)',
-  green: '#4A9A65',
-  greenSoft: 'rgba(74,154,101,0.12)',
-  danger: '#B85C5C',
-  dangerSoft: 'rgba(184,92,92,0.12)',
+  text: '#F5F7FB',
+  muted: '#8D98AA',
+  mutedSoft: '#BAC2D0',
+  cyan: '#26D9FF',
+  cyanSoft: 'rgba(38,217,255,0.10)',
+  blueLight: '#9DBBFF',
+  blueLightSoft: 'rgba(157,187,255,0.12)',
+  purple: '#8B5CFF',
+  purpleSoft: 'rgba(139,92,255,0.12)',
+  gold: '#F2A93B',
+  goldSoft: 'rgba(242,169,59,0.12)',
+  green: '#31D6A3',
+  greenSoft: 'rgba(49,214,163,0.12)',
+  danger: '#EF4444',
+  dangerSoft: 'rgba(239,68,68,0.12)',
 };
 
 type SignalKind =
@@ -693,22 +692,14 @@ function ContextCard({
   title,
   text,
   color,
-  onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   text: string;
   color: string;
-  onPress?: () => void;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.contextCard,
-        pressed ? styles.pressed : null,
-      ]}
-    >
+    <View style={styles.contextCard}>
       <View
         style={[
           styles.contextIconWrap,
@@ -720,21 +711,13 @@ function ContextCard({
 
       <Text style={styles.contextTitle}>{title}</Text>
       <Text style={styles.contextText}>{text}</Text>
-    </Pressable>
+    </View>
   );
 }
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user, realUsers } = useApp();
-
-  const scrollViewRef = React.useRef<ScrollView>(null);
-  const [presenceFieldY, setPresenceFieldY] = React.useState(0);
-  const [affinityModalVisible, setAffinityModalVisible] = React.useState(false);
-
-  function scrollToPresenceField() {
-    scrollViewRef.current?.scrollTo({ y: Math.max(presenceFieldY - 16, 0), animated: true });
-  }
 
   const currentVerificationStatus = getCurrentVerificationStatus(user);
   const verificationMeta = getVerificationMeta(currentVerificationStatus);
@@ -756,7 +739,6 @@ export default function HomeScreen() {
       <StatusBar style="light" />
 
       <ScrollView
-        ref={scrollViewRef}
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -792,13 +774,11 @@ export default function HomeScreen() {
 
         <FieldTrustNotice />
 
-        <View onLayout={(event) => setPresenceFieldY(event.nativeEvent.layout.y)}>
-          <PresenceField
-            profiles={radarProfiles}
-            currentUserStatus={currentVerificationStatus}
-            onPress={() => router.push('/presence-map' as never)}
-          />
-        </View>
+        <PresenceField
+          profiles={radarProfiles}
+          currentUserStatus={currentVerificationStatus}
+          onPress={() => router.push('/presence-map' as never)}
+        />
 
         <View style={styles.sectionHeader}>
           <View style={styles.sectionHeaderTextWrap}>
@@ -836,7 +816,6 @@ export default function HomeScreen() {
             title="Presença local"
             text="Veja sinais aproximados da sua região."
             color={COLORS.cyan}
-            onPress={scrollToPresenceField}
           />
 
           <ContextCard
@@ -844,7 +823,6 @@ export default function HomeScreen() {
             title="Motivo claro"
             text="Entenda por que uma presença apareceu."
             color={COLORS.purple}
-            onPress={() => setAffinityModalVisible(true)}
           />
 
           <ContextCard
@@ -852,7 +830,6 @@ export default function HomeScreen() {
             title="Mapa vivo"
             text="Abra o radar para explorar por perto."
             color={COLORS.gold}
-            onPress={() => router.push('/presence-map' as never)}
           />
 
           <ContextCard
@@ -860,48 +837,11 @@ export default function HomeScreen() {
             title="Ação simples"
             text="Toque no perfil para decidir o próximo passo."
             color={COLORS.green}
-            onPress={() => router.push('/(tabs)/search' as never)}
           />
         </View>
 
         <View style={styles.bottomSpace} />
       </ScrollView>
-
-      <Modal
-        visible={affinityModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setAffinityModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View
-              style={[
-                styles.modalIconWrap,
-                { backgroundColor: `${COLORS.purple}14`, borderColor: `${COLORS.purple}44` },
-              ]}
-            >
-              <Ionicons name="sparkles-outline" size={20} color={COLORS.purple} />
-            </View>
-
-            <Text style={styles.modalTitle}>Como a IA de afinidades funciona</Text>
-
-            <Text style={styles.modalBody}>
-              A IA do ELUS observa perfis próximos e aponta possíveis afinidades entre
-              vocês, mas ela nunca cria conexão, nunca envia mensagem e nunca decide nada
-              sozinha. Toda conexão real ainda depende dos dois perfis estarem verificados
-              e aprovarem o vínculo explicitamente.
-            </Text>
-
-            <Pressable
-              onPress={() => setAffinityModalVisible(false)}
-              style={({ pressed }) => [styles.modalButton, pressed ? styles.pressed : null]}
-            >
-              <Text style={styles.modalButtonText}>Entendi</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -1482,66 +1422,6 @@ const styles = StyleSheet.create<any>({
   pressed: {
     opacity: 0.78,
     transform: [{ scale: 0.98 }],
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-  },
-
-  modalCard: {
-    width: '100%',
-    maxWidth: 400,
-    borderRadius: 24,
-    padding: 24,
-    backgroundColor: '#0B0D14',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-  },
-
-  modalIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    marginBottom: 16,
-  },
-
-  modalTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-
-  modalBody: {
-    color: 'rgba(255,255,255,0.78)',
-    fontSize: 14,
-    lineHeight: 21,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-
-  modalButton: {
-    width: '100%',
-    minHeight: 48,
-    borderRadius: 16,
-    backgroundColor: COLORS.purple,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  modalButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
   },
 
   bottomSpace: {

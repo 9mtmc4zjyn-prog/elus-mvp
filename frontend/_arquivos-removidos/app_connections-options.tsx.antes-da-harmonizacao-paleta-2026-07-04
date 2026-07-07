@@ -11,19 +11,19 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 const COLORS = {
-  background: '#0B101A',
-  panel: '#141A26',
-  panelSoft: '#1C2433',
+  background: '#05070D',
+  panel: '#0B1020',
+  panelSoft: '#10182A',
   border: 'rgba(255,255,255,0.08)',
   borderStrong: 'rgba(255,255,255,0.13)',
-  text: '#EDEDED',
-  muted: '#6B7280',
-  mutedSoft: '#A1A9B8',
-  cyan: '#5E9EAB',
-  gold: '#C49A45',
-  goldSoft: 'rgba(196,154,69,0.10)',
-  purple: '#8B7EA8',
-  green: '#4A9A65',
+  text: '#F5F7FB',
+  muted: '#8D98AA',
+  mutedSoft: '#BAC2D0',
+  cyan: '#26D9FF',
+  gold: '#F2A93B',
+  goldSoft: 'rgba(242,169,59,0.10)',
+  purple: '#8B5CFF',
+  green: '#31D6A3',
 };
 
 type OptionItemProps = {

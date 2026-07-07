@@ -11,16 +11,16 @@ import {
 import { useRouter } from 'expo-router';
 
 const COLORS = {
-  background: '#0B101A',
+  background: '#03040A',
   border: 'rgba(255,255,255,0.10)',
-  text: '#EDEDED',
-  muted: 'rgba(237,237,237,0.82)',
-  soft: 'rgba(161,169,184,0.55)',
-  blue: '#5E9EAB',
-  blueLight: '#8FA3B8',
-  cyan: '#5E9EAB',
-  gold: '#C49A45',
-  green: '#4A9A65',
+  text: '#FFFFFF',
+  muted: 'rgba(210,218,236,0.80)',
+  soft: 'rgba(255,255,255,0.46)',
+  blue: '#2D64FF',
+  blueLight: '#8FB3FF',
+  cyan: '#26D9FF',
+  gold: '#D9B46A',
+  green: '#22C55E',
 };
 
 function SectionTitle({ children }: { children: string }) {

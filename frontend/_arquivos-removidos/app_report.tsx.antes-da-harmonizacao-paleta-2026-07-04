@@ -16,20 +16,20 @@ import { supabase } from '../src/lib/supabase';
 import { useApp } from '../src/context/AppContext';
 
 const COLORS = {
-  background: '#0B101A',
-  card: 'rgba(20,26,38,0.94)',
+  background: '#03040A',
+  card: 'rgba(12,15,27,0.94)',
   border: 'rgba(255,255,255,0.10)',
   borderStrong: 'rgba(255,255,255,0.16)',
-  text: '#EDEDED',
-  muted: 'rgba(237,237,237,0.82)',
-  soft: 'rgba(161,169,184,0.55)',
-  blue: '#5E9EAB',
-  blueLight: '#8FA3B8',
-  red: '#B85C5C',
-  redSoft: 'rgba(184,92,92,0.12)',
-  input: 'rgba(11,16,26,0.88)',
-  selected: 'rgba(184,92,92,0.16)',
-  selectedBorder: 'rgba(184,92,92,0.50)',
+  text: '#FFFFFF',
+  muted: 'rgba(210,218,236,0.80)',
+  soft: 'rgba(255,255,255,0.46)',
+  blue: '#2D64FF',
+  blueLight: '#8FB3FF',
+  red: '#EF4444',
+  redSoft: 'rgba(239,68,68,0.12)',
+  input: 'rgba(3,4,10,0.88)',
+  selected: 'rgba(239,68,68,0.16)',
+  selectedBorder: 'rgba(239,68,68,0.50)',
 };
 
 // Cada motivo tem um "type": 'identidade' (sobre quem a pessoa é) ou

@@ -28,9 +28,9 @@ const ELUS_UNVERIFIED_RED = require("../../assets/images/elus-unverified-red.png
 const ELUS_IN_REVIEW_BLUE = require("../../assets/images/elus-symbol-cyan-purple.png");
 const ELUS_LOGO = require("../../assets/images/elus-logo.png");
 
-const STATUS_GREEN = "#4A9A65";
-const STATUS_RED = "#B85C5C";
-const STATUS_BLUE = "#8FA3B8";
+const STATUS_GREEN = "#22C55E";
+const STATUS_RED = "#EF4444";
+const STATUS_BLUE = "#9DBBFF";
 
 const SENSITIVE_BASIC_INFO_PATTERNS = [
   /telefone/i,
@@ -1249,7 +1249,7 @@ export default function ProfileScreen() {
                 <Text style={styles.modalCancelButtonText}>Cancelar</Text>
               </Pressable>
               <Pressable
-                style={({ pressed }) => [styles.modalSendButton, { backgroundColor: "#B85C5C" }, pressed && styles.buttonPressed]}
+                style={({ pressed }) => [styles.modalSendButton, { backgroundColor: "#EF4444" }, pressed && styles.buttonPressed]}
                 onPress={confirmBlockUser}
               >
                 <Text style={[styles.modalSendButtonText, { color: "#FFFFFF" }]}>Bloquear</Text>
@@ -1275,7 +1275,7 @@ export default function ProfileScreen() {
             </Text>
 
             <View style={styles.modalRulesCard}>
-              <Ionicons name="shield-checkmark-outline" size={18} color="#5E9EAB" />
+              <Ionicons name="shield-checkmark-outline" size={18} color="#22D3EE" />
               <Text style={styles.modalRulesText}>
                 Este pedido não cria elo, não vira conexão real e não libera borda
                 colorida.
@@ -1329,7 +1329,7 @@ export default function ProfileScreen() {
                       ]}
                     >
                       {selected ? (
-                        <Ionicons name="checkmark" size={16} color="#0B101A" />
+                        <Ionicons name="checkmark" size={16} color="#06070B" />
                       ) : null}
                     </View>
 
@@ -1389,7 +1389,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#0B101A",
+    backgroundColor: "#06070B",
   },
 
   fixedHeader: {
@@ -1398,7 +1398,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#0B101A",
+    backgroundColor: "#06070B",
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.08)",
   },
@@ -1435,9 +1435,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 7,
-    backgroundColor: "#C49A45",
+    backgroundColor: "#C9A84C",
     borderWidth: 1,
-    borderColor: "#A9823A",
+    borderColor: "#D4A843",
   },
 
   planButtonText: {
@@ -1477,7 +1477,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 2,
-    color: '#5E9EAB',
+    color: '#26D9FF',
     textTransform: 'uppercase',
     marginBottom: 4,
   },
@@ -1499,7 +1499,7 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#5E9EAB',
+    backgroundColor: '#26D9FF',
     marginTop: 7,
     marginRight: 10,
     flexShrink: 0,
@@ -1525,7 +1525,7 @@ const styles = StyleSheet.create({
   heroCard: {
     borderRadius: 30,
     padding: 18,
-    backgroundColor: "#141A26",
+    backgroundColor: "#10121A",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.10)",
   },
@@ -1540,7 +1540,7 @@ const styles = StyleSheet.create({
     height: 310,
     borderRadius: 26,
     overflow: "hidden",
-    backgroundColor: "#1C2433",
+    backgroundColor: "#181B25",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
   },
@@ -1596,7 +1596,7 @@ const styles = StyleSheet.create({
   },
 
   profileKind: {
-    color: "#A1A9B8",
+    color: "#9EA4B8",
     fontSize: 12,
     fontWeight: "900",
     letterSpacing: 1.5,
@@ -1612,14 +1612,14 @@ const styles = StyleSheet.create({
   },
 
   profileRole: {
-    color: "#EDEDED",
+    color: "#D6DAE8",
     fontSize: 16,
     fontWeight: "700",
     marginTop: 6,
   },
 
   profileLocation: {
-    color: "#A1A9B8",
+    color: "#9EA4B8",
     fontSize: 14,
     fontWeight: "600",
     marginTop: 6,
@@ -1669,7 +1669,7 @@ const styles = StyleSheet.create({
   },
 
   warningText: {
-    color: "#A1A9B8",
+    color: "#B9BED0",
     fontSize: 13,
     lineHeight: 19,
     fontWeight: "600",
@@ -1679,7 +1679,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
     borderRadius: 24,
     padding: 18,
-    backgroundColor: "#080D16",
+    backgroundColor: "#0D0F16",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.09)",
   },
@@ -1693,7 +1693,7 @@ const styles = StyleSheet.create({
   },
 
   paragraph: {
-    color: "#A1A9B8",
+    color: "#C7CCDA",
     fontSize: 15,
     lineHeight: 23,
     fontWeight: "600",
@@ -1720,7 +1720,7 @@ const styles = StyleSheet.create({
 
   bulletText: {
     flex: 1,
-    color: "#A1A9B8",
+    color: "#C7CCDA",
     fontSize: 14,
     lineHeight: 21,
     fontWeight: "600",
@@ -1782,7 +1782,7 @@ const styles = StyleSheet.create({
   },
 
   contactText: {
-    color: "#A1A9B8",
+    color: "#B9BED0",
     fontSize: 14,
     lineHeight: 21,
     fontWeight: "600",
@@ -1806,18 +1806,18 @@ const styles = StyleSheet.create({
   },
 
   contactButtonText: {
-    color: "#0B101A",
+    color: "#090A0F",
     fontSize: 15,
     fontWeight: "900",
     textAlign: "center",
   },
 
   contactButtonTextDisabled: {
-    color: "#6B7280",
+    color: "#8F95A8",
   },
 
   lockedReason: {
-    color: "#6B7280",
+    color: "#8F95A8",
     fontSize: 12,
     lineHeight: 18,
     fontWeight: "700",
@@ -1836,7 +1836,7 @@ const styles = StyleSheet.create({
     width: "100%",
     maxHeight: "88%",
     borderRadius: 30,
-    backgroundColor: "#141A26",
+    backgroundColor: "#10121A",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.14)",
     padding: 18,
@@ -1851,7 +1851,7 @@ const styles = StyleSheet.create({
   },
 
   modalText: {
-    color: "#A1A9B8",
+    color: "#B9BED0",
     fontSize: 14,
     lineHeight: 21,
     fontWeight: "600",
@@ -1871,7 +1871,7 @@ const styles = StyleSheet.create({
 
   modalRulesText: {
     flex: 1,
-    color: "#A1A9B8",
+    color: "#C7CCDA",
     fontSize: 12,
     lineHeight: 17,
     fontWeight: "800",
@@ -1941,13 +1941,13 @@ const styles = StyleSheet.create({
   },
 
   optionCheckboxSelected: {
-    backgroundColor: "#5E9EAB",
-    borderColor: "#5E9EAB",
+    backgroundColor: "#22D3EE",
+    borderColor: "#22D3EE",
   },
 
   optionText: {
     flex: 1,
-    color: "#A1A9B8",
+    color: "#C7CCDA",
     fontSize: 14,
     lineHeight: 19,
     fontWeight: "800",
@@ -1986,7 +1986,7 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#5E9EAB",
+    backgroundColor: "#22D3EE",
   },
 
   modalSendButtonDisabled: {
@@ -1996,14 +1996,14 @@ const styles = StyleSheet.create({
   },
 
   modalSendButtonText: {
-    color: "#0B101A",
+    color: "#06070B",
     fontSize: 14,
     fontWeight: "900",
     textAlign: "center",
   },
 
   modalSendButtonTextDisabled: {
-    color: "#6B7280",
+    color: "#8F95A8",
   },
 
   notFoundContainer: {
@@ -2029,7 +2029,7 @@ const styles = StyleSheet.create({
   },
 
   notFoundText: {
-    color: "#A1A9B8",
+    color: "#B9BED0",
     fontSize: 15,
     lineHeight: 22,
     fontWeight: "600",

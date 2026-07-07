@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import type { ComponentProps } from 'react';
 import {
   ActivityIndicator,
@@ -6,6 +6,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,6 +18,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from './theme';
 import { supabase } from '../src/lib/supabase';
+import { INTEREST_CATEGORIES } from '../src/data/interestSuggestions';
 
 const ELUS_SYMBOL = require('../assets/brand/elus_symbol_main.png');
 
@@ -58,6 +60,9 @@ export default function ProfileSetupScreen() {
   const [bio, setBio] = useState('');
   const [presenceMode, setPresenceMode] = useState<'personal' | 'need_service' | 'offer_service'>('personal');
   const [loading, setLoading] = useState(false);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [showCustomInterestInput, setShowCustomInterestInput] = useState(false);
+  const [customInterestsText, setCustomInterestsText] = useState('');
 
   async function handleContinue() {
     setLoading(true);
@@ -71,8 +76,16 @@ export default function ProfileSetupScreen() {
       return;
     }
 
-    const updates: Record<string, string> = {
+    const customInterests = customInterestsText
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+
+    const allInterests = [...selectedInterests, ...customInterests];
+
+    const updates: Record<string, string | string[]> = {
       presence_mode: presenceMode,
+      interests: allInterests,
     };
 
     if (name.trim()) updates.name = name.trim();
@@ -92,6 +105,14 @@ export default function ProfileSetupScreen() {
     }
 
     router.push('/verification' as never);
+  }
+
+  function toggleInterest(interestId: string) {
+    setSelectedInterests((current) =>
+      current.includes(interestId)
+        ? current.filter((id) => id !== interestId)
+        : [...current, interestId]
+    );
   }
 
   function handleBack() {
@@ -183,6 +204,65 @@ export default function ProfileSetupScreen() {
                 editable={!loading}
               />
             </View>
+          </View>
+
+          <View style={styles.interestsCard}>
+            <Text style={styles.sectionTitle}>Interesses</Text>
+
+            <Text style={styles.sectionSubtitle}>
+              Escolha os temas que mais têm a ver com você. Isso ajuda o ELUS a
+              sugerir afinidades melhores.
+            </Text>
+
+            {INTEREST_CATEGORIES.map((category) => (
+              <View key={category.id} style={styles.interestCategoryBlock}>
+                <Text style={styles.interestCategoryTitle}>{category.title}</Text>
+
+                <View style={styles.interestChipsRow}>
+                  {category.interests.map((interest) => {
+                    const isSelected = selectedInterests.includes(interest.id);
+
+                    return (
+                      <Pressable
+                        key={interest.id}
+                        onPress={() => toggleInterest(interest.id)}
+                        style={[styles.interestChip, isSelected && styles.interestChipOn]}
+                        disabled={loading}
+                      >
+                        <Text style={[styles.interestChipText, isSelected && styles.interestChipTextOn]}>
+                          {interest.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ))}
+
+            <View style={styles.interestChipsRow}>
+              <Pressable
+                onPress={() => setShowCustomInterestInput((prev) => !prev)}
+                style={[styles.interestChip, showCustomInterestInput && styles.interestChipOn]}
+                disabled={loading}
+              >
+                <Text style={[styles.interestChipText, showCustomInterestInput && styles.interestChipTextOn]}>
+                  Outro +
+                </Text>
+              </Pressable>
+            </View>
+
+            {showCustomInterestInput ? (
+              <View style={styles.customInterestInputBox}>
+                <TextInput
+                  style={styles.customInterestInput}
+                  placeholder="Digite outros interesses separados por vírgula"
+                  placeholderTextColor={colors.textMuted}
+                  value={customInterestsText}
+                  onChangeText={setCustomInterestsText}
+                  editable={!loading}
+                />
+              </View>
+            ) : null}
           </View>
 
           <View style={styles.presenceCard}>
@@ -307,4 +387,14 @@ const styles = StyleSheet.create({
   continueButtonText: { color: colors.white, fontSize: 17, fontWeight: '900' },
   buttonDisabled: { opacity: 0.6 },
   footerText: { color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 16, lineHeight: 19 },
+  interestsCard: { backgroundColor: colors.surface, borderRadius: 24, padding: 20, borderWidth: 1, borderColor: colors.border, marginBottom: 18 },
+  interestCategoryBlock: { marginBottom: 16 },
+  interestCategoryTitle: { color: colors.textMuted, fontSize: 13, fontWeight: '800', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 },
+  interestChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  interestChip: { minHeight: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, paddingHorizontal: 13, paddingVertical: 9 },
+  interestChipOn: { borderColor: colors.cyanBorder, backgroundColor: colors.cyanSoft },
+  interestChipText: { color: colors.textMuted, fontSize: 12, lineHeight: 16, fontWeight: '800' },
+  interestChipTextOn: { color: colors.accent },
+  customInterestInputBox: { marginTop: 12, height: 52, borderRadius: 16, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, justifyContent: 'center', paddingHorizontal: 16 },
+  customInterestInput: { color: colors.text, fontSize: 15 },
 });

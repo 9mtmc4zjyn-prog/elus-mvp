@@ -175,7 +175,7 @@ function getRequestStatusMeta({
     if (canBecomeRealConnection) {
       return {
         label: 'Aceita',
-        color: '#4A9A65',
+        color: '#34D399',
       };
     }
 
@@ -188,13 +188,13 @@ function getRequestStatusMeta({
   if (isRejectedRequestStatus(status)) {
     return {
       label: 'Recusada',
-      color: '#B85C5C',
+      color: '#E26D6D',
     };
   }
 
   return {
     label: 'Pendente',
-    color: '#C49A45',
+    color: '#D6A84F',
   };
 }
 
@@ -202,20 +202,20 @@ function getContactRequestStatusMeta(status: string) {
   if (isAcceptedRequestStatus(status)) {
     return {
       label: 'Compartilhada',
-      color: '#4A9A65',
+      color: '#34D399',
     };
   }
 
   if (isRejectedRequestStatus(status)) {
     return {
       label: 'Recusada',
-      color: '#B85C5C',
+      color: '#E26D6D',
     };
   }
 
   return {
     label: 'Pendente',
-    color: '#C49A45',
+    color: '#D6A84F',
   };
 }
 
@@ -225,9 +225,9 @@ function getGateMeta(currentUserPhase: IdentityPhase) {
       title: 'Solicitações liberadas',
       text:
         'Você pode aceitar solicitações de conexão quando os dois lados estiverem verificados e pode acompanhar pedidos de informações separadamente.',
-      color: '#4A9A65',
-      borderColor: 'rgba(74,154,101,0.30)',
-      backgroundColor: 'rgba(74,154,101,0.08)',
+      color: '#34D399',
+      borderColor: 'rgba(52,211,153,0.30)',
+      backgroundColor: 'rgba(52,211,153,0.08)',
       icon: 'shield-checkmark-outline' as IconName,
       buttonLabel: 'Ver conexões',
     };
@@ -238,9 +238,9 @@ function getGateMeta(currentUserPhase: IdentityPhase) {
       title: 'Aguardando aprovação',
       text:
         'Sua verificação foi enviada, mas ainda depende de aprovação. Até a confirmação, você pode acompanhar solicitações, mas não pode iniciar ações sensíveis.',
-      color: '#8FA3B8',
-      borderColor: 'rgba(143,163,184,0.36)',
-      backgroundColor: 'rgba(143,163,184,0.11)',
+      color: '#9DBBFF',
+      borderColor: 'rgba(157,187,255,0.36)',
+      backgroundColor: 'rgba(157,187,255,0.11)',
       icon: 'time-outline' as IconName,
       buttonLabel: 'Ver status da análise',
     };
@@ -250,9 +250,9 @@ function getGateMeta(currentUserPhase: IdentityPhase) {
     title: 'Verificação pendente',
     text:
       'Finalize a verificação de identidade para criar, aceitar ou solicitar conexões reais no ELUS.',
-    color: '#B85C5C',
-    borderColor: 'rgba(184,92,92,0.36)',
-    backgroundColor: 'rgba(184,92,92,0.11)',
+    color: '#EF4444',
+    borderColor: 'rgba(239,68,68,0.36)',
+    backgroundColor: 'rgba(239,68,68,0.11)',
     icon: 'shield-outline' as IconName,
     buttonLabel: 'Verificar identidade',
   };
@@ -260,14 +260,14 @@ function getGateMeta(currentUserPhase: IdentityPhase) {
 
 function getBlockedColor(phase: IdentityPhase) {
   if (phase === 'in_review') {
-    return '#8FA3B8';
+    return '#9DBBFF';
   }
 
   if (phase === 'verified') {
-    return '#4A9A65';
+    return '#34D399';
   }
 
-  return '#B85C5C';
+  return '#EF4444';
 }
 
 function findUserById(users: AppUser[], userId: string) {
@@ -353,7 +353,7 @@ function getVisibleAvatarColor({
   fallbackColor: string;
 }) {
   if (currentUserPhase !== 'verified' && targetPhase === 'verified') {
-    return '#8FA3B8';
+    return '#9DBBFF';
   }
 
   return fallbackColor;
@@ -1151,8 +1151,8 @@ export default function RequestsScreen() {
                       size={16}
                       color={
                         requesterPhase === 'in_review'
-                          ? '#8FA3B8'
-                          : '#B85C5C'
+                          ? '#9DBBFF'
+                          : '#EF4444'
                       }
                     />
 
@@ -1659,7 +1659,7 @@ const styles = StyleSheet.create({
   },
 
   contactSharedText: {
-    color: '#4A9A65',
+    color: '#34D399',
     fontSize: 12,
     lineHeight: 17,
     fontWeight: '800',
@@ -1711,21 +1711,21 @@ const styles = StyleSheet.create({
     marginTop: 14,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(184,92,92,0.28)',
-    backgroundColor: 'rgba(184,92,92,0.08)',
+    borderColor: 'rgba(239,68,68,0.28)',
+    backgroundColor: 'rgba(239,68,68,0.08)',
     padding: 12,
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
 
   blockedReasonCardReview: {
-    borderColor: 'rgba(143,163,184,0.34)',
-    backgroundColor: 'rgba(143,163,184,0.09)',
+    borderColor: 'rgba(157,187,255,0.34)',
+    backgroundColor: 'rgba(157,187,255,0.09)',
   },
 
   blockedReasonText: {
     flex: 1,
-    color: '#C98A8A',
+    color: '#FF9B9B',
     fontSize: 12,
     lineHeight: 17,
     fontWeight: '800',
@@ -1733,7 +1733,7 @@ const styles = StyleSheet.create({
   },
 
   blockedReasonTextReview: {
-    color: '#A8BAC7',
+    color: '#BBD0FF',
   },
 
   actionRow: {
@@ -1898,7 +1898,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: '#141A26',
+    backgroundColor: '#101219',
     padding: 20,
   },
 
