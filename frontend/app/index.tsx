@@ -19,21 +19,16 @@ export default function WelcomeScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View
+        style={[styles.backgroundGlowCore, { backgroundColor: colors.cyanVivid }]}
+      />
+
+      <View
         style={[styles.backgroundGlow, { backgroundColor: colors.accentSoft }]}
       />
 
       <View style={styles.container}>
         <View style={styles.brandArea}>
-          <View
-            style={[
-              styles.symbolHalo,
-              {
-                backgroundColor: colors.accentSoft,
-                borderColor: colors.border,
-                shadowColor: colors.accent,
-              },
-            ]}
-          >
+          <View style={styles.symbolHalo}>
             <View
               style={[
                 styles.symbolRing,
@@ -124,6 +119,17 @@ const styles = StyleSheet.create({
     borderRadius: 180,
     top: 80,
     alignSelf: 'center',
+    opacity: 0.5,
+  },
+
+  backgroundGlowCore: {
+    position: 'absolute',
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    top: 140,
+    alignSelf: 'center',
+    opacity: 0.04,
   },
 
   container: {
@@ -145,10 +151,6 @@ const styles = StyleSheet.create({
     borderRadius: 89,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    shadowOpacity: 0.35,
-    shadowRadius: 34,
-    shadowOffset: { width: 0, height: 0 },
   },
 
   symbolRing: {
