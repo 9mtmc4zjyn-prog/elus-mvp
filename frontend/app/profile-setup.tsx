@@ -242,7 +242,7 @@ export default function ProfileSetupScreen() {
             <View style={styles.interestChipsRow}>
               <Pressable
                 onPress={() => setShowCustomInterestInput((prev) => !prev)}
-                style={[styles.interestChip, showCustomInterestInput && styles.interestChipOn]}
+                style={[styles.outroChip, showCustomInterestInput && styles.interestChipOn]}
                 disabled={loading}
               >
                 <Text style={[styles.interestChipText, showCustomInterestInput && styles.interestChipTextOn]}>
@@ -392,6 +392,16 @@ const styles = StyleSheet.create({
   interestCategoryTitle: { color: colors.textMuted, fontSize: 13, fontWeight: '800', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 },
   interestChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   interestChip: { minHeight: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, paddingHorizontal: 13, paddingVertical: 9 },
+  outroChip: {
+    minHeight: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.accent,
+    backgroundColor: colors.background,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+  },
   interestChipOn: { borderColor: colors.cyanBorder, backgroundColor: colors.cyanSoft },
   interestChipText: { color: colors.textMuted, fontSize: 12, lineHeight: 16, fontWeight: '800' },
   interestChipTextOn: { color: colors.accent },

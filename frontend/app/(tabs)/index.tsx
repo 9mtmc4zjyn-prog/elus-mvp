@@ -16,6 +16,7 @@ import { useApp, type AppUser } from '../../src/context/AppContext';
 import { appUserToProfile } from '../../src/utils/adaptSupabaseProfile';
 import type { Profile } from '../../src/data/profiles';
 import { getLocalAffinityExplanation } from '../../src/utils/elusIntelligenceRules';
+import { Button } from '../../src/components/Button';
 
 const ELUS_UNVERIFIED = require('../../assets/images/elus-unverified.png');
 const ELUS_VERIFIED_GREEN = require('../../assets/images/elus-verified-green.png');
@@ -893,12 +894,11 @@ export default function HomeScreen() {
               e aprovarem o vínculo explicitamente.
             </Text>
 
-            <Pressable
+            <Button
+              label="Entendi"
+              variant="purpleAccent"
               onPress={() => setAffinityModalVisible(false)}
-              style={({ pressed }) => [styles.modalButton, pressed ? styles.pressed : null]}
-            >
-              <Text style={styles.modalButtonText}>Entendi</Text>
-            </Pressable>
+            />
           </View>
         </View>
       </Modal>
@@ -1527,21 +1527,6 @@ const styles = StyleSheet.create<any>({
     lineHeight: 21,
     textAlign: 'center',
     marginBottom: 20,
-  },
-
-  modalButton: {
-    width: '100%',
-    minHeight: 48,
-    borderRadius: 16,
-    backgroundColor: COLORS.purple,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  modalButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
   },
 
   bottomSpace: {

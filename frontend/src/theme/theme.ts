@@ -50,6 +50,10 @@ export interface ThemeColors {
 
   chipHighlightBorder: string;
   chipHighlightBackground: string;
+
+  dangerSoft: string;
+  purple: string;
+  mint: string;
 }
 
 const hybrid: ThemeColors = {
@@ -83,6 +87,10 @@ const hybrid: ThemeColors = {
 
   chipHighlightBorder: 'rgba(38,217,255,0.42)',
   chipHighlightBackground: 'rgba(38,217,255,0.10)',
+
+  dangerSoft: 'rgba(184,92,92,0.15)',
+  purple: '#8B7EA8',
+  mint: '#35E6B5',
 };
 
 const monoDark: ThemeColors = {
@@ -116,6 +124,10 @@ const monoDark: ThemeColors = {
 
   chipHighlightBorder: 'rgba(255,255,255,0.42)',
   chipHighlightBackground: 'rgba(255,255,255,0.10)',
+
+  dangerSoft: 'rgba(255,255,255,0.10)',
+  purple: '#CFCFCF',
+  mint: '#D9D9D9',
 };
 
 const monoLight: ThemeColors = {
@@ -149,6 +161,10 @@ const monoLight: ThemeColors = {
 
   chipHighlightBorder: 'rgba(0,0,0,0.42)',
   chipHighlightBackground: 'rgba(0,0,0,0.10)',
+
+  dangerSoft: 'rgba(0,0,0,0.08)',
+  purple: '#4A4A4A',
+  mint: '#3A3A3A',
 };
 
 export const THEMES: Record<ThemeMode, ThemeColors> = {

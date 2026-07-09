@@ -9,6 +9,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { useTheme } from '../theme/ThemeContext';
 
 type ProfileAvatarProps = {
   name?: string;
@@ -92,14 +93,15 @@ export default function ProfileAvatar({
   size = 54,
   ringColors,
   bondColors,
-  colors,
+  colors: colorsProp,
   verified = false,
   showVerifiedBadge = false,
   showConnectionRing = false,
   onPress,
   style,
 }: ProfileAvatarProps) {
-  const activeColors = normalizeColors(ringColors ?? bondColors ?? colors);
+  const { colors } = useTheme();
+  const activeColors = normalizeColors(ringColors ?? bondColors ?? colorsProp);
   const hasConnectionRing = showConnectionRing && activeColors.length > 0;
 
   const ringSides = hasConnectionRing
@@ -149,6 +151,8 @@ export default function ProfileAvatar({
             width: innerSize,
             height: innerSize,
             borderRadius: innerSize / 2,
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
           },
         ]}
       >
@@ -168,6 +172,7 @@ export default function ProfileAvatar({
               styles.initials,
               {
                 fontSize: Math.max(14, Math.round(size * 0.32)),
+                color: colors.text,
               },
             ]}
           >
@@ -177,8 +182,16 @@ export default function ProfileAvatar({
       </View>
 
       {verified && showVerifiedBadge ? (
-        <View style={styles.verifiedBadge}>
-          <Text style={styles.verifiedText}>✓</Text>
+        <View
+          style={[
+            styles.verifiedBadge,
+            {
+              backgroundColor: colors.success,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Text style={[styles.verifiedText, { color: colors.text }]}>✓</Text>
         </View>
       ) : null}
     </View>
@@ -213,13 +226,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#080A12',
     borderWidth: 2,
-    borderColor: '#05060A',
   },
 
   initials: {
-    color: '#FFFFFF',
     fontWeight: '900',
     letterSpacing: 0.4,
   },
@@ -231,15 +241,12 @@ const styles = StyleSheet.create({
     width: 21,
     height: 21,
     borderRadius: 11,
-    backgroundColor: '#36D399',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#05060A',
   },
 
   verifiedText: {
-    color: '#05060A',
     fontSize: 12,
     lineHeight: 14,
     fontWeight: '900',

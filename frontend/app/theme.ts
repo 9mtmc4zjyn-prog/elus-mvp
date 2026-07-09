@@ -71,7 +71,7 @@ export const colors = {
   // Marca / tecnologia
   cyan: '#26D9FF',
   cyanSoft: 'rgba(38,217,255,0.10)',
-  cyanBorder: 'rgba(38,217,255,0.28)',
+  cyanBorder: 'rgba(38,217,255,0.42)',
 
   blue: '#316BFF',
   blueLight: '#9DBBFF',

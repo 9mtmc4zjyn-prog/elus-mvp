@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useApp } from '../src/context/AppContext';
+import { Button } from '../src/components/Button';
 
 const COLORS = {
   background: '#0B101A',
@@ -559,24 +560,12 @@ export default function PlansScreen() {
           </View>
         </View>
 
-        <Pressable
+        <Button
+          label={plansBlocked ? 'Verificar identidade agora' : 'Continuar'}
+          variant={plansBlocked ? 'destructive' : 'primary'}
+          icon={plansBlocked ? 'shield-checkmark-outline' : 'arrow-forward'}
           onPress={handleContinue}
-          style={({ pressed }) => [
-            styles.continueButton,
-            plansBlocked && styles.verificationButton,
-            pressed && styles.buttonPressed,
-          ]}
-        >
-          <Text style={styles.continueButtonText}>
-            {plansBlocked ? 'Verificar identidade agora' : 'Continuar'}
-          </Text>
-
-          <Ionicons
-            name={plansBlocked ? 'shield-checkmark-outline' : 'arrow-forward'}
-            size={20}
-            color={COLORS.text}
-          />
-        </Pressable>
+        />
 
         <Text style={styles.footerText}>
           {plansBlocked
@@ -1094,28 +1083,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     color: COLORS.mutedSoft,
-  },
-
-  continueButton: {
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: COLORS.blue,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-
-  verificationButton: {
-    backgroundColor: COLORS.danger,
-  },
-
-  continueButtonText: {
-    fontSize: 14,
-    lineHeight: 18,
-    color: COLORS.text,
-    fontWeight: '800',
-    marginRight: 8,
   },
 
   footerText: {

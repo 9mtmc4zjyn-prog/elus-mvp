@@ -16,6 +16,7 @@ import BrandMark from '../../src/components/BrandMark';
 import ProfileAvatar from '../../src/components/ProfileAvatar';
 import { useApp } from '../../src/context/AppContext';
 import { supabase } from '../../src/lib/supabase';
+import { Button } from '../../src/components/Button';
 
 const WATERMARK = require('../../assets/watermark/elus_symbol_watermark_10.png');
 
@@ -527,29 +528,17 @@ export default function ProfileScreen() {
           </View>
 
           {!isVerified ? (
-            <Pressable
-              style={({ pressed }) => [
-                styles.primaryButton,
-                pressed && styles.pressed,
-              ]}
+            <Button
+              label={isInReview ? 'Ver status da análise →' : 'Verificar identidade agora →'}
+              variant="primary"
               onPress={goToVerification}
-            >
-              <Text style={styles.primaryButtonText}>
-                {isInReview ? 'Ver status da análise →' : 'Verificar identidade agora →'}
-              </Text>
-            </Pressable>
+            />
           ) : (
-            <Pressable
-              style={({ pressed }) => [
-                styles.secondaryButtonFull,
-                pressed && styles.pressed,
-              ]}
+            <Button
+              label="Ver status da verificação"
+              variant="secondary"
               onPress={goToVerification}
-            >
-              <Text style={styles.secondaryButtonFullText}>
-                Ver status da verificação
-              </Text>
-            </Pressable>
+            />
           )}
         </View>
 
@@ -672,15 +661,7 @@ export default function ProfileScreen() {
           </Text>
         </View>
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.logoutButton,
-            pressed && styles.pressed,
-          ]}
-          onPress={handleLogout}
-        >
-          <Text style={styles.logoutButtonText}>Sair da conta</Text>
-        </Pressable>
+        <Button label="Sair da conta" variant="destructiveSecondary" onPress={handleLogout} />
       </ScrollView>
     </View>
   );
@@ -932,41 +913,6 @@ const styles = StyleSheet.create<any>({
     fontWeight: '700',
     marginBottom: 5,
   },
-  primaryButton: {
-    marginTop: 20,
-    minHeight: 60,
-    borderRadius: 24,
-    backgroundColor: COLORS.blue,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: COLORS.blue,
-    shadowOpacity: 0.36,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  primaryButtonText: {
-    color: COLORS.text,
-    fontSize: 17,
-    fontWeight: '900',
-    textAlign: 'center',
-    paddingHorizontal: 12,
-  },
-  secondaryButtonFull: {
-    marginTop: 20,
-    minHeight: 58,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.055)',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryButtonFullText: {
-    color: COLORS.text,
-    fontSize: 16,
-    fontWeight: '900',
-  },
-
   bondsCard: {
     marginTop: 18,
     padding: 20,
@@ -1075,26 +1021,6 @@ const styles = StyleSheet.create<any>({
     fontSize: 14,
     lineHeight: 21,
     fontWeight: '700',
-  },
-  logoutButton: {
-    marginTop: 16,
-    minHeight: 56,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,107,107,0.10)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,107,107,0.26)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoutButtonText: {
-    color: 'rgba(255,155,155,0.95)',
-    fontSize: 16,
-    fontWeight: '900',
-  },
-
-  pressed: {
-    opacity: 0.78,
-    transform: [{ scale: 0.99 }],
   },
   pressedSmall: {
     opacity: 0.72,

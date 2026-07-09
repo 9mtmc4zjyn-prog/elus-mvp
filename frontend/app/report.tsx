@@ -14,6 +14,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useApp } from '../src/context/AppContext';
+import { Button } from '../src/components/Button';
 
 const COLORS = {
   background: '#0B101A',
@@ -112,12 +113,11 @@ export default function ReportScreen() {
             Nossa equipe irá analisar a denúncia. O usuário denunciado não será
             notificado sobre o envio da denúncia.
           </Text>
-          <Pressable
-            style={({ pressed }) => [styles.doneButton, pressed && styles.pressed]}
+          <Button
+            label="Voltar"
+            variant="primary"
             onPress={() => router.back()}
-          >
-            <Text style={styles.doneButtonText}>Voltar</Text>
-          </Pressable>
+          />
         </View>
       </SafeAreaView>
     );
@@ -210,29 +210,20 @@ export default function ReportScreen() {
           </Text>
         </View>
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.submitButton,
-            !selectedReason && styles.submitButtonDisabled,
-            pressed && styles.pressed,
-          ]}
-          onPress={submitReport}
+        <Button
+          label="Enviar denúncia"
+          variant="destructive"
+          loading={loading}
           disabled={loading || !selectedReason}
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.submitButtonText}>Enviar denúncia</Text>
-          )}
-        </Pressable>
+          onPress={submitReport}
+        />
 
-        <Pressable
-          style={({ pressed }) => [styles.cancelButton, pressed && styles.pressed]}
-          onPress={() => router.back()}
+        <Button
+          label="Cancelar"
+          variant="secondary"
           disabled={loading}
-        >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
-        </Pressable>
+          onPress={() => router.back()}
+        />
 
         <View style={styles.bottomSpace} />
       </ScrollView>
@@ -346,30 +337,6 @@ const styles = StyleSheet.create({
   },
   warningTitle: { color: '#D9B46A', fontSize: 13, fontWeight: '900', marginBottom: 6 },
   warningText: { color: COLORS.muted, fontSize: 13, lineHeight: 20, fontWeight: '600' },
-  submitButton: {
-    minHeight: 58,
-    borderRadius: 26,
-    backgroundColor: COLORS.red,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-    shadowColor: COLORS.red,
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  submitButtonDisabled: { opacity: 0.45 },
-  submitButtonText: { color: COLORS.text, fontSize: 17, fontWeight: '900' },
-  cancelButton: {
-    minHeight: 52,
-    borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: COLORS.borderStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: { color: COLORS.text, fontSize: 16, fontWeight: '800' },
   successContainer: {
     flex: 1,
     alignItems: 'center',
@@ -390,15 +357,6 @@ const styles = StyleSheet.create({
   successIcon: { color: '#22C55E', fontSize: 36, fontWeight: '900' },
   successTitle: { color: COLORS.text, fontSize: 24, fontWeight: '900', marginBottom: 14, textAlign: 'center' },
   successText: { color: COLORS.muted, fontSize: 15, lineHeight: 24, fontWeight: '600', textAlign: 'center', marginBottom: 32 },
-  doneButton: {
-    minWidth: 200,
-    minHeight: 56,
-    borderRadius: 26,
-    backgroundColor: COLORS.blue,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doneButtonText: { color: COLORS.text, fontSize: 17, fontWeight: '900' },
   bottomSpace: { height: 40 },
   pressed: { opacity: 0.74 },
 });

@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Button } from '../src/components/Button';
 
 const COLORS = {
   background: '#0B101A',
@@ -227,12 +228,7 @@ export default function PrivacyPolicyScreen() {
           ELUS · Em conformidade com a LGPD (Lei nº 13.709/2018).
         </Text>
 
-        <Pressable
-          style={({ pressed }) => [styles.acceptButton, pressed && styles.pressed]}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.acceptButtonText}>Li e entendi ✓</Text>
-        </Pressable>
+        <Button label="Li e entendi ✓" variant="success" onPress={() => router.back()} />
 
         <View style={styles.bottomSpace} />
       </ScrollView>
@@ -314,18 +310,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 24,
   },
-  acceptButton: {
-    minHeight: 58,
-    borderRadius: 26,
-    backgroundColor: COLORS.green,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: COLORS.green,
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  acceptButtonText: { color: '#06070B', fontSize: 18, fontWeight: '900' },
   bottomSpace: { height: 40 },
   pressed: { opacity: 0.75 },
 });

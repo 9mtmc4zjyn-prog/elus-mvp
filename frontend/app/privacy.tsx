@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Button } from '../src/components/Button';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -171,22 +172,9 @@ export default function PrivacyScreen() {
           </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.acceptButton}
-          onPress={handleAccept}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.acceptButtonText}>Aceitar e continuar</Text>
-          <Ionicons name="arrow-forward" size={20} color="#061019" />
-        </TouchableOpacity>
+        <Button label="Aceitar e continuar" variant="primary" icon="arrow-forward" onPress={handleAccept} />
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={handleBack}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.secondaryButtonText}>Voltar</Text>
-        </TouchableOpacity>
+        <Button label="Voltar" variant="secondary" onPress={handleBack} />
       </ScrollView>
     </View>
   );
@@ -377,39 +365,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  acceptButton: {
-    height: 58,
-    borderRadius: 20,
-    backgroundColor: COLORS.cyan,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    marginTop: 24,
-  },
-
-  acceptButtonText: {
-    color: '#061019',
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '900',
-    marginRight: 8,
-  },
-
-  secondaryButton: {
-    height: 56,
-    borderRadius: 20,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.borderStrong,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
-  },
-
-  secondaryButtonText: {
-    color: COLORS.textStrong,
-    fontSize: 16,
-    lineHeight: 21,
-    fontWeight: '800',
-  },
 });

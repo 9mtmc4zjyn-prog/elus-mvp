@@ -1,20 +1,18 @@
 ﻿import React, { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Stack, usePathname, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Ionicons } from '@expo/vector-icons';
 
 import { AppProvider, useApp } from '../src/context/AppContext';
 import { supabase } from '../src/lib/supabase';
 import { ThemeProvider } from '../src/theme/ThemeContext';
+import { Button } from '../src/components/Button';
 
 const COLORS = {
   background: '#0B101A',
-  gold: '#C49A45',
   goldDark: '#8A6E35',
   text: '#EDEDED',
-  buttonText: '#1A1200',
 };
 
 function normalizePathname(pathname: string) {
@@ -122,17 +120,20 @@ function GlobalPlansButton() {
   }
 
   return (
-    <Pressable
-      style={({ pressed }) => [
+    <Button
+      label="Planos"
+      variant="warningAccent"
+      icon="diamond"
+      iconPosition="left"
+      iconSize={15}
+      pressedScale={0.98}
+      textStyle={styles.globalPlansButtonText}
+      containerStyle={[
         styles.globalPlansButton,
         ownProfileRoute && styles.globalPlansButtonOnProfile,
-        pressed && styles.globalPlansButtonPressed,
       ]}
       onPress={openPlans}
-    >
-      <Ionicons name="diamond" size={15} color={COLORS.buttonText} />
-      <Text style={styles.globalPlansButtonText}>Planos</Text>
-    </Pressable>
+    />
   );
 }
 
@@ -211,13 +212,8 @@ const styles = StyleSheet.create({
     minHeight: 42,
     paddingHorizontal: 14,
     borderRadius: 999,
-    backgroundColor: COLORS.gold,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.28)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: COLORS.gold,
     shadowOpacity: 0.36,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 0 },
@@ -228,15 +224,7 @@ const styles = StyleSheet.create({
     right: 78,
   },
 
-  globalPlansButtonPressed: {
-    opacity: 0.78,
-    transform: [{ scale: 0.98 }],
-  },
-
   globalPlansButtonText: {
-    marginLeft: 6,
-    color: COLORS.buttonText,
     fontSize: 13,
-    fontWeight: '900',
   },
 });

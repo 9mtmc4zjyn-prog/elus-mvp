@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { useApp } from '../../src/context/AppContext';
 import { appUserToProfile } from '../../src/utils/adaptSupabaseProfile';
 import type { Profile } from '../../src/data/profiles';
+import { Button } from '../../src/components/Button';
 
 const ELUS_SYMBOL = require('../../assets/brand/elus_symbol_main.png');
 const ELUS_UNVERIFIED_RED = require('../../assets/images/elus-unverified-red.png');
@@ -730,17 +731,11 @@ function AccountStatusCard({
         </Text>
 
         {!verified ? (
-          <Pressable
-            style={({ pressed }) => [
-              styles.verificationButton,
-              pressed ? styles.pressed : null,
-            ]}
+          <Button
+            label="Ver status da verificação →"
+            variant="primary"
             onPress={onPressVerification}
-          >
-            <Text style={styles.verificationButtonText}>
-              Ver status da verificação →
-            </Text>
-          </Pressable>
+          />
         ) : null}
       </View>
     </View>
@@ -801,17 +796,11 @@ function RequestsAccessCard({
           compartilhadas quando existirem.
         </Text>
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.requestsAccessButton,
-            pressed ? styles.pressedSmall : null,
-          ]}
+        <Button
+          label="Abrir solicitações →"
+          variant="secondary"
           onPress={onOpenRequests}
-        >
-          <Text style={styles.requestsAccessButtonText}>
-            Abrir solicitações →
-          </Text>
-        </Pressable>
+        />
       </View>
     </View>
   );
@@ -908,17 +897,11 @@ function ConnectionsErrorCard({ onRetry }: { onRetry: () => void }) {
           Verifique sua conexão com a internet e tente novamente. Se o problema persistir, reabra o aplicativo.
         </Text>
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.requestsAccessButton,
-            pressed ? styles.pressedSmall : null,
-          ]}
+        <Button
+          label="Tentar novamente →"
+          variant="secondary"
           onPress={onRetry}
-        >
-          <Text style={styles.requestsAccessButtonText}>
-            Tentar novamente →
-          </Text>
-        </Pressable>
+        />
       </View>
     </View>
   );
@@ -1325,21 +1308,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  verificationButton: {
-    marginTop: 16,
-    minHeight: 48,
-    borderRadius: 18,
-    backgroundColor: COLORS.blue,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  verificationButtonText: {
-    color: COLORS.text,
-    fontSize: 15,
-    fontWeight: '900',
-  },
-
   requestsAccessCard: {
     marginTop: 18,
     padding: 17,
@@ -1446,23 +1414,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     fontWeight: '700',
-  },
-
-  requestsAccessButton: {
-    marginTop: 14,
-    minHeight: 44,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  requestsAccessButtonText: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '900',
   },
 
   activeConnectionsSection: {
@@ -1576,11 +1527,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 24,
     fontWeight: '700',
-  },
-
-  pressed: {
-    opacity: 0.78,
-    transform: [{ scale: 0.99 }],
   },
 
   pressedSmall: {

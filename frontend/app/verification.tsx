@@ -17,6 +17,8 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../src/lib/supabase';
 import { useApp } from '../src/context/AppContext';
+import { Chip } from '../src/components/Chip';
+import { Button } from '../src/components/Button';
 
 const LOGO_FULL = require('../assets/brand/elus_logo_login_full.png');
 const SYMBOL = require('../assets/brand/elus_symbol_main.png');
@@ -622,31 +624,22 @@ export default function VerificationScreen() {
                   <Text style={styles.stepLabel}>Etapa {stepIndex + 1} de 3</Text>
                 </View>
 
-                {currentStep === 'document' ? (
+                {currentStep === 'document' && !isLocked ? (
                   <>
                     <Text style={styles.sectionTitle}>Escolha o documento</Text>
 
                     <View style={styles.documentGrid}>
-                      {DOCUMENT_TYPES.map((document) => {
-                        const selected = selectedDocument === document;
-                        return (
-                          <Pressable
-                            key={document}
+                      {DOCUMENT_TYPES.map((document) => (
+                        <View key={document} style={{ width: '48%', marginBottom: 12 }}>
+                          <Chip
+                            label={document}
+                            selected={selectedDocument === document}
                             disabled={isLocked || loading || documentSent}
-                            style={({ pressed }) => [
-                              styles.documentButton,
-                              selected && styles.documentButtonActive,
-                              (isLocked || loading || documentSent) && styles.documentButtonDisabled,
-                              pressed && !isLocked && !documentSent && styles.pressedSmall,
-                            ]}
                             onPress={() => selectDocument(document)}
-                          >
-                            <Text style={[styles.documentButtonText, selected && styles.documentButtonTextActive]}>
-                              {document}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
+                            size="large"
+                          />
+                        </View>
+                      ))}
                     </View>
 
                     <View style={styles.selfieBox}>
@@ -725,7 +718,7 @@ export default function VerificationScreen() {
                   </>
                 ) : null}
 
-                {currentStep === 'selfie' ? (
+                {currentStep === 'selfie' && !isLocked ? (
                   <View style={styles.selfieBox}>
                     <View style={styles.selfieTopRow}>
                       <View style={[styles.selfieIconBox, { borderColor: `${verificationColor}55`, backgroundColor: `${verificationColor}10` }]}>
@@ -775,7 +768,7 @@ export default function VerificationScreen() {
                   </View>
                 ) : null}
 
-                {currentStep === 'selfie_with_document' ? (
+                {currentStep === 'selfie_with_document' && !isLocked ? (
                   <View style={[
                     styles.selfieBox,
                     selfieWithDocumentPhotoUri && !selfieWithDocumentSent && !isLocked && styles.selfieBoxReview,
@@ -836,7 +829,7 @@ export default function VerificationScreen() {
                   </Text>
                 </View>
 
-                {currentStep === 'selfie_with_document' ? (
+                {isLocked || currentStep === 'selfie_with_document' ? (
                   <>
                     <View style={[
                       styles.warningBox,
@@ -864,23 +857,13 @@ export default function VerificationScreen() {
                       </Pressable>
                     ) : null}
 
-                    <Pressable
-                      style={({ pressed }) => [
-                        styles.continueButton,
-                        (!canContinue || loading) && styles.continueButtonDisabled,
-                        pressed && canContinue && !loading && styles.pressed,
-                      ]}
-                      onPress={continueToApp}
+                    <Button
+                      label={continueButtonText}
+                      variant="primary"
+                      loading={loading}
                       disabled={!canContinue || loading}
-                    >
-                      {loading ? (
-                        <ActivityIndicator color="#FFFFFF" />
-                      ) : (
-                        <Text style={[styles.continueButtonText, !canContinue && styles.continueButtonTextDisabled]}>
-                          {continueButtonText}
-                        </Text>
-                      )}
-                    </Pressable>
+                      onPress={continueToApp}
+                    />
                   </>
                 ) : null}
 
@@ -937,11 +920,6 @@ const styles = StyleSheet.create({
   stepLabel: { marginLeft: 12, color: COLORS.muted, fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
   sectionTitle: { color: COLORS.text, fontSize: 18, fontWeight: '900', marginBottom: 12 },
   documentGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  documentButton: { width: '48%', minHeight: 56, borderRadius: 22, backgroundColor: COLORS.input, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  documentButtonActive: { backgroundColor: 'rgba(45,100,255,0.18)', borderColor: COLORS.borderBlue },
-  documentButtonDisabled: { opacity: 0.82 },
-  documentButtonText: { color: COLORS.muted, fontSize: 17, fontWeight: '900' },
-  documentButtonTextActive: { color: COLORS.blueLight },
   documentSourceRow: { flexDirection: 'row', gap: 10, marginTop: 20 },
   documentSourceButton: { flex: 1, minHeight: 58, borderRadius: 24, backgroundColor: COLORS.blue, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, shadowColor: COLORS.blue, shadowOpacity: 0.42, shadowRadius: 22, shadowOffset: { width: 0, height: 0 } },
   documentSourceButtonText: { color: COLORS.text, fontSize: 14, lineHeight: 19, fontWeight: '900', textAlign: 'center' },
@@ -978,10 +956,6 @@ const styles = StyleSheet.create({
   checkboxActive: { backgroundColor: COLORS.blue, borderColor: COLORS.blue },
   checkboxMark: { color: COLORS.text, fontSize: 19, fontWeight: '900' },
   confirmText: { flex: 1, color: COLORS.muted, fontSize: 14, lineHeight: 22, fontWeight: '700' },
-  continueButton: { marginTop: 22, minHeight: 62, borderRadius: 26, backgroundColor: COLORS.blue, alignItems: 'center', justifyContent: 'center' },
-  continueButtonDisabled: { backgroundColor: 'rgba(255,255,255,0.13)' },
-  continueButtonText: { color: COLORS.text, fontSize: 19, fontWeight: '900', textAlign: 'center' },
-  continueButtonTextDisabled: { color: 'rgba(255,255,255,0.42)' },
   limitedButton: { marginTop: 14, minHeight: 56, borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.045)', borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
   limitedButtonText: { color: COLORS.muted, fontSize: 16, fontWeight: '900' },
   buttonDisabled: { opacity: 0.6 },

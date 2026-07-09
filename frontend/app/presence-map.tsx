@@ -19,6 +19,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useApp, type AppUser } from '../src/context/AppContext';
 import { appUserToProfile } from '../src/utils/adaptSupabaseProfile';
 import type { Profile } from '../src/data/profiles';
+import { Button } from '../src/components/Button';
 
 const ELUS_LOGO = require('../assets/images/elus-logo.png');
 const ELUS_SYMBOL = require('../assets/images/elus-symbol-cyan-purple.png');
@@ -96,7 +97,7 @@ function clamp(value: number, min: number, max: number) {
 function normalizeText(value: string) {
   return String(value ?? '')
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .trim();
 }
@@ -967,9 +968,11 @@ export default function PresenceMapScreen() {
               </Pressable>
             </View>
 
-            <Pressable style={styles.connectButton} onPress={openSelectedProfile}>
-              <Text style={styles.connectButtonText}>Ver perfil restrito</Text>
-            </Pressable>
+            <Button
+              label="Ver perfil restrito"
+              variant="secondary"
+              onPress={openSelectedProfile}
+            />
           </View>
         ) : null}
 
@@ -1001,16 +1004,14 @@ export default function PresenceMapScreen() {
             </View>
           </ScrollView>
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.refreshButton,
-              pressed ? styles.pressed : null,
-            ]}
+          <Button
+            label="Atualizar"
+            variant="mintAccent"
+            icon="refresh"
+            iconPosition="left"
             onPress={resetView}
-          >
-            <Ionicons name="refresh" size={18} color="#061019" />
-            <Text style={styles.refreshText}>Atualizar</Text>
-          </Pressable>
+            containerStyle={{ minHeight: 42, borderRadius: 21, paddingHorizontal: 14 }}
+          />
         </View>
       </View>
     </SafeAreaView>
@@ -1499,23 +1500,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  connectButton: {
-    marginTop: 12,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.075)',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-
-  connectButtonText: {
-    color: COLORS.text,
-    fontSize: 13,
-    fontWeight: '900',
-  },
-
   bottomBar: {
     position: 'absolute',
     left: 0,
@@ -1564,22 +1548,6 @@ const styles = StyleSheet.create({
   statText: {
     color: COLORS.muted,
     fontSize: 12,
-    fontWeight: '900',
-  },
-
-  refreshButton: {
-    height: 42,
-    paddingHorizontal: 14,
-    borderRadius: 21,
-    backgroundColor: '#35E6B5',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  refreshText: {
-    marginLeft: 7,
-    color: '#061019',
-    fontSize: 13,
     fontWeight: '900',
   },
 

@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
+import { Button } from '../src/components/Button';
 
 const SYMBOL = require('../assets/brand/elus_symbol_main.png');
 const WATERMARK = require('../assets/watermark/elus_symbol_watermark_10.png');
@@ -249,32 +250,20 @@ export default function LoginScreen() {
               </Pressable>
             </View>
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.primaryButton,
-                pressed && styles.pressed,
-                loading && styles.buttonDisabled,
-              ]}
+            <Button
+              label="Entrar →"
+              variant="primary"
+              loading={loading}
+              disabled={loading}
               onPress={enterApp}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.primaryButtonText}>Entrar →</Text>
-              )}
-            </Pressable>
+            />
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.secondaryButton,
-                pressed && styles.pressed,
-              ]}
-              onPress={goToSignup}
+            <Button
+              label="Ainda não tenho conta"
+              variant="secondary"
               disabled={loading}
-            >
-              <Text style={styles.secondaryButtonText}>Ainda não tenho conta</Text>
-            </Pressable>
+              onPress={goToSignup}
+            />
           </View>
 
           <Text style={styles.footer}>
@@ -324,12 +313,6 @@ const styles = StyleSheet.create({
   passwordHint: { marginTop: 8, color: COLORS.soft, fontSize: 12, fontWeight: '700', textAlign: 'right' },
   forgotButton: { alignSelf: 'flex-end', marginTop: 16, marginBottom: 20 },
   forgotText: { color: COLORS.blueLight, fontSize: 15, fontWeight: '900' },
-  primaryButton: { minHeight: 64, borderRadius: 26, backgroundColor: COLORS.blue, alignItems: 'center', justifyContent: 'center', shadowColor: COLORS.blue, shadowOpacity: 0.44, shadowRadius: 24, shadowOffset: { width: 0, height: 0 } },
-  primaryButtonText: { color: COLORS.text, fontSize: 21, fontWeight: '900' },
-  buttonDisabled: { opacity: 0.6 },
-  secondaryButton: { marginTop: 14, minHeight: 58, borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.055)', borderWidth: 1, borderColor: COLORS.borderStrong, alignItems: 'center', justifyContent: 'center' },
-  secondaryButtonText: { color: COLORS.text, fontSize: 18, fontWeight: '900' },
   footer: { marginTop: 24, color: COLORS.soft, textAlign: 'center', fontSize: 14, fontWeight: '800' },
-  pressed: { opacity: 0.78, transform: [{ scale: 0.99 }] },
   pressedSmall: { opacity: 0.7, transform: [{ scale: 0.94 }] },
 });
