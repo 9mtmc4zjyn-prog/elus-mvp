@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import {
   Image,
   Modal,
@@ -17,6 +17,8 @@ import { appUserToProfile } from '../../src/utils/adaptSupabaseProfile';
 import type { Profile } from '../../src/data/profiles';
 import { getLocalAffinityExplanation } from '../../src/utils/elusIntelligenceRules';
 import { Button } from '../../src/components/Button';
+import { useTheme } from '../../src/theme/ThemeContext';
+import type { ThemeColors } from '../../src/theme/theme';
 
 const ELUS_UNVERIFIED = require('../../assets/images/elus-unverified.png');
 const ELUS_VERIFIED_GREEN = require('../../assets/images/elus-verified-green.png');
@@ -24,27 +26,12 @@ const ELUS_CENTER_SYMBOL = require('../../assets/images/elus-symbol-cyan-purple.
 const ELUS_LOGO = require('../../assets/images/elus-logo.png');
 
 const COLORS = {
-  background: '#0B101A',
-  panel: '#141A26',
-  panelSoft: '#1C2433',
   panelDeep: '#080D16',
-  border: 'rgba(255,255,255,0.08)',
-  borderStrong: 'rgba(255,255,255,0.14)',
-  text: '#EDEDED',
-  muted: '#6B7280',
-  mutedSoft: '#A1A9B8',
-  cyan: '#5E9EAB',
-  cyanSoft: 'rgba(94,158,171,0.15)',
   blueLight: '#8FA3B8',
   blueLightSoft: 'rgba(143,163,184,0.14)',
-  purple: '#8B7EA8',
   purpleSoft: 'rgba(139,126,168,0.12)',
-  gold: '#C49A45',
   goldSoft: 'rgba(196,154,69,0.12)',
-  green: '#4A9A65',
   greenSoft: 'rgba(74,154,101,0.12)',
-  danger: '#B85C5C',
-  dangerSoft: 'rgba(184,92,92,0.12)',
 };
 
 type SignalKind =
@@ -142,16 +129,16 @@ function getVisibleProfileVerificationStatus({
   return profileStatus;
 }
 
-function getVerificationStatusColor(status: VerificationVisualStatus) {
+function getVerificationStatusColor(status: VerificationVisualStatus, colors: ThemeColors) {
   if (status === 'verified') {
-    return COLORS.green;
+    return colors.success;
   }
 
   if (status === 'in_review') {
     return COLORS.blueLight;
   }
 
-  return COLORS.danger;
+  return colors.danger;
 }
 
 function getVerificationStatusImage(status: VerificationVisualStatus) {
@@ -166,11 +153,11 @@ function getVerificationStatusImage(status: VerificationVisualStatus) {
   return ELUS_UNVERIFIED;
 }
 
-function getVerificationMeta(status: VerificationVisualStatus) {
+function getVerificationMeta(status: VerificationVisualStatus, colors: ThemeColors) {
   if (status === 'verified') {
     return {
       pillText: 'Verificação concluída',
-      color: COLORS.green,
+      color: colors.success,
       icon: 'shield-checkmark-outline' as keyof typeof Ionicons.glyphMap,
     };
   }
@@ -185,15 +172,15 @@ function getVerificationMeta(status: VerificationVisualStatus) {
 
   return {
     pillText: 'Verificação pendente',
-    color: COLORS.danger,
+    color: colors.danger,
     icon: 'shield-outline' as keyof typeof Ionicons.glyphMap,
   };
 }
 
-function getProfileStatusColor(profile: Profile) {
+function getProfileStatusColor(profile: Profile, colors: ThemeColors) {
   const status = getProfileVerificationStatus(profile);
 
-  return getVerificationStatusColor(status);
+  return getVerificationStatusColor(status, colors);
 }
 
 function getProfileSignalKind(profile: Profile): SignalKind {
@@ -254,20 +241,20 @@ function getRestrictedLocation(profile: Profile) {
   return 'Localização aproximada protegida';
 }
 
-function getSignalColor(kind: SignalKind) {
+function getSignalColor(kind: SignalKind, colors: ThemeColors) {
   switch (kind) {
     case 'pessoa':
-      return COLORS.cyan;
+      return colors.accent;
     case 'empresa':
-      return COLORS.purple;
+      return colors.purple;
     case 'servico':
-      return COLORS.green;
+      return colors.success;
     case 'em-analise':
       return COLORS.blueLight;
     case 'nao-validado':
-      return COLORS.danger;
+      return colors.danger;
     default:
-      return COLORS.cyan;
+      return colors.accent;
   }
 }
 
@@ -343,13 +330,15 @@ function SmallStatusPill({
 }
 
 function FieldTrustNotice() {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.fieldTrustNotice}>
       <View style={styles.fieldTrustIconWrap}>
-        <Ionicons name="sparkles-outline" size={17} color={COLORS.cyan} />
+        <Ionicons name="sparkles-outline" size={17} color={colors.accent} />
       </View>
 
-      <Text style={styles.fieldTrustText}>
+      <Text style={[styles.fieldTrustText, { color: colors.textMuted }]}>
         Afinidades detectadas pela IA. Contato só com aprovação.
       </Text>
     </View>
@@ -365,12 +354,13 @@ function RadarNode({
   position: RadarPosition;
   currentUserStatus: VerificationVisualStatus;
 }) {
+  const { colors } = useTheme();
   const profileStatus = getProfileVerificationStatus(profile);
   const visibleProfileStatus = getVisibleProfileVerificationStatus({
     currentUserStatus,
     profileStatus,
   });
-  const color = getVerificationStatusColor(visibleProfileStatus);
+  const color = getVerificationStatusColor(visibleProfileStatus, colors);
   const image = getVerificationStatusImage(visibleProfileStatus);
 
   return (
@@ -406,15 +396,18 @@ function PresenceField({
   currentUserStatus: VerificationVisualStatus;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.fieldCard,
+        { borderColor: colors.borderStrong },
         pressed ? styles.fieldCardPressed : null,
       ]}
     >
-      <View style={styles.fieldBackgroundGlowOne} />
+      <View style={[styles.fieldBackgroundGlowOne, { backgroundColor: colors.accentSoft }]} />
       <View style={styles.fieldBackgroundGlowTwo} />
 
       <View style={styles.radarCircleOuter} />
@@ -446,19 +439,19 @@ function PresenceField({
         );
       })}
 
-      <View style={styles.fieldTextBox}>
+      <View style={[styles.fieldTextBox, { borderColor: colors.border }]}>
         <View style={styles.fieldHeaderRow}>
-          <Text style={styles.fieldEyebrow}>Campo ativo</Text>
+          <Text style={[styles.fieldEyebrow, { color: colors.accent }]}>Campo ativo</Text>
 
           <View style={styles.livePill}>
-            <View style={styles.liveDot} />
-            <Text style={styles.livePillText}>Vivo</Text>
+            <View style={[styles.liveDot, { backgroundColor: colors.accent }]} />
+            <Text style={[styles.livePillText, { color: colors.accent }]}>Vivo</Text>
           </View>
         </View>
 
-        <Text style={styles.fieldTitle}>Presença viva ao seu redor</Text>
+        <Text style={[styles.fieldTitle, { color: colors.text }]}>Presença viva ao seu redor</Text>
 
-        <Text style={styles.fieldDescription}>
+        <Text style={[styles.fieldDescription, { color: colors.textMuted }]}>
           Toque no campo para abrir o mapa vivo com sinais aproximados, filtros e contexto da sua região.
         </Text>
       </View>
@@ -473,12 +466,13 @@ function SignalAvatar({
   profile: Profile;
   currentUserStatus: VerificationVisualStatus;
 }) {
+  const { colors } = useTheme();
   const profileStatus = getProfileVerificationStatus(profile);
   const visibleProfileStatus = getVisibleProfileVerificationStatus({
     currentUserStatus,
     profileStatus,
   });
-  const statusColor = getVerificationStatusColor(visibleProfileStatus);
+  const statusColor = getVerificationStatusColor(visibleProfileStatus, colors);
 
   if (visibleProfileStatus !== 'verified') {
     const image = getVerificationStatusImage(visibleProfileStatus);
@@ -503,7 +497,7 @@ function SignalAvatar({
   }
 
   return (
-    <View style={[styles.signalAvatar, styles.signalAvatarNeutral]}>
+    <View style={[styles.signalAvatar, styles.signalAvatarNeutral, { backgroundColor: colors.surfaceElevated }]}>
       <Image source={{ uri: profile.photoUrl }} style={styles.signalPhoto} />
     </View>
   );
@@ -519,11 +513,12 @@ function SignalCard({
   currentUserStatus: VerificationVisualStatus;
 }) {
   const router = useRouter();
+  const { colors } = useTheme();
   const [affinityExpanded, setAffinityExpanded] = React.useState(false);
 
   const currentUserCanUseFullApp = currentUserStatus === 'verified';
   const kind = getProfileSignalKind(profile);
-  const color = getSignalColor(kind);
+  const color = getSignalColor(kind, colors);
   const profileStatus = getProfileVerificationStatus(profile);
   const profileIsVerified = profileStatus === 'verified';
   const profileIsInReview = profileStatus === 'in_review';
@@ -577,6 +572,7 @@ function SignalCard({
       style={({ pressed }) => [
         styles.signalCard,
         {
+          backgroundColor: colors.surface,
           borderColor: `${color}2E`,
         },
         pressed ? styles.pressed : null,
@@ -590,9 +586,10 @@ function SignalCard({
             <Text
               style={[
                 styles.signalName,
+                { color: colors.text },
                 !profileIsVerified
                   ? {
-                      color: getProfileStatusColor(profile),
+                      color: getProfileStatusColor(profile, colors),
                     }
                   : null,
               ]}
@@ -608,11 +605,11 @@ function SignalCard({
             />
           </View>
 
-          <Text style={styles.signalLabel} numberOfLines={1}>
+          <Text style={[styles.signalLabel, { color: colors.textMuted }]} numberOfLines={1}>
             {displayLabel}
           </Text>
 
-          <Text style={styles.signalDistance}>{displayDistance}</Text>
+          <Text style={[styles.signalDistance, { color: colors.textSoft }]}>{displayDistance}</Text>
         </View>
 
         <View
@@ -630,15 +627,15 @@ function SignalCard({
 
       <View style={styles.aiReasonBox}>
         <View style={styles.aiReasonHeader}>
-          <Ionicons name="sparkles-outline" size={14} color={COLORS.cyan} />
-          <Text style={styles.aiReasonLabel}>Motivo da afinidade</Text>
+          <Ionicons name="sparkles-outline" size={14} color={colors.accent} />
+          <Text style={[styles.aiReasonLabel, { color: colors.accent }]}>Motivo da afinidade</Text>
         </View>
 
         <View style={styles.aiBullets}>
           {affinityReasons.map((reason, index) => (
             <View key={`${profile.id}-reason-${index}`} style={styles.aiBulletRow}>
-              <View style={styles.aiBulletDot} />
-              <Text style={styles.aiReasonText} numberOfLines={2}>
+              <View style={[styles.aiBulletDot, { backgroundColor: colors.accent }]} />
+              <Text style={[styles.aiReasonText, { color: colors.textMuted }]} numberOfLines={2}>
                 {reason}
               </Text>
             </View>
@@ -647,7 +644,7 @@ function SignalCard({
 
         {affinityExpanded && (
           <View style={styles.affinityExpandedBox}>
-            <Text style={styles.affinityExpandedText}>
+            <Text style={[styles.affinityExpandedText, { color: colors.textMuted }]}>
               {localAffinityExplanation.text}
             </Text>
             {localAffinityExplanation.safetyNotice ? (
@@ -665,13 +662,13 @@ function SignalCard({
           ]}
           onPress={() => setAffinityExpanded((v) => !v)}
         >
-          <Text style={styles.affinityToggleText}>
+          <Text style={[styles.affinityToggleText, { color: colors.accent }]}>
             {affinityExpanded ? 'Ocultar explicação' : 'Por que essa afinidade?'}
           </Text>
           <Ionicons
             name={affinityExpanded ? 'chevron-up-outline' : 'chevron-down-outline'}
             size={13}
-            color={COLORS.cyan}
+            color={colors.accent}
           />
         </Pressable>
       </View>
@@ -679,11 +676,12 @@ function SignalCard({
       <Pressable
         style={({ pressed }) => [
           styles.profileActionButton,
+          { borderColor: colors.border },
           pressed ? styles.pressed : null,
         ]}
         onPress={openProfile}
       >
-        <Text style={styles.profileActionButtonText}>Ver perfil</Text>
+        <Text style={[styles.profileActionButtonText, { color: colors.text }]}>Ver perfil</Text>
       </Pressable>
     </Pressable>
   );
@@ -702,11 +700,14 @@ function ContextCard({
   color: string;
   onPress?: () => void;
 }) {
+  const { colors } = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.contextCard,
+        { backgroundColor: colors.surface, borderColor: colors.borderStrong },
         pressed ? styles.pressed : null,
       ]}
     >
@@ -719,8 +720,8 @@ function ContextCard({
         <Ionicons name={icon} size={17} color={color} />
       </View>
 
-      <Text style={styles.contextTitle}>{title}</Text>
-      <Text style={styles.contextText}>{text}</Text>
+      <Text style={[styles.contextTitle, { color: colors.text }]}>{title}</Text>
+      <Text style={[styles.contextText, { color: colors.textSoft }]}>{text}</Text>
     </Pressable>
   );
 }
@@ -728,6 +729,7 @@ function ContextCard({
 export default function HomeScreen() {
   const router = useRouter();
   const { user, realUsers } = useApp();
+  const { colors } = useTheme();
 
   const scrollViewRef = React.useRef<ScrollView>(null);
   const [presenceFieldY, setPresenceFieldY] = React.useState(0);
@@ -738,7 +740,7 @@ export default function HomeScreen() {
   }
 
   const currentVerificationStatus = getCurrentVerificationStatus(user);
-  const verificationMeta = getVerificationMeta(currentVerificationStatus);
+  const verificationMeta = getVerificationMeta(currentVerificationStatus, colors);
 
   const allProfiles = realUsers.map(appUserToProfile);
   const onlineProfiles = allProfiles.filter((profile) => profile.isOnline);
@@ -753,7 +755,7 @@ export default function HomeScreen() {
   const signalProfiles = (onlineProfiles.length > 0 ? onlineProfiles : allProfiles).slice(0, 3);
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
 
       <ScrollView
@@ -765,8 +767,8 @@ export default function HomeScreen() {
         <View style={styles.heroBlock}>
           <View style={styles.topBrandRow}>
             <View style={styles.topTextWrap}>
-              <Text style={styles.topEyebrow}>ELUS</Text>
-              <Text style={styles.topTitle}>Campo de Presença</Text>
+              <Text style={[styles.topEyebrow, { color: colors.accent }]}>ELUS</Text>
+              <Text style={[styles.topTitle, { color: colors.text }]}>Campo de Presença</Text>
             </View>
 
             <Image
@@ -776,18 +778,18 @@ export default function HomeScreen() {
             />
           </View>
 
-          <Text style={styles.topDescription}>
+          <Text style={[styles.topDescription, { color: colors.textMuted }]}>
             Uma rede contextual viva para pessoas, empresas, serviços e oportunidades reais, sem expor localização exata.
           </Text>
 
           <View style={styles.statusRow}>
-            <SmallStatusPill icon="radio-outline" text="Radar ativo" color={COLORS.cyan} />
+            <SmallStatusPill icon="radio-outline" text="Radar ativo" color={colors.accent} />
             <SmallStatusPill
               icon={verificationMeta.icon}
               text={verificationMeta.pillText}
               color={verificationMeta.color}
             />
-            <SmallStatusPill icon="sparkles-outline" text="IA contextual" color={COLORS.purple} />
+            <SmallStatusPill icon="sparkles-outline" text="IA contextual" color={colors.purple} />
           </View>
         </View>
 
@@ -803,15 +805,15 @@ export default function HomeScreen() {
 
         <View style={styles.sectionHeader}>
           <View style={styles.sectionHeaderTextWrap}>
-            <Text style={styles.sectionEyebrow}>Sinais da região</Text>
-            <Text style={styles.sectionTitle}>Presenças que combinam</Text>
+            <Text style={[styles.sectionEyebrow, { color: colors.warning }]}>Sinais da região</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Presenças que combinam</Text>
           </View>
 
           <Pressable
             onPress={() => router.push('/(tabs)/connections' as never)}
             style={styles.sectionLinkButton}
           >
-            <Text style={styles.sectionLink}>Ver rede</Text>
+            <Text style={[styles.sectionLink, { color: colors.accent }]}>Ver rede</Text>
           </Pressable>
         </View>
 
@@ -826,8 +828,8 @@ export default function HomeScreen() {
 
         <View style={styles.sectionHeader}>
           <View style={styles.sectionHeaderTextWrap}>
-            <Text style={styles.sectionEyebrow}>Descoberta</Text>
-            <Text style={styles.sectionTitle}>Como usar o Campo</Text>
+            <Text style={[styles.sectionEyebrow, { color: colors.warning }]}>Descoberta</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Como usar o Campo</Text>
           </View>
         </View>
 
@@ -836,7 +838,7 @@ export default function HomeScreen() {
             icon="location-outline"
             title="Presença local"
             text="Veja sinais aproximados da sua região."
-            color={COLORS.cyan}
+            color={colors.accent}
             onPress={scrollToPresenceField}
           />
 
@@ -844,7 +846,7 @@ export default function HomeScreen() {
             icon="sparkles-outline"
             title="Motivo claro"
             text="Entenda por que uma presença apareceu."
-            color={COLORS.purple}
+            color={colors.purple}
             onPress={() => setAffinityModalVisible(true)}
           />
 
@@ -852,7 +854,7 @@ export default function HomeScreen() {
             icon="radio-outline"
             title="Mapa vivo"
             text="Abra o radar para explorar por perto."
-            color={COLORS.gold}
+            color={colors.warning}
             onPress={() => router.push('/presence-map' as never)}
           />
 
@@ -860,7 +862,7 @@ export default function HomeScreen() {
             icon="construct-outline"
             title="Ação simples"
             text="Toque no perfil para decidir o próximo passo."
-            color={COLORS.green}
+            color={colors.success}
             onPress={() => router.push('/(tabs)/search' as never)}
           />
         </View>
@@ -879,10 +881,10 @@ export default function HomeScreen() {
             <View
               style={[
                 styles.modalIconWrap,
-                { backgroundColor: `${COLORS.purple}14`, borderColor: `${COLORS.purple}44` },
+                { backgroundColor: `${colors.purple}14`, borderColor: `${colors.purple}44` },
               ]}
             >
-              <Ionicons name="sparkles-outline" size={20} color={COLORS.purple} />
+              <Ionicons name="sparkles-outline" size={20} color={colors.purple} />
             </View>
 
             <Text style={styles.modalTitle}>Como a IA de afinidades funciona</Text>
@@ -909,7 +911,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create<any>({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   scroll: {
@@ -943,7 +944,6 @@ const styles = StyleSheet.create<any>({
   topEyebrow: {
     fontSize: 10,
     lineHeight: 13,
-    color: COLORS.cyan,
     fontWeight: '800',
     letterSpacing: 3,
     textTransform: 'uppercase',
@@ -954,7 +954,6 @@ const styles = StyleSheet.create<any>({
     marginTop: 4,
     fontSize: 30,
     lineHeight: 36,
-    color: COLORS.text,
     fontWeight: '350',
     letterSpacing: -0.5,
   },
@@ -969,7 +968,6 @@ const styles = StyleSheet.create<any>({
   topDescription: {
     fontSize: 13,
     lineHeight: 20,
-    color: COLORS.mutedSoft,
     marginBottom: 14,
     maxWidth: 330,
   },
@@ -1024,7 +1022,6 @@ const styles = StyleSheet.create<any>({
 
   fieldTrustText: {
     flex: 1,
-    color: COLORS.mutedSoft,
     fontSize: 12,
     lineHeight: 17,
     fontWeight: '800',
@@ -1035,7 +1032,6 @@ const styles = StyleSheet.create<any>({
     borderRadius: 32,
     backgroundColor: COLORS.panelDeep,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
     overflow: 'hidden',
     marginBottom: 16,
   },
@@ -1050,7 +1046,6 @@ const styles = StyleSheet.create<any>({
     width: 230,
     height: 230,
     borderRadius: 115,
-    backgroundColor: COLORS.cyanSoft,
     top: -86,
     right: -68,
   },
@@ -1138,7 +1133,6 @@ const styles = StyleSheet.create<any>({
     borderRadius: 22,
     backgroundColor: 'rgba(5,7,13,0.78)',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
 
   fieldHeaderRow: {
@@ -1151,7 +1145,6 @@ const styles = StyleSheet.create<any>({
   fieldEyebrow: {
     fontSize: 10,
     lineHeight: 13,
-    color: COLORS.cyan,
     fontWeight: '800',
     letterSpacing: 1.8,
     textTransform: 'uppercase',
@@ -1172,12 +1165,10 @@ const styles = StyleSheet.create<any>({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: COLORS.cyan,
     marginRight: 6,
   },
 
   livePillText: {
-    color: COLORS.cyan,
     fontSize: 10,
     fontWeight: '900',
     textTransform: 'uppercase',
@@ -1186,7 +1177,6 @@ const styles = StyleSheet.create<any>({
   fieldTitle: {
     fontSize: 18,
     lineHeight: 23,
-    color: COLORS.text,
     fontWeight: '800',
     marginBottom: 5,
   },
@@ -1194,7 +1184,6 @@ const styles = StyleSheet.create<any>({
   fieldDescription: {
     fontSize: 11,
     lineHeight: 16,
-    color: COLORS.mutedSoft,
   },
 
   sectionHeader: {
@@ -1214,7 +1203,6 @@ const styles = StyleSheet.create<any>({
   sectionEyebrow: {
     fontSize: 10,
     lineHeight: 13,
-    color: COLORS.gold,
     fontWeight: '800',
     letterSpacing: 2,
     textTransform: 'uppercase',
@@ -1224,7 +1212,6 @@ const styles = StyleSheet.create<any>({
   sectionTitle: {
     fontSize: 29,
     lineHeight: 35,
-    color: COLORS.text,
     fontWeight: '350',
     letterSpacing: -0.5,
   },
@@ -1236,16 +1223,13 @@ const styles = StyleSheet.create<any>({
 
   sectionLink: {
     fontSize: 12,
-    color: COLORS.cyan,
     fontWeight: '800',
   },
 
   signalCard: {
     borderRadius: 25,
     padding: 15,
-    backgroundColor: COLORS.panel,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
     marginBottom: 14,
   },
 
@@ -1261,14 +1245,12 @@ const styles = StyleSheet.create<any>({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.panelSoft,
     marginRight: 12,
     overflow: 'hidden',
   },
 
   signalAvatarNeutral: {
     borderColor: 'rgba(255,255,255,0.14)',
-    backgroundColor: COLORS.panelSoft,
   },
 
   signalPhoto: {
@@ -1297,7 +1279,6 @@ const styles = StyleSheet.create<any>({
     flexShrink: 1,
     fontSize: 21,
     lineHeight: 26,
-    color: COLORS.text,
     fontWeight: '400',
     marginRight: 7,
   },
@@ -1310,14 +1291,12 @@ const styles = StyleSheet.create<any>({
   signalLabel: {
     fontSize: 12,
     lineHeight: 17,
-    color: COLORS.mutedSoft,
     marginBottom: 2,
   },
 
   signalDistance: {
     fontSize: 11,
     lineHeight: 15,
-    color: COLORS.muted,
     fontWeight: '750',
   },
 
@@ -1348,7 +1327,6 @@ const styles = StyleSheet.create<any>({
 
   aiReasonLabel: {
     marginLeft: 7,
-    color: COLORS.cyan,
     fontSize: 10,
     lineHeight: 14,
     fontWeight: '900',
@@ -1369,7 +1347,6 @@ const styles = StyleSheet.create<any>({
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: COLORS.cyan,
     marginTop: 6,
     marginRight: 8,
   },
@@ -1378,7 +1355,6 @@ const styles = StyleSheet.create<any>({
     flex: 1,
     fontSize: 11,
     lineHeight: 16,
-    color: COLORS.mutedSoft,
   },
 
   affinityExpandedBox: {
@@ -1391,7 +1367,6 @@ const styles = StyleSheet.create<any>({
   },
 
   affinityExpandedText: {
-    color: COLORS.mutedSoft,
     fontSize: 12,
     lineHeight: 19,
     fontWeight: '600',
@@ -1415,7 +1390,6 @@ const styles = StyleSheet.create<any>({
   },
 
   affinityToggleText: {
-    color: COLORS.cyan,
     fontSize: 11,
     fontWeight: '900',
     letterSpacing: 0.3,
@@ -1429,11 +1403,9 @@ const styles = StyleSheet.create<any>({
     paddingVertical: 8,
     backgroundColor: 'rgba(255,255,255,0.065)',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
 
   profileActionButtonText: {
-    color: COLORS.text,
     fontSize: 11,
     fontWeight: '900',
   },
@@ -1448,9 +1420,7 @@ const styles = StyleSheet.create<any>({
     width: '48.5%',
     minHeight: 142,
     borderRadius: 22,
-    backgroundColor: COLORS.panel,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
     padding: 14,
     marginBottom: 12,
   },
@@ -1468,7 +1438,6 @@ const styles = StyleSheet.create<any>({
   contextTitle: {
     fontSize: 13,
     lineHeight: 17,
-    color: COLORS.text,
     fontWeight: '800',
     marginBottom: 6,
   },
@@ -1476,7 +1445,6 @@ const styles = StyleSheet.create<any>({
   contextText: {
     fontSize: 11,
     lineHeight: 16,
-    color: COLORS.muted,
   },
 
   pressed: {

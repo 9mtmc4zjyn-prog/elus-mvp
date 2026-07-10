@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
   Pressable,
@@ -15,25 +15,18 @@ import { useApp } from '../../src/context/AppContext';
 import { appUserToProfile } from '../../src/utils/adaptSupabaseProfile';
 import type { Profile } from '../../src/data/profiles';
 import { Button } from '../../src/components/Button';
+import { useTheme } from '../../src/theme/ThemeContext';
+import type { ThemeColors } from '../../src/theme/theme';
 
 const ELUS_SYMBOL = require('../../assets/brand/elus_symbol_main.png');
 const ELUS_UNVERIFIED_RED = require('../../assets/images/elus-unverified-red.png');
 const ELUS_VERIFIED_GREEN = require('../../assets/images/elus-verified-green.png');
 
 const COLORS = {
-  background: '#0B101A',
   card: 'rgba(20,26,38,0.94)',
-  cardSoft: 'rgba(255,255,255,0.045)',
-  border: 'rgba(255,255,255,0.12)',
-  text: '#EDEDED',
   muted: 'rgba(161,169,184,0.78)',
   soft: 'rgba(161,169,184,0.55)',
-  blue: '#5E9EAB',
   blueLight: '#8FA3B8',
-  cyan: '#5E9EAB',
-  gold: '#C49A45',
-  green: '#4A9A65',
-  danger: '#B85C5C',
 };
 
 type VerificationPhase = 'verified' | 'in_review' | 'unverified';
@@ -120,16 +113,16 @@ function normalizeUserVerificationStatus(
   return 'unverified';
 }
 
-function getCurrentUserStatusColor(status: VerificationPhase) {
+function getCurrentUserStatusColor(status: VerificationPhase, colors: ThemeColors) {
   if (status === 'verified') {
-    return COLORS.green;
+    return colors.success;
   }
 
   if (status === 'in_review') {
     return COLORS.blueLight;
   }
 
-  return COLORS.danger;
+  return colors.danger;
 }
 
 function getCurrentUserStatusSymbol(status: VerificationPhase) {
@@ -351,16 +344,16 @@ function getConnectionLabel(branch: any, connection: unknown) {
   return String(branch?.title ?? 'Vínculo');
 }
 
-function getConnectionColor(branch: any, connection: unknown) {
+function getConnectionColor(branch: any, connection: unknown, colors: ThemeColors) {
   const rawConnection = connection as Record<string, unknown>;
   const kind = normalizeText(String(rawConnection?.kind ?? branch?.kind ?? ''));
 
   if (kind === 'family') {
-    return COLORS.blue;
+    return colors.accent;
   }
 
   if (kind === 'company' || kind === 'professional') {
-    return COLORS.gold;
+    return colors.warning;
   }
 
   if (kind === 'interest') {
@@ -383,15 +376,17 @@ function getConnectionColor(branch: any, connection: unknown) {
     return '#F59E0B';
   }
 
-  return String(branch?.color ?? COLORS.green);
+  return String(branch?.color ?? colors.success);
 }
 
 function getAcceptedConnectionItems({
   connectionBranches,
   profiles,
+  colors,
 }: {
   connectionBranches: any[];
   profiles: Profile[];
+  colors: ThemeColors;
 }) {
   const items: ActiveConnectionItem[] = [];
   const usedProfileIds = new Set<string>();
@@ -434,7 +429,7 @@ function getAcceptedConnectionItems({
         id: `${profileId}-${String((connection as any)?.id ?? items.length)}`,
         profile: matchedProfile,
         label: getConnectionLabel(branch, connection),
-        color: getConnectionColor(branch, connection),
+        color: getConnectionColor(branch, connection, colors),
       });
     });
   });
@@ -561,6 +556,7 @@ function RequestFlowIcon({ color }: { color: string }) {
 }
 
 function PlainAvatar({ profile, size = 54 }: { profile: Profile; size?: number }) {
+  const { colors } = useTheme();
   const photoUrl = getProfilePhotoUrl(profile);
   const innerSize = size - 6;
 
@@ -586,7 +582,7 @@ function PlainAvatar({ profile, size = 54 }: { profile: Profile; size?: number }
           resizeMode="cover"
         />
       ) : (
-        <Text style={styles.avatarFallbackText}>
+        <Text style={[styles.avatarFallbackText, { color: colors.text }]}>
           {getFirstName(profile).slice(0, 2).toUpperCase()}
         </Text>
       )}
@@ -605,9 +601,10 @@ function ConnectionsSummary({
   activeConnectionsCount: number;
   onOpenActiveConnections?: () => void;
 }) {
+  const { colors } = useTheme();
   const statusColor = currentUserVerified
-    ? COLORS.cyan
-    : getCurrentUserStatusColor(currentUserStatus);
+    ? colors.accent
+    : getCurrentUserStatusColor(currentUserStatus, colors);
 
   const summaryContent = (
     <>
@@ -683,7 +680,8 @@ function AccountStatusCard({
   currentUserStatus: VerificationPhase;
   onPressVerification: () => void;
 }) {
-  const statusColor = getCurrentUserStatusColor(currentUserStatus);
+  const { colors } = useTheme();
+  const statusColor = getCurrentUserStatusColor(currentUserStatus, colors);
   const statusSymbol = getCurrentUserStatusSymbol(currentUserStatus);
   const verified = currentUserStatus === 'verified';
 
@@ -710,7 +708,7 @@ function AccountStatusCard({
       </View>
 
       <View style={styles.statusTextBox}>
-        <Text style={styles.cardKicker}>Status da conta</Text>
+        <Text style={[styles.cardKicker, { color: colors.warning }]}>Status da conta</Text>
 
         <Text
           style={[
@@ -725,7 +723,7 @@ function AccountStatusCard({
 
         <Text style={styles.statusText}>{getStatusText(currentUserStatus)}</Text>
 
-        <Text style={styles.statusGuide}>
+        <Text style={[styles.statusGuide, { color: colors.text }]}>
           Acompanhe tudo por aqui. Quando houver avanço, o status aparecerá nas
           áreas de solicitações e vínculos.
         </Text>
@@ -751,9 +749,10 @@ function RequestsAccessCard({
   currentUserStatus: VerificationPhase;
   onOpenRequests: () => void;
 }) {
+  const { colors } = useTheme();
   const statusColor = currentUserVerified
-    ? COLORS.green
-    : getCurrentUserStatusColor(currentUserStatus);
+    ? colors.success
+    : getCurrentUserStatusColor(currentUserStatus, colors);
 
   return (
     <View
@@ -778,7 +777,7 @@ function RequestsAccessCard({
       </View>
 
       <View style={styles.requestsAccessInfo}>
-        <Text style={styles.cardKicker}>Solicitações</Text>
+        <Text style={[styles.cardKicker, { color: colors.warning }]}>Solicitações</Text>
 
         <Text
           style={[
@@ -815,13 +814,15 @@ function ActiveConnectionsList({
   onOpenProfile: (profileId: string) => void;
   onLayout: (event: any) => void;
 }) {
+  const { colors } = useTheme();
+
   if (items.length === 0) {
     return null;
   }
 
   return (
     <View style={styles.activeConnectionsSection} onLayout={onLayout}>
-      <Text style={styles.sectionTitle}>Conexões reais ativas</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>Conexões reais ativas</Text>
 
       <Text style={styles.sectionHint}>
         Vínculos aprovados ficam organizados aqui com tipo e acesso ao perfil.
@@ -839,7 +840,7 @@ function ActiveConnectionsList({
           <PlainAvatar profile={item.profile} size={54} />
 
           <View style={styles.activeConnectionInfo}>
-            <Text style={styles.activeConnectionName} numberOfLines={1}>
+            <Text style={[styles.activeConnectionName, { color: colors.text }]} numberOfLines={1}>
               {getProfileName(item.profile)}
             </Text>
 
@@ -875,21 +876,23 @@ function ActiveConnectionsList({
 }
 
 function ConnectionsErrorCard({ onRetry }: { onRetry: () => void }) {
+  const { colors } = useTheme();
+
   return (
     <View
       style={[
         styles.statusCard,
         {
-          backgroundColor: `${COLORS.danger}10`,
-          borderColor: `${COLORS.danger}34`,
+          backgroundColor: `${colors.danger}10`,
+          borderColor: `${colors.danger}34`,
           marginTop: 26,
         },
       ]}
     >
       <View style={styles.statusTextBox}>
-        <Text style={styles.cardKicker}>Erro de carregamento</Text>
+        <Text style={[styles.cardKicker, { color: colors.warning }]}>Erro de carregamento</Text>
 
-        <Text style={[styles.statusTitle, { color: COLORS.danger }]}>
+        <Text style={[styles.statusTitle, { color: colors.danger }]}>
           Não foi possível carregar suas conexões
         </Text>
 
@@ -908,11 +911,13 @@ function ConnectionsErrorCard({ onRetry }: { onRetry: () => void }) {
 }
 
 function HistoryCard() {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.historyCard}>
-      <Text style={styles.historyKicker}>Histórico</Text>
+      <Text style={[styles.historyKicker, { color: colors.warning }]}>Histórico</Text>
 
-      <Text style={styles.historyTitle}>
+      <Text style={[styles.historyTitle, { color: colors.text }]}>
         Tudo que virar vínculo aparece nesta tela.
       </Text>
 
@@ -928,6 +933,7 @@ export default function ConnectionsScreen() {
   const router = useRouter();
   const scrollRef = useRef<ScrollView | null>(null);
   const activeConnectionsY = useRef(0);
+  const { colors } = useTheme();
 
   const { user, getConnectionBranches, realUsers } = useApp() as any;
 
@@ -977,8 +983,9 @@ export default function ConnectionsScreen() {
     return getAcceptedConnectionItems({
       connectionBranches,
       profiles: allProfiles,
+      colors,
     });
-  }, [connectionBranches, currentUserVerified, allProfiles]);
+  }, [connectionBranches, currentUserVerified, allProfiles, colors]);
 
   function openProfile(profileId: string) {
     router.push(`/profile/${profileId}` as never);
@@ -1004,7 +1011,7 @@ export default function ConnectionsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
 
       <ScrollView
@@ -1014,7 +1021,7 @@ export default function ConnectionsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topBrandRow}>
-          <Text style={styles.pageKicker}>ELUS</Text>
+          <Text style={[styles.pageKicker, { color: colors.accent }]}>ELUS</Text>
 
           <Image
             source={ELUS_SYMBOL}
@@ -1023,7 +1030,7 @@ export default function ConnectionsScreen() {
           />
         </View>
 
-        <Text style={styles.pageTitle}>Vínculos</Text>
+        <Text style={[styles.pageTitle, { color: colors.text }]}>Vínculos</Text>
 
         <Text style={styles.pageSubtitle}>
           Acompanhe conexões reais, solicitações recebidas, solicitações enviadas
@@ -1071,7 +1078,6 @@ export default function ConnectionsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   scroll: {
@@ -1091,7 +1097,6 @@ const styles = StyleSheet.create({
   },
 
   pageKicker: {
-    color: COLORS.cyan,
     fontSize: 12,
     fontWeight: '900',
     letterSpacing: 4,
@@ -1106,7 +1111,6 @@ const styles = StyleSheet.create({
 
   pageTitle: {
     marginTop: 12,
-    color: COLORS.text,
     fontSize: 42,
     lineHeight: 48,
     fontWeight: '300',
@@ -1278,7 +1282,6 @@ const styles = StyleSheet.create({
   },
 
   cardKicker: {
-    color: COLORS.gold,
     fontSize: 11,
     fontWeight: '900',
     letterSpacing: 2.6,
@@ -1302,7 +1305,6 @@ const styles = StyleSheet.create({
 
   statusGuide: {
     marginTop: 12,
-    color: COLORS.text,
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '800',
@@ -1421,7 +1423,6 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: COLORS.text,
     fontSize: 28,
     lineHeight: 34,
     fontWeight: '900',
@@ -1457,7 +1458,6 @@ const styles = StyleSheet.create({
   },
 
   avatarFallbackText: {
-    color: COLORS.text,
     fontSize: 18,
     fontWeight: '900',
   },
@@ -1469,7 +1469,6 @@ const styles = StyleSheet.create({
   },
 
   activeConnectionName: {
-    color: COLORS.text,
     fontSize: 18,
     lineHeight: 23,
     fontWeight: '900',
@@ -1506,7 +1505,6 @@ const styles = StyleSheet.create({
   },
 
   historyKicker: {
-    color: COLORS.gold,
     fontSize: 12,
     fontWeight: '900',
     letterSpacing: 3,
@@ -1515,7 +1513,6 @@ const styles = StyleSheet.create({
 
   historyTitle: {
     marginTop: 10,
-    color: COLORS.text,
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '900',

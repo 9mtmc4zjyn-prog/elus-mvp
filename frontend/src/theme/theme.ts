@@ -59,9 +59,9 @@ export interface ThemeColors {
 const hybrid: ThemeColors = {
   mode: 'hybrid',
 
-  background: '#0B101A',
-  surface: '#141A26',
-  surfaceElevated: '#1C2433',
+  background: '#05070D',
+  surface: '#0B1020',
+  surfaceElevated: '#131C30',
   surfaceSoft: 'rgba(255,255,255,0.045)',
 
   border: 'rgba(255,255,255,0.10)',
@@ -71,8 +71,8 @@ const hybrid: ThemeColors = {
   textMuted: '#A1A9B8',
   textSoft: '#6B7280',
 
-  accent: '#5E9EAB',
-  accentSoft: 'rgba(94,158,171,0.15)',
+  accent: '#5B8DEF',
+  accentSoft: 'rgba(91,141,239,0.16)',
 
   cyanVivid: '#22D3EE',
   purpleVivid: '#A855F7',

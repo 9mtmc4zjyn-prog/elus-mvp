@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Stack, usePathname, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -6,13 +6,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AppProvider, useApp } from '../src/context/AppContext';
 import { supabase } from '../src/lib/supabase';
-import { ThemeProvider } from '../src/theme/ThemeContext';
+import { ThemeProvider, useTheme } from '../src/theme/ThemeContext';
 import { Button } from '../src/components/Button';
 
 const COLORS = {
-  background: '#0B101A',
   goldDark: '#8A6E35',
-  text: '#EDEDED',
 };
 
 function normalizePathname(pathname: string) {
@@ -141,6 +139,7 @@ function AppShell() {
   const router = useRouter();
   const pathname = usePathname();
   const segments = useSegments();
+  const { colors } = useTheme();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -153,19 +152,22 @@ function AppShell() {
   }, [pathname]);
 
   return (
-    <View style={styles.appShell}>
+    <View style={[styles.appShell, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
 
       <Stack
         screenOptions={{
           headerShown: false,
           contentStyle: {
-            backgroundColor: COLORS.background,
+            backgroundColor: colors.background,
           },
         }}
       />
 
-      <View pointerEvents="none" style={styles.statusBarShield} />
+      <View
+        pointerEvents="none"
+        style={[styles.statusBarShield, { backgroundColor: colors.background }]}
+      />
 
       <GlobalPlansButton />
     </View>
@@ -191,7 +193,6 @@ const styles = StyleSheet.create({
 
   appShell: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   statusBarShield: {
@@ -201,7 +202,6 @@ const styles = StyleSheet.create({
     right: 0,
     height: 50,
     zIndex: 998,
-    backgroundColor: COLORS.background,
   },
 
   globalPlansButton: {

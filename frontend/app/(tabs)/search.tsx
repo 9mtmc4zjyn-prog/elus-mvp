@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Image,
   Platform,
@@ -19,6 +19,8 @@ import { appUserToProfile } from "../../src/utils/adaptSupabaseProfile";
 import type { Profile } from "../../src/data/profiles";
 import { getLocalAffinityExplanation } from "../../src/utils/elusIntelligenceRules";
 import { Chip } from "../../src/components/Chip";
+import { useTheme } from "../../src/theme/ThemeContext";
+import type { ThemeColors } from "../../src/theme/theme";
 
 const ELUS_LOGO = require("../../assets/images/elus-logo.png");
 const ELUS_UNVERIFIED_RED = require("../../assets/images/elus-unverified-red.png");
@@ -26,27 +28,10 @@ const ELUS_IN_REVIEW_BLUE = require("../../assets/images/elus-symbol-cyan-purple
 const ELUS_VERIFIED_GREEN = require("../../assets/images/elus-verified-green.png");
 
 const COLORS = {
-  bg: "#0B101A",
-  card: "#141A26",
-  cardSoft: "#1C2433",
   cardDeep: "#080D16",
-  border: "rgba(255,255,255,0.08)",
-  borderSoft: "rgba(255,255,255,0.10)",
-  borderStrong: "rgba(255,255,255,0.14)",
-  white: "#EDEDED",
-  muted: "#6B7280",
-  muted2: "#A1A9B8",
-  blue: "#5E9EAB",
   blueSoft: "rgba(94,158,171,0.18)",
-  cyan: "#5E9EAB",
-  cyanSoft: "rgba(94,158,171,0.15)",
-  purple: "#8B7EA8",
   purpleSoft: "rgba(139,126,168,0.12)",
-  gold: "#C49A45",
   goldSoft: "rgba(196,154,69,0.12)",
-  red: "#B85C5C",
-  redSoft: "rgba(184,92,92,0.12)",
-  green: "#4A9A65",
   greenSoft: "rgba(74,154,101,0.12)",
   blueLight: "#8FA3B8",
   blueLightSoft: "rgba(143,163,184,0.14)",
@@ -250,16 +235,16 @@ function getVisibleProfileVerificationPhase({
   return profilePhase;
 }
 
-function getStatusColor(phase: VerificationPhase): string {
+function getStatusColor(phase: VerificationPhase, colors: ThemeColors): string {
   if (phase === "verified") {
-    return COLORS.green;
+    return colors.success;
   }
 
   if (phase === "in_review") {
     return COLORS.blueLight;
   }
 
-  return COLORS.red;
+  return colors.danger;
 }
 
 function getStatusImage(phase: VerificationPhase) {
@@ -643,6 +628,7 @@ function SearchAvatar({
   currentUserVerified: boolean;
   size: number;
 }) {
+  const { colors } = useTheme();
   const phase = getProfileVerificationPhase(profile);
   const visiblePhase = getVisibleProfileVerificationPhase({
     currentUserVerified,
@@ -662,6 +648,7 @@ function SearchAvatar({
     <View
       style={[
         styles.avatarWrap,
+        { backgroundColor: colors.surfaceElevated },
         {
           width: size,
           height: size,
@@ -691,7 +678,7 @@ function SearchAvatar({
         />
       )}
 
-      <View style={styles.statusBadge}>
+      <View style={[styles.statusBadge, { borderColor: colors.background }]}>
         <Image
           source={getStatusImage(visiblePhase)}
           style={styles.statusBadgeImage}
@@ -703,19 +690,20 @@ function SearchAvatar({
 }
 
 function Tag({ label, muted }: { label: string; muted?: boolean }) {
+  const { colors } = useTheme();
   const normalized = normalizeText(label);
 
   const color = normalized.includes("profissional")
-    ? COLORS.gold
+    ? colors.warning
     : normalized.includes("apoio")
       ? "#FF9F1C"
       : normalized.includes("interesse") || normalized.includes("design")
-        ? COLORS.cyan
+        ? colors.accent
         : normalized.includes("preferencia")
-          ? COLORS.purple
+          ? colors.purple
           : normalized.includes("seguranca")
             ? COLORS.blueLight
-            : COLORS.muted;
+            : colors.textSoft;
 
   return (
     <View
@@ -741,13 +729,14 @@ function ExploreTrustNotice({
   currentUserPhase: VerificationPhase;
   onPressVerification: () => void;
 }) {
+  const { colors } = useTheme();
   const userVerified = currentUserPhase === "verified";
   const noticeColor =
     currentUserPhase === "verified"
-      ? COLORS.green
+      ? colors.success
       : currentUserPhase === "in_review"
         ? COLORS.blueLight
-        : COLORS.red;
+        : colors.danger;
 
   return (
     <View
@@ -760,7 +749,7 @@ function ExploreTrustNotice({
               ? COLORS.greenSoft
               : currentUserPhase === "in_review"
                 ? COLORS.blueLightSoft
-                : COLORS.redSoft,
+                : colors.dangerSoft,
         },
       ]}
     >
@@ -781,7 +770,7 @@ function ExploreTrustNotice({
       </View>
 
       <View style={styles.exploreTrustTextWrap}>
-        <Text style={styles.exploreTrustText}>
+        <Text style={[styles.exploreTrustText, { color: colors.textMuted }]}>
           Contatos protegidos. Conexão real exige verificação e aprovação.
         </Text>
 
@@ -817,6 +806,7 @@ function ProfileCard({
   affinityScore?: number;
 }) {
   const router = useRouter();
+  const { colors } = useTheme();
 
   const profilePhase = getProfileVerificationPhase(profile);
   const visibleProfilePhase = getVisibleProfileVerificationPhase({
@@ -839,7 +829,7 @@ function ProfileCard({
   const canSeeFullProfile =
     currentUserVerified && profileVerified && hasAcceptedConnection;
 
-  const statusColor = getStatusColor(visibleProfilePhase);
+  const statusColor = getStatusColor(visibleProfilePhase, colors);
   const visibleName = getVisibleName(profile, canSeeFullProfile);
 
   const affinityExplanation = getLocalAffinityExplanation({
@@ -848,7 +838,7 @@ function ProfileCard({
     sharedReasons: safeArray(profile.aiReasons),
   });
 
-  const affinityColor = visibleProfilePhase === "verified" ? COLORS.cyan : statusColor;
+  const affinityColor = visibleProfilePhase === "verified" ? colors.accent : statusColor;
 
   const affinityReasons = getCleanAffinityReasons({
     profile,
@@ -879,6 +869,7 @@ function ProfileCard({
       onPress={openProfile}
       style={({ pressed }) => [
         styles.profileCard,
+        { backgroundColor: colors.surface, borderColor: colors.borderStrong },
         !canSeeFullProfile ? styles.profileCardLimited : null,
         visibleProfilePhase === "unverified" ? styles.profileCardDanger : null,
         pressed ? styles.pressed : null,
@@ -898,6 +889,7 @@ function ProfileCard({
               numberOfLines={1}
               style={[
                 styles.profileName,
+                { color: colors.text },
                 visibleProfilePhase !== "verified" ? { color: statusColor } : null,
               ]}
             >
@@ -907,6 +899,7 @@ function ProfileCard({
             <Text
               style={[
                 styles.profileKind,
+                { color: colors.warning },
                 visibleProfilePhase !== "verified" ? { color: statusColor } : null,
               ]}
             >
@@ -920,7 +913,7 @@ function ProfileCard({
             </Text>
           </View>
 
-          <Text numberOfLines={1} style={styles.profileMeta}>
+          <Text numberOfLines={1} style={[styles.profileMeta, { color: colors.textMuted }]}>
             {canSeeFullProfile
               ? `${profile.city} · ${profile.state}`
               : getStatusLabel(profile, currentUserVerified)}
@@ -928,11 +921,11 @@ function ProfileCard({
 
           {(affinityScore ?? 0) >= 3 && (
             <View style={styles.highAffinityBadge}>
-              <Text style={styles.highAffinityBadgeText}>✦ Alta afinidade</Text>
+              <Text style={[styles.highAffinityBadgeText, { color: colors.accent }]}>✦ Alta afinidade</Text>
             </View>
           )}
 
-          <Text numberOfLines={2} style={styles.profileDescription}>
+          <Text numberOfLines={2} style={[styles.profileDescription, { color: colors.textSoft }]}>
             {visibleDescription}
           </Text>
 
@@ -992,8 +985,8 @@ function ProfileCard({
           </View>
 
           <View style={styles.aiAffinityTitleWrap}>
-            <Text style={styles.aiAffinityKicker}>Motivo</Text>
-            <Text style={styles.aiAffinityTitle}>Por que apareceu</Text>
+            <Text style={[styles.aiAffinityKicker, { color: colors.accent }]}>Motivo</Text>
+            <Text style={[styles.aiAffinityTitle, { color: colors.text }]}>Por que apareceu</Text>
           </View>
         </View>
 
@@ -1009,15 +1002,15 @@ function ProfileCard({
                 ]}
               />
 
-              <Text style={styles.aiAffinityReasonText}>{reason}</Text>
+              <Text style={[styles.aiAffinityReasonText, { color: colors.textMuted }]}>{reason}</Text>
             </View>
           ))}
         </View>
       </View>
 
       <View style={styles.actions}>
-        <Pressable onPress={openProfile} style={styles.secondaryAction}>
-          <Text style={styles.secondaryActionText}>
+        <Pressable onPress={openProfile} style={[styles.secondaryAction, { borderColor: colors.border }]}>
+          <Text style={[styles.secondaryActionText, { color: colors.text }]}>
             {canSeeFullProfile ? "Ver perfil" : "Ver perfil restrito"}
           </Text>
         </Pressable>
@@ -1043,15 +1036,17 @@ function ResultsBlock({
   currentUserVerified: boolean;
   connectionBranches: any[];
 }) {
+  const { colors } = useTheme();
+
   return (
     <>
       <View style={styles.resultHeader}>
         <View style={styles.resultTitleWrap}>
-          <Text style={styles.sectionEyebrow}>Resultados</Text>
+          <Text style={[styles.sectionEyebrow, { color: colors.warning }]}>Resultados</Text>
 
-          <Text style={styles.sectionTitle}>Resultados próximos</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Resultados próximos</Text>
 
-          <Text style={styles.sectionSubtitle}>
+          <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
             {hasQuery
               ? "Resultado da busca em tempo real."
               : "Toque no card para abrir o perfil e decidir o próximo passo."}
@@ -1059,7 +1054,7 @@ function ResultsBlock({
         </View>
 
         <View style={styles.resultBadge}>
-          <Text style={styles.resultBadgeText}>{profiles.length}</Text>
+          <Text style={[styles.resultBadgeText, { color: colors.warning }]}>{profiles.length}</Text>
         </View>
       </View>
 
@@ -1077,9 +1072,9 @@ function ResultsBlock({
           ))
         ) : (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyTitle}>Nenhum resultado encontrado</Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>Nenhum resultado encontrado</Text>
 
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
               Tente buscar por nome, primeiro nome, cidade, profissão, interesse
               ou empresa.
             </Text>
@@ -1103,21 +1098,23 @@ function buildBaseProfiles(realUsers: AppUser[]): Profile[] {
 }
 
 function SearchErrorCard({ onRetry }: { onRetry: () => void }) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.emptyCard}>
-      <Text style={[styles.emptyTitle, { color: COLORS.red }]}>
+      <Text style={[styles.emptyTitle, { color: colors.danger }]}>
         Não foi possível carregar as conexões
       </Text>
 
-      <Text style={styles.emptyText}>
+      <Text style={[styles.emptyText, { color: colors.textMuted }]}>
         Verifique sua internet e tente novamente.
       </Text>
 
       <Pressable
-        style={[styles.secondaryAction, { marginTop: 12 }]}
+        style={[styles.secondaryAction, { borderColor: colors.border, marginTop: 12 }]}
         onPress={onRetry}
       >
-        <Text style={styles.secondaryActionText}>Tentar novamente →</Text>
+        <Text style={[styles.secondaryActionText, { color: colors.text }]}>Tentar novamente →</Text>
       </Pressable>
     </View>
   );
@@ -1126,6 +1123,7 @@ function SearchErrorCard({ onRetry }: { onRetry: () => void }) {
 export default function SearchScreen() {
   const router = useRouter();
   const app = useApp() as any;
+  const { colors } = useTheme();
 
   const user = app.user as AppUser;
   const getConnectionBranches = app.getConnectionBranches;
@@ -1191,7 +1189,7 @@ export default function SearchScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
 
       <ScrollView
@@ -1201,26 +1199,26 @@ export default function SearchScreen() {
         contentContainerStyle={styles.content}
       >
         <View style={styles.hero}>
-          <Text style={styles.heroEyebrow}>ELUS</Text>
+          <Text style={[styles.heroEyebrow, { color: colors.accent }]}>ELUS</Text>
 
-          <Text style={styles.heroTitle}>Buscar conexões</Text>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>Buscar conexões</Text>
 
-          <Text style={styles.heroText}>
+          <Text style={[styles.heroText, { color: colors.textMuted }]}>
             Encontre pessoas, empresas, serviços e presenças próximas com contexto, filtros e busca rápida.
           </Text>
         </View>
 
-        <View style={styles.searchBox}>
-          <View style={styles.searchIconWrap}>
-            <Ionicons name="search-outline" size={21} color={COLORS.cyan} />
+        <View style={[styles.searchBox, { borderColor: colors.borderStrong, backgroundColor: colors.surface }]}>
+          <View style={[styles.searchIconWrap, { backgroundColor: colors.accentSoft }]}>
+            <Ionicons name="search-outline" size={21} color={colors.accent} />
           </View>
 
           <TextInput
             value={query}
             onChangeText={setQuery}
             placeholder="Buscar por nome, serviço ou empresa"
-            placeholderTextColor={COLORS.muted}
-            style={styles.searchInput}
+            placeholderTextColor={colors.textSoft}
+            style={[styles.searchInput, { color: colors.text }]}
             autoCorrect={false}
             autoCapitalize="words"
             returnKeyType="search"
@@ -1255,13 +1253,13 @@ export default function SearchScreen() {
           />
         )}
 
-        <View style={styles.brandCard}>
+        <View style={[styles.brandCard, { borderColor: colors.borderStrong, backgroundColor: colors.surface }]}>
           <View style={styles.brandSmallRow}>
             <Image source={ELUS_LOGO} style={styles.brandSmallSymbol} />
-            <Text style={styles.brandSmallText}>ELUS</Text>
+            <Text style={[styles.brandSmallText, { color: colors.text }]}>ELUS</Text>
           </View>
 
-          <Text style={styles.brandCardText}>
+          <Text style={[styles.brandCardText, { color: colors.textMuted }]}>
             Uma rede contextual para presenças humanas reais.
           </Text>
         </View>
@@ -1275,7 +1273,6 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.bg,
   },
 
   content: {
@@ -1291,7 +1288,6 @@ const styles = StyleSheet.create({
   heroEyebrow: {
     fontSize: 10,
     lineHeight: 13,
-    color: COLORS.cyan,
     fontWeight: "800",
     letterSpacing: 3,
     textTransform: "uppercase",
@@ -1299,7 +1295,6 @@ const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    color: COLORS.white,
     fontSize: 31,
     lineHeight: 37,
     fontWeight: "300",
@@ -1308,7 +1303,6 @@ const styles = StyleSheet.create({
   },
 
   heroText: {
-    color: COLORS.muted2,
     fontSize: 13,
     lineHeight: 20,
     fontWeight: "500",
@@ -1318,8 +1312,6 @@ const styles = StyleSheet.create({
     minHeight: 58,
     borderRadius: 29,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
-    backgroundColor: COLORS.card,
     paddingHorizontal: 13,
     flexDirection: "row",
     alignItems: "center",
@@ -1332,7 +1324,6 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: COLORS.cyanSoft,
     borderWidth: 1,
     borderColor: "rgba(38,217,255,0.24)",
     marginRight: 10,
@@ -1340,7 +1331,6 @@ const styles = StyleSheet.create({
 
   searchInput: {
     flex: 1,
-    color: COLORS.white,
     fontSize: 15,
     lineHeight: 20,
     fontWeight: "700",
@@ -1372,7 +1362,6 @@ const styles = StyleSheet.create({
   },
 
   exploreTrustText: {
-    color: COLORS.muted2,
     fontSize: 12,
     lineHeight: 17,
     fontWeight: "800",
@@ -1414,7 +1403,6 @@ const styles = StyleSheet.create({
   sectionEyebrow: {
     fontSize: 10,
     lineHeight: 13,
-    color: COLORS.gold,
     fontWeight: "800",
     letterSpacing: 2,
     textTransform: "uppercase",
@@ -1422,7 +1410,6 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: COLORS.white,
     fontSize: 31,
     lineHeight: 37,
     fontWeight: "300",
@@ -1430,7 +1417,6 @@ const styles = StyleSheet.create({
   },
 
   sectionSubtitle: {
-    color: COLORS.muted2,
     fontSize: 12,
     lineHeight: 17,
     fontWeight: "500",
@@ -1449,7 +1435,6 @@ const styles = StyleSheet.create({
   },
 
   resultBadgeText: {
-    color: COLORS.gold,
     fontSize: 18,
     lineHeight: 22,
     fontWeight: "900",
@@ -1462,8 +1447,6 @@ const styles = StyleSheet.create({
   profileCard: {
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
-    backgroundColor: COLORS.card,
     padding: 15,
   },
 
@@ -1496,7 +1479,6 @@ const styles = StyleSheet.create({
 
   profileName: {
     flex: 1,
-    color: COLORS.white,
     fontSize: 21,
     lineHeight: 26,
     fontWeight: "600",
@@ -1504,14 +1486,12 @@ const styles = StyleSheet.create({
   },
 
   profileKind: {
-    color: COLORS.gold,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: "800",
   },
 
   profileMeta: {
-    color: COLORS.muted2,
     fontSize: 12,
     lineHeight: 17,
     fontWeight: "600",
@@ -1530,21 +1510,18 @@ const styles = StyleSheet.create({
   },
 
   highAffinityBadgeText: {
-    color: COLORS.cyan,
     fontSize: 10,
     fontWeight: "900",
     letterSpacing: 0.5,
   },
 
   profileDescription: {
-    color: COLORS.muted,
     fontSize: 12,
     lineHeight: 17,
     fontWeight: "500",
   },
 
   avatarWrap: {
-    backgroundColor: COLORS.cardSoft,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -1562,7 +1539,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: COLORS.bg,
     backgroundColor: "#05060A",
   },
 
@@ -1638,7 +1614,6 @@ const styles = StyleSheet.create({
   },
 
   aiAffinityKicker: {
-    color: COLORS.cyan,
     fontSize: 9,
     lineHeight: 12,
     fontWeight: "900",
@@ -1648,7 +1623,6 @@ const styles = StyleSheet.create({
   },
 
   aiAffinityTitle: {
-    color: COLORS.white,
     fontSize: 13,
     lineHeight: 17,
     fontWeight: "900",
@@ -1673,7 +1647,6 @@ const styles = StyleSheet.create({
 
   aiAffinityReasonText: {
     flex: 1,
-    color: COLORS.muted2,
     fontSize: 11,
     lineHeight: 16,
     fontWeight: "600",
@@ -1692,14 +1665,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: COLORS.darkButton,
     borderWidth: 1,
-    borderColor: COLORS.border,
     paddingHorizontal: 16,
     paddingVertical: 10,
     justifyContent: "center",
   },
 
   secondaryActionText: {
-    color: COLORS.white,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: "800",
@@ -1726,13 +1697,10 @@ const styles = StyleSheet.create({
   emptyCard: {
     borderRadius: 25,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
-    backgroundColor: COLORS.card,
     padding: 18,
   },
 
   emptyTitle: {
-    color: COLORS.white,
     fontSize: 20,
     lineHeight: 25,
     fontWeight: "600",
@@ -1740,7 +1708,6 @@ const styles = StyleSheet.create({
   },
 
   emptyText: {
-    color: COLORS.muted2,
     fontSize: 13,
     lineHeight: 20,
     fontWeight: "500",
@@ -1750,8 +1717,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
-    backgroundColor: COLORS.card,
     padding: 16,
   },
 
@@ -1769,7 +1734,6 @@ const styles = StyleSheet.create({
   },
 
   brandSmallText: {
-    color: COLORS.white,
     fontSize: 21,
     lineHeight: 26,
     fontWeight: "900",
@@ -1777,7 +1741,6 @@ const styles = StyleSheet.create({
   },
 
   brandCardText: {
-    color: COLORS.muted2,
     fontSize: 12,
     lineHeight: 18,
     fontWeight: "500",
