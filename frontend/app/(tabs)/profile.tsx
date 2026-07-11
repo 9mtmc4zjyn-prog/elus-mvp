@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
   Image,
@@ -17,23 +17,17 @@ import ProfileAvatar from '../../src/components/ProfileAvatar';
 import { useApp } from '../../src/context/AppContext';
 import { supabase } from '../../src/lib/supabase';
 import { Button } from '../../src/components/Button';
+import { useTheme } from '../../src/theme/ThemeContext';
+import type { ThemeColors } from '../../src/theme/theme';
 
 const WATERMARK = require('../../assets/watermark/elus_symbol_watermark_10.png');
 
 const COLORS = {
-  background: '#0B101A',
   card: 'rgba(20,26,38,0.94)',
-  cardSoft: 'rgba(255,255,255,0.045)',
-  border: 'rgba(255,255,255,0.12)',
   borderSoft: 'rgba(255,255,255,0.075)',
-  text: '#EDEDED',
   muted: 'rgba(161,169,184,0.78)',
   soft: 'rgba(161,169,184,0.55)',
-  blue: '#5E9EAB',
   blueLight: '#8FA3B8',
-  gold: '#C49A45',
-  green: '#4A9A65',
-  danger: '#B85C5C',
 };
 
 const NO_CONNECTION_RING_COLORS = ['transparent'];
@@ -133,16 +127,16 @@ function getVerificationDescription(verificationStatus: string) {
   return 'Sua verificação está pendente. Finalize a verificação com selfie segurando documento oficial com foto para liberar o uso completo.';
 }
 
-function getVerificationColor(verificationStatus: string) {
+function getVerificationColor(verificationStatus: string, colors: ThemeColors) {
   if (verificationStatus === 'verified') {
-    return COLORS.green;
+    return colors.success;
   }
 
   if (isAwaitingVerification(verificationStatus)) {
     return COLORS.blueLight;
   }
 
-  return COLORS.danger;
+  return colors.danger;
 }
 
 function getVerificationMainCardTitle(verificationStatus: string) {
@@ -190,6 +184,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, updateUser, logout, getConnectionBranches } = useApp();
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const { colors } = useTheme();
 
   async function handleAvatarPress() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -260,7 +255,7 @@ export default function ProfileScreen() {
   const isInReview = isAwaitingVerification(verificationStatus);
   const isLimited = !isVerified;
 
-  const verificationColor = getVerificationColor(verificationStatus);
+  const verificationColor = getVerificationColor(verificationStatus, colors);
   const profileTypeLabel = getProfileTypeLabel(user.profileType);
   const presenceModeLabel = getPresenceModeLabel(user.presenceMode);
   const planLabel = getPlanLabel(user.plan);
@@ -319,7 +314,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <Image source={WATERMARK} style={styles.watermarkOne} resizeMode="contain" />
       <Image source={WATERMARK} style={styles.watermarkTwo} resizeMode="contain" />
 
@@ -334,15 +329,16 @@ export default function ProfileScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.headerButton,
+              { borderColor: colors.borderStrong },
               pressed && styles.pressedSmall,
             ]}
             onPress={goToPrivacy}
           >
-            <Text style={styles.headerButtonText}>⋯</Text>
+            <Text style={[styles.headerButtonText, { color: colors.text }]}>⋯</Text>
           </Pressable>
         </View>
 
-        <View style={styles.profileCard}>
+        <View style={[styles.profileCard, { borderColor: colors.borderStrong }]}>
           <Pressable
             onPress={handleAvatarPress}
             disabled={uploadingAvatar}
@@ -356,14 +352,14 @@ export default function ProfileScreen() {
               ringColors={ringColors}
               verified={isVerified}
             />
-            <View style={styles.avatarEditBadge}>
-              <Text style={styles.avatarEditBadgeText}>
+            <View style={[styles.avatarEditBadge, { backgroundColor: colors.accent, borderColor: colors.background }]}>
+              <Text style={[styles.avatarEditBadgeText, { color: colors.text }]}>
                 {uploadingAvatar ? '…' : '✎'}
               </Text>
             </View>
           </Pressable>
 
-          <Text style={styles.profileName} numberOfLines={2}>
+          <Text style={[styles.profileName, { color: colors.text }]} numberOfLines={2}>
             {user.name}
           </Text>
 
@@ -375,7 +371,7 @@ export default function ProfileScreen() {
             {[user.city, user.state].filter(Boolean).join(' · ') || 'Localização não informada'}
           </Text>
 
-          <Text style={styles.profileHeadline}>
+          <Text style={[styles.profileHeadline, { color: colors.text }]}>
             {headline}
           </Text>
 
@@ -436,7 +432,7 @@ export default function ProfileScreen() {
             Verificação de identidade
           </Text>
 
-          <Text style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
             {getVerificationTitle(verificationStatus)}
           </Text>
 
@@ -474,7 +470,7 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.verificationInfoTextBox}>
-              <Text style={styles.verificationInfoTitle}>
+              <Text style={[styles.verificationInfoTitle, { color: colors.text }]}>
                 Selfie com documento oficial
               </Text>
 
@@ -501,7 +497,7 @@ export default function ProfileScreen() {
             <Text
               style={
                 isVerified
-                  ? styles.successTitle
+                  ? [styles.successTitle, { color: colors.success }]
                   : [
                       styles.limitedTitle,
                       {
@@ -543,8 +539,8 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.bondsCard}>
-          <Text style={styles.sectionKicker}>Perfil ELUS</Text>
-          <Text style={styles.sectionTitle}>Afinidades declaradas</Text>
+          <Text style={[styles.sectionKicker, { color: colors.warning }]}>Perfil ELUS</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Afinidades declaradas</Text>
 
           {affinityBranches.length > 0 ? (
             <View style={styles.bondWrap}>
@@ -588,8 +584,8 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.actionsCard}>
-          <Text style={styles.sectionKicker}>Configurações</Text>
-          <Text style={styles.sectionTitle}>Gerenciar perfil</Text>
+          <Text style={[styles.sectionKicker, { color: colors.warning }]}>Configurações</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Gerenciar perfil</Text>
 
           <View style={styles.menuList}>
             <Pressable
@@ -600,7 +596,7 @@ export default function ProfileScreen() {
               onPress={goToEditProfile}
             >
               <View>
-                <Text style={styles.menuTitle}>Editar perfil</Text>
+                <Text style={[styles.menuTitle, { color: colors.text }]}>Editar perfil</Text>
                 <Text style={styles.menuSubtitle}>Nome, foto, presença e interesses</Text>
               </View>
 
@@ -615,7 +611,7 @@ export default function ProfileScreen() {
               onPress={goToMap}
             >
               <View>
-                <Text style={styles.menuTitle}>Meu campo</Text>
+                <Text style={[styles.menuTitle, { color: colors.text }]}>Meu campo</Text>
                 <Text style={styles.menuSubtitle}>Ver sua presença e afinidades próximas</Text>
               </View>
 
@@ -630,7 +626,7 @@ export default function ProfileScreen() {
               onPress={goToPlans}
             >
               <View>
-                <Text style={styles.menuTitle}>Planos</Text>
+                <Text style={[styles.menuTitle, { color: colors.text }]}>Planos</Text>
                 <Text style={styles.menuSubtitle}>Plano atual, limites e recursos premium</Text>
               </View>
 
@@ -645,7 +641,7 @@ export default function ProfileScreen() {
               onPress={goToPrivacy}
             >
               <View>
-                <Text style={styles.menuTitle}>Privacidade e segurança</Text>
+                <Text style={[styles.menuTitle, { color: colors.text }]}>Privacidade e segurança</Text>
                 <Text style={styles.menuSubtitle}>Documento, selfie, bloqueios e dados</Text>
               </View>
 
@@ -655,7 +651,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.brandCard}>
-          <Text style={styles.brandCardTitle}>ELUS</Text>
+          <Text style={[styles.brandCardTitle, { color: colors.text }]}>ELUS</Text>
           <Text style={styles.brandCardText}>
             Conexões reais, com identidade real e acesso simples.
           </Text>
@@ -670,7 +666,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create<any>({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   watermarkOne: {
     position: 'absolute',
@@ -708,12 +703,10 @@ const styles = StyleSheet.create<any>({
     borderRadius: 23,
     backgroundColor: 'rgba(16,19,29,0.92)',
     borderWidth: 1,
-    borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerButtonText: {
-    color: COLORS.text,
     fontSize: 28,
     lineHeight: 28,
     fontWeight: '900',
@@ -725,12 +718,10 @@ const styles = StyleSheet.create<any>({
     borderRadius: 34,
     backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: COLORS.border,
     alignItems: 'center',
   },
   profileName: {
     marginTop: 20,
-    color: COLORS.text,
     fontSize: 32,
     lineHeight: 38,
     fontWeight: '900',
@@ -752,7 +743,6 @@ const styles = StyleSheet.create<any>({
   },
   profileHeadline: {
     marginTop: 18,
-    color: COLORS.text,
     fontSize: 17,
     lineHeight: 25,
     fontWeight: '800',
@@ -788,7 +778,7 @@ const styles = StyleSheet.create<any>({
     paddingHorizontal: 13,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: 'rgba(45,100,255,0.14)',
+    backgroundColor: 'rgba(91,141,239,0.14)',
     borderWidth: 1,
     borderColor: 'rgba(143,179,255,0.30)',
   },
@@ -812,7 +802,6 @@ const styles = StyleSheet.create<any>({
     borderColor: 'rgba(255,107,107,0.30)',
   },
   sectionKicker: {
-    color: COLORS.gold,
     fontSize: 12,
     fontWeight: '900',
     letterSpacing: 3,
@@ -820,7 +809,6 @@ const styles = StyleSheet.create<any>({
   },
   sectionTitle: {
     marginTop: 9,
-    color: COLORS.text,
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '900',
@@ -837,7 +825,7 @@ const styles = StyleSheet.create<any>({
     marginTop: 18,
     padding: 17,
     borderRadius: 24,
-    backgroundColor: 'rgba(45,100,255,0.10)',
+    backgroundColor: 'rgba(91,141,239,0.10)',
     borderWidth: 1,
     borderColor: 'rgba(143,179,255,0.24)',
     flexDirection: 'row',
@@ -847,7 +835,7 @@ const styles = StyleSheet.create<any>({
     width: 46,
     height: 46,
     borderRadius: 16,
-    backgroundColor: 'rgba(45,100,255,0.18)',
+    backgroundColor: 'rgba(91,141,239,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -861,7 +849,6 @@ const styles = StyleSheet.create<any>({
     flex: 1,
   },
   verificationInfoTitle: {
-    color: COLORS.text,
     fontSize: 16,
     fontWeight: '900',
   },
@@ -881,7 +868,6 @@ const styles = StyleSheet.create<any>({
     borderColor: 'rgba(54,211,153,0.28)',
   },
   successTitle: {
-    color: COLORS.green,
     fontSize: 15,
     fontWeight: '900',
     marginBottom: 7,
@@ -901,7 +887,6 @@ const styles = StyleSheet.create<any>({
     borderColor: 'rgba(255,107,107,0.24)',
   },
   limitedTitle: {
-    color: COLORS.danger,
     fontSize: 15,
     fontWeight: '900',
     marginBottom: 7,
@@ -919,7 +904,6 @@ const styles = StyleSheet.create<any>({
     borderRadius: 30,
     backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   bondsExplanation: {
     marginTop: 10,
@@ -968,7 +952,6 @@ const styles = StyleSheet.create<any>({
     borderRadius: 30,
     backgroundColor: COLORS.card,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   menuList: {
     marginTop: 16,
@@ -983,7 +966,6 @@ const styles = StyleSheet.create<any>({
     justifyContent: 'space-between',
   },
   menuTitle: {
-    color: COLORS.text,
     fontSize: 16,
     fontWeight: '900',
   },
@@ -1010,7 +992,6 @@ const styles = StyleSheet.create<any>({
     borderColor: COLORS.borderSoft,
   },
   brandCardTitle: {
-    color: COLORS.text,
     fontSize: 18,
     fontWeight: '900',
     letterSpacing: 5,
@@ -1033,14 +1014,11 @@ const styles = StyleSheet.create<any>({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: COLORS.blue,
     borderWidth: 2,
-    borderColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarEditBadgeText: {
-    color: COLORS.text,
     fontSize: 13,
     fontWeight: '900',
   },

@@ -47,7 +47,10 @@ function isPreAppRoute(pathname: string, segments: readonly string[]) {
     path === '/onboarding' ||
     path === '/profile-type' ||
     path === '/profile-setup' ||
-    path === '/verification'
+    path === '/verification' ||
+    path === '/terms' ||
+    path === '/privacy' ||
+    path === '/privacy-policy'
   );
 }
 

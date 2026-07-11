@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -18,25 +18,18 @@ import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../src/components/Button';
+import { useTheme } from '../src/theme/ThemeContext';
 
 const SYMBOL = require('../assets/brand/elus_symbol_main.png');
 const WATERMARK = require('../assets/watermark/elus_symbol_watermark_10.png');
 
 const COLORS = {
-  background: '#0B101A',
-  card: 'rgba(20,26,38,0.94)',
-  infoCard: 'rgba(94,158,171,0.12)',
+  infoCard: 'rgba(91,141,239,0.12)',
   input: 'rgba(11,16,26,0.88)',
-  border: 'rgba(255,255,255,0.12)',
-  borderStrong: 'rgba(255,255,255,0.18)',
-  borderBlue: 'rgba(94,158,171,0.32)',
-  text: '#EDEDED',
+  borderBlue: 'rgba(91,141,239,0.32)',
   mutedStrong: 'rgba(237,237,237,0.86)',
   soft: 'rgba(161,169,184,0.55)',
-  blue: '#5E9EAB',
   blueLight: '#8FA3B8',
-  cyan: '#5E9EAB',
-  gold: '#C49A45',
 };
 
 // Idade mínima exigida para criar conta no ELUS (ECA Digital — Lei 15.211/2025)
@@ -44,6 +37,7 @@ const MIN_AGE = 18;
 
 export default function SignupScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -179,7 +173,7 @@ export default function SignupScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
 
       <KeyboardAvoidingView
@@ -198,7 +192,7 @@ export default function SignupScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.logoArea}>
-            <View style={styles.symbolHalo}>
+            <View style={[styles.symbolHalo, { shadowColor: colors.accent }]}>
               <Image source={SYMBOL} style={styles.heroSymbol} resizeMode="cover" />
             </View>
 
@@ -208,19 +202,19 @@ export default function SignupScreen() {
             </Text>
 
             <View style={styles.trustRow}>
-              <View style={styles.trustPill}>
-                <Text style={styles.trustDot}>•</Text>
+              <View style={[styles.trustPill, { backgroundColor: colors.surfaceSoft, borderColor: colors.border }]}>
+                <Text style={[styles.trustDot, { color: colors.warning }]}>•</Text>
                 <Text style={styles.trustText}>Identidade real</Text>
               </View>
 
-              <View style={styles.trustPill}>
-                <Text style={styles.trustDotCyan}>•</Text>
+              <View style={[styles.trustPill, { backgroundColor: colors.surfaceSoft, borderColor: colors.border }]}>
+                <Text style={[styles.trustDotCyan, { color: colors.accent }]}>•</Text>
                 <Text style={styles.trustText}>Verificação única</Text>
               </View>
             </View>
           </View>
 
-          <View style={styles.card}>
+          <View style={[styles.card, { borderColor: colors.borderStrong, shadowColor: colors.accent }]}>
             <View style={styles.cardGlowOne} />
             <View style={styles.cardGlowTwo} />
 
@@ -231,33 +225,33 @@ export default function SignupScreen() {
 
               <View style={styles.cardHeaderText}>
                 <Text style={styles.kicker}>Começar no ELUS</Text>
-                <Text style={styles.title}>Criar sua conta</Text>
+                <Text style={[styles.title, { color: colors.text }]}>Criar sua conta</Text>
               </View>
             </View>
 
-            <Text style={styles.label}>Nome</Text>
-            <View style={styles.inputBox}>
+            <Text style={[styles.label, { color: colors.text }]}>Nome</Text>
+            <View style={[styles.inputBox, { borderColor: colors.borderStrong }]}>
               <Text style={styles.inputIcon}>♙</Text>
               <TextInput
                 value={name}
                 onChangeText={setName}
                 placeholder="Seu nome"
                 placeholderTextColor="rgba(143,163,197,0.70)"
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 autoCapitalize="words"
                 editable={!loading}
               />
             </View>
 
-            <Text style={styles.label}>E-mail</Text>
-            <View style={styles.inputBox}>
+            <Text style={[styles.label, { color: colors.text }]}>E-mail</Text>
+            <View style={[styles.inputBox, { borderColor: colors.borderStrong }]}>
               <Text style={styles.inputIcon}>✉</Text>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
                 placeholder="seuemail@exemplo.com"
                 placeholderTextColor="rgba(143,163,197,0.70)"
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -265,15 +259,15 @@ export default function SignupScreen() {
               />
             </View>
 
-            <Text style={styles.label}>Senha</Text>
-            <View style={styles.inputBox}>
+            <Text style={[styles.label, { color: colors.text }]}>Senha</Text>
+            <View style={[styles.inputBox, { borderColor: colors.borderStrong }]}>
               <Text style={styles.inputIcon}>⌁</Text>
               <TextInput
                 value={password}
                 onChangeText={setPassword}
                 placeholder="Crie uma senha"
                 placeholderTextColor="rgba(143,163,197,0.70)"
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -284,13 +278,14 @@ export default function SignupScreen() {
                 style={({ pressed }) => [
                   styles.passwordCheckButton,
                   showPassword && styles.passwordCheckButtonActive,
+                  showPassword && { backgroundColor: colors.accent, borderColor: colors.accent, shadowColor: colors.accent },
                   pressed && styles.pressedSmall,
                 ]}
                 onPress={togglePasswordVisibility}
                 hitSlop={10}
               >
                 {showPassword ? (
-                  <Text style={styles.passwordCheckMark}>✓</Text>
+                  <Text style={[styles.passwordCheckMark, { color: colors.text }]}>✓</Text>
                 ) : null}
               </Pressable>
             </View>
@@ -299,41 +294,41 @@ export default function SignupScreen() {
               {showPassword ? 'Senha visível' : 'Senha oculta'}
             </Text>
 
-            <Text style={styles.label}>Data de nascimento</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Data de nascimento</Text>
             <View style={styles.dateRow}>
-              <View style={styles.dateInputBoxSmall}>
+              <View style={[styles.dateInputBoxSmall, { borderColor: colors.borderStrong }]}>
                 <TextInput
                   value={birthDay}
                   onChangeText={setBirthDay}
                   placeholder="DD"
                   placeholderTextColor="rgba(143,163,197,0.70)"
-                  style={styles.dateInput}
+                  style={[styles.dateInput, { color: colors.text }]}
                   keyboardType="number-pad"
                   maxLength={2}
                   editable={!loading}
                 />
               </View>
 
-              <View style={styles.dateInputBoxSmall}>
+              <View style={[styles.dateInputBoxSmall, { borderColor: colors.borderStrong }]}>
                 <TextInput
                   value={birthMonth}
                   onChangeText={setBirthMonth}
                   placeholder="MM"
                   placeholderTextColor="rgba(143,163,197,0.70)"
-                  style={styles.dateInput}
+                  style={[styles.dateInput, { color: colors.text }]}
                   keyboardType="number-pad"
                   maxLength={2}
                   editable={!loading}
                 />
               </View>
 
-              <View style={styles.dateInputBoxLarge}>
+              <View style={[styles.dateInputBoxLarge, { borderColor: colors.borderStrong }]}>
                 <TextInput
                   value={birthYear}
                   onChangeText={setBirthYear}
                   placeholder="AAAA"
                   placeholderTextColor="rgba(143,163,197,0.70)"
-                  style={styles.dateInput}
+                  style={[styles.dateInput, { color: colors.text }]}
                   keyboardType="number-pad"
                   maxLength={4}
                   editable={!loading}
@@ -355,7 +350,7 @@ export default function SignupScreen() {
             </View>
 
             <View style={styles.securityBox}>
-              <Text style={styles.securityTitle}>Segurança sem complicar o acesso</Text>
+              <Text style={[styles.securityTitle, { color: colors.warning }]}>Segurança sem complicar o acesso</Text>
               <Text style={styles.securityText}>
                 Após a validação, o ELUS não pedirá documento em todo login. O acesso
                 diário continuará simples e rápido.
@@ -367,7 +362,7 @@ export default function SignupScreen() {
               onPress={() => setTermsAccepted((v) => !v)}
               disabled={loading}
             >
-              <View style={[styles.termsCheckbox, termsAccepted && styles.termsCheckboxChecked]}>
+              <View style={[styles.termsCheckbox, termsAccepted && { backgroundColor: colors.accent, borderColor: colors.accent }]}>
                 {termsAccepted ? (
                   <Ionicons name="checkmark" size={14} color="#FFFFFF" />
                 ) : null}
@@ -414,51 +409,51 @@ export default function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+  screen: { flex: 1 },
   keyboard: { flex: 1 },
   scroll: { flex: 1 },
   watermarkOne: { position: 'absolute', width: 340, height: 340, top: -132, left: -152, opacity: 0.07 },
   watermarkTwo: { position: 'absolute', width: 430, height: 430, right: -198, bottom: 74, opacity: 0.06 },
-  blueGlow: { position: 'absolute', width: 260, height: 260, borderRadius: 130, backgroundColor: 'rgba(45,100,255,0.15)', top: 120, alignSelf: 'center' },
+  blueGlow: { position: 'absolute', width: 260, height: 260, borderRadius: 130, backgroundColor: 'rgba(91,141,239,0.15)', top: 120, alignSelf: 'center' },
   purpleGlow: { position: 'absolute', width: 260, height: 260, borderRadius: 130, backgroundColor: 'rgba(139,92,255,0.10)', bottom: 90, left: -120 },
   content: { flexGrow: 1, paddingHorizontal: 22, paddingTop: 30, paddingBottom: 34 },
   logoArea: { alignItems: 'center', marginBottom: 24 },
-  symbolHalo: { width: 106, height: 106, borderRadius: 53, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(45,100,255,0.08)', borderWidth: 1, borderColor: 'rgba(143,179,255,0.16)', shadowColor: COLORS.blue, shadowOpacity: 0.34, shadowRadius: 28, shadowOffset: { width: 0, height: 0 } },
+  symbolHalo: { width: 106, height: 106, borderRadius: 53, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(91,141,239,0.08)', borderWidth: 1, borderColor: 'rgba(143,179,255,0.16)', shadowOpacity: 0.34, shadowRadius: 28, shadowOffset: { width: 0, height: 0 } },
   heroSymbol: { width: 82, height: 82, borderRadius: 41 },
   introText: { marginTop: 18, maxWidth: 348, color: COLORS.mutedStrong, fontSize: 16, lineHeight: 27, textAlign: 'center', fontWeight: '600' },
   trustRow: { marginTop: 18, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
-  trustPill: { minHeight: 32, borderRadius: 16, paddingHorizontal: 12, marginHorizontal: 5, marginBottom: 8, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.045)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.10)' },
-  trustDot: { color: COLORS.gold, fontSize: 20, lineHeight: 20, marginRight: 6 },
-  trustDotCyan: { color: COLORS.cyan, fontSize: 20, lineHeight: 20, marginRight: 6 },
+  trustPill: { minHeight: 32, borderRadius: 16, paddingHorizontal: 12, marginHorizontal: 5, marginBottom: 8, flexDirection: 'row', alignItems: 'center', borderWidth: 1 },
+  trustDot: { fontSize: 20, lineHeight: 20, marginRight: 6 },
+  trustDotCyan: { fontSize: 20, lineHeight: 20, marginRight: 6 },
   trustText: { color: COLORS.mutedStrong, fontSize: 12, fontWeight: '800' },
-  card: { padding: 24, borderRadius: 34, backgroundColor: 'rgba(12,15,27,0.94)', borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden', shadowColor: COLORS.blue, shadowOpacity: 0.16, shadowRadius: 26, shadowOffset: { width: 0, height: 0 } },
-  cardGlowOne: { position: 'absolute', width: 190, height: 190, borderRadius: 95, backgroundColor: 'rgba(45,100,255,0.11)', right: -90, top: -80 },
+  card: { padding: 24, borderRadius: 34, backgroundColor: 'rgba(12,15,27,0.94)', borderWidth: 1, overflow: 'hidden', shadowOpacity: 0.16, shadowRadius: 26, shadowOffset: { width: 0, height: 0 } },
+  cardGlowOne: { position: 'absolute', width: 190, height: 190, borderRadius: 95, backgroundColor: 'rgba(91,141,239,0.11)', right: -90, top: -80 },
   cardGlowTwo: { position: 'absolute', width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(139,92,255,0.10)', left: -92, bottom: -84 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
   cardSymbol: { width: 58, height: 58, borderRadius: 29, overflow: 'hidden', backgroundColor: '#05060A', borderWidth: 1, borderColor: COLORS.borderBlue, marginRight: 14 },
   cardSymbolImage: { width: '100%', height: '100%' },
   cardHeaderText: { flex: 1 },
   kicker: { color: COLORS.blueLight, fontSize: 12, fontWeight: '900', letterSpacing: 3.4, textTransform: 'uppercase', marginBottom: 6 },
-  title: { color: COLORS.text, fontSize: 31, lineHeight: 36, fontWeight: '900', letterSpacing: -0.8 },
-  label: { marginTop: 16, marginBottom: 8, color: COLORS.text, fontSize: 15, fontWeight: '900' },
-  inputBox: { minHeight: 60, borderRadius: 25, backgroundColor: COLORS.input, borderWidth: 1, borderColor: COLORS.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 17 },
+  title: { fontSize: 31, lineHeight: 36, fontWeight: '900', letterSpacing: -0.8 },
+  label: { marginTop: 16, marginBottom: 8, fontSize: 15, fontWeight: '900' },
+  inputBox: { minHeight: 60, borderRadius: 25, backgroundColor: COLORS.input, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 17 },
   inputIcon: { width: 28, color: COLORS.blueLight, fontSize: 22, marginRight: 8, textAlign: 'center' },
-  input: { flex: 1, color: COLORS.text, fontSize: 18, fontWeight: '700', paddingVertical: 0 },
+  input: { flex: 1, fontSize: 18, fontWeight: '700', paddingVertical: 0 },
   passwordCheckButton: { width: 30, height: 30, borderRadius: 9, marginLeft: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(3,4,10,0.55)', borderWidth: 2, borderColor: COLORS.blueLight },
-  passwordCheckButtonActive: { backgroundColor: COLORS.blue, borderColor: COLORS.blue, shadowColor: COLORS.blue, shadowOpacity: 0.5, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } },
-  passwordCheckMark: { color: COLORS.text, fontSize: 18, lineHeight: 20, fontWeight: '900' },
+  passwordCheckButtonActive: { shadowOpacity: 0.5, shadowRadius: 8, shadowOffset: { width: 0, height: 0 } },
+  passwordCheckMark: { fontSize: 18, lineHeight: 20, fontWeight: '900' },
   passwordHint: { marginTop: 8, color: COLORS.soft, fontSize: 12, fontWeight: '700', textAlign: 'right' },
   dateRow: { flexDirection: 'row', gap: 10 },
-  dateInputBoxSmall: { flex: 1, minHeight: 60, borderRadius: 25, backgroundColor: COLORS.input, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  dateInputBoxLarge: { flex: 1.6, minHeight: 60, borderRadius: 25, backgroundColor: COLORS.input, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  dateInput: { color: COLORS.text, fontSize: 18, fontWeight: '700', textAlign: 'center', width: '100%' },
+  dateInputBoxSmall: { flex: 1, minHeight: 60, borderRadius: 25, backgroundColor: COLORS.input, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  dateInputBoxLarge: { flex: 1.6, minHeight: 60, borderRadius: 25, backgroundColor: COLORS.input, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  dateInput: { fontSize: 18, fontWeight: '700', textAlign: 'center', width: '100%' },
   dateHint: { marginTop: 8, color: COLORS.soft, fontSize: 12, fontWeight: '700' },
   infoBox: { marginTop: 18, padding: 17, borderRadius: 24, backgroundColor: COLORS.infoCard, borderWidth: 1, borderColor: COLORS.borderBlue, flexDirection: 'row', alignItems: 'center' },
-  infoIconBox: { width: 44, height: 44, borderRadius: 16, backgroundColor: 'rgba(45,100,255,0.18)', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
+  infoIconBox: { width: 44, height: 44, borderRadius: 16, backgroundColor: 'rgba(91,141,239,0.18)', alignItems: 'center', justifyContent: 'center', marginRight: 14 },
   infoIcon: { color: COLORS.blueLight, fontSize: 24, fontWeight: '900' },
   infoText: { flex: 1, color: COLORS.mutedStrong, fontSize: 14, lineHeight: 22, fontWeight: '700' },
   securityBox: { marginTop: 14, padding: 15, borderRadius: 22, backgroundColor: 'rgba(217,180,106,0.08)', borderWidth: 1, borderColor: 'rgba(217,180,106,0.22)' },
-  securityTitle: { color: COLORS.gold, fontSize: 14, fontWeight: '900', marginBottom: 6 },
+  securityTitle: { fontSize: 14, fontWeight: '900', marginBottom: 6 },
   securityText: { color: COLORS.mutedStrong, fontSize: 13, lineHeight: 20, fontWeight: '700' },
   termsRow: { marginTop: 20, flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   termsCheckbox: {
@@ -473,7 +468,6 @@ const styles = StyleSheet.create({
     marginTop: 1,
     flexShrink: 0,
   },
-  termsCheckboxChecked: { backgroundColor: COLORS.blue, borderColor: COLORS.blue },
   termsText: { flex: 1, color: COLORS.mutedStrong, fontSize: 13, lineHeight: 20, fontWeight: '700' },
   termsLink: { color: COLORS.blueLight, fontWeight: '900', textDecorationLine: 'underline' },
   footer: { marginTop: 24, color: COLORS.soft, textAlign: 'center', fontSize: 14, fontWeight: '800' },
