@@ -22,14 +22,14 @@ import {
   type IdentityPhase,
 } from "../../src/utils/connectionRules";
 import { getLocalAffinityExplanation } from "../../src/utils/elusIntelligenceRules";
+import { useTheme } from "../../src/theme/ThemeContext";
+import type { ThemeColors } from "../../src/theme/theme";
 
 const ELUS_VERIFIED_GREEN = require("../../assets/images/elus-verified-green.png");
 const ELUS_UNVERIFIED_RED = require("../../assets/images/elus-unverified-red.png");
 const ELUS_IN_REVIEW_BLUE = require("../../assets/images/elus-symbol-cyan-purple.png");
 const ELUS_LOGO = require("../../assets/images/elus-logo.png");
 
-const STATUS_GREEN = "#4A9A65";
-const STATUS_RED = "#B85C5C";
 const STATUS_BLUE = "#8FA3B8";
 
 const SENSITIVE_BASIC_INFO_PATTERNS = [
@@ -284,16 +284,16 @@ function getVisibleProfileStatusLabel({
   return getVerificationPhaseLabel(targetProfilePhase);
 }
 
-function getStatusColor(status: IdentityPhase): string {
+function getStatusColor(status: IdentityPhase, colors: ThemeColors): string {
   if (status === "verified") {
-    return STATUS_GREEN;
+    return colors.success;
   }
 
   if (status === "in_review") {
     return STATUS_BLUE;
   }
 
-  return STATUS_RED;
+  return colors.danger;
 }
 
 function getStatusSoftColor(status: IdentityPhase): string {
@@ -608,7 +608,8 @@ function StatusPill({
   status: IdentityPhase;
   label?: string;
 }) {
-  const statusColor = getStatusColor(status);
+  const { colors } = useTheme();
+  const statusColor = getStatusColor(status, colors);
 
   return (
     <View
@@ -645,12 +646,14 @@ function Section({
 }
 
 function BulletList({ items }: { items: string[] }) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.bulletList}>
       {items.map((item, index) => (
         <View key={`${item}-${index}`} style={styles.bulletRow}>
           <View style={styles.bulletDot} />
-          <Text style={styles.bulletText}>{item}</Text>
+          <Text style={[styles.bulletText, { color: colors.textMuted }]}>{item}</Text>
         </View>
       ))}
     </View>
@@ -673,6 +676,8 @@ export default function ProfileScreen() {
     isBlocked,
   } = useApp();
 
+  const { colors } = useTheme();
+
   const [contactSelectionVisible, setContactSelectionVisible] = useState(false);
   const [selectedContactInformation, setSelectedContactInformation] = useState<string[]>([]);
   const [blockConfirmVisible, setBlockConfirmVisible] = useState(false);
@@ -693,10 +698,10 @@ export default function ProfileScreen() {
 
   if (!profile) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
         <StatusBar barStyle="light-content" />
 
-        <View style={styles.fixedHeader}>
+        <View style={[styles.fixedHeader, { backgroundColor: colors.background }]}>
           <Pressable
             style={({ pressed }) => [
               styles.backButton,
@@ -712,6 +717,7 @@ export default function ProfileScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.planButton,
+              { backgroundColor: colors.warning },
               pressed ? styles.buttonPressed : null,
             ]}
             onPress={openPlans}
@@ -730,7 +736,7 @@ export default function ProfileScreen() {
 
           <Text style={styles.notFoundTitle}>Perfil não encontrado</Text>
 
-          <Text style={styles.notFoundText}>
+          <Text style={[styles.notFoundText, { color: colors.textMuted }]}>
             O ID recebido não corresponde a nenhum perfil cadastrado nesta etapa.
           </Text>
 
@@ -965,10 +971,10 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
 
-      <View style={styles.fixedHeader}>
+      <View style={[styles.fixedHeader, { backgroundColor: colors.background }]}>
         <Pressable
           style={({ pressed }) => [
             styles.backButton,
@@ -984,6 +990,7 @@ export default function ProfileScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.planButton,
+            { backgroundColor: colors.warning },
             pressed ? styles.buttonPressed : null,
           ]}
           onPress={openPlans}
@@ -998,11 +1005,12 @@ export default function ProfileScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.heroCard}>
+        <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.photoWrapper}>
             <View
               style={[
                 styles.photoFrame,
+                { backgroundColor: colors.surfaceElevated },
                 visibleProfileStatus === "in_review" ? styles.reviewPhotoFrame : null,
                 visibleProfileStatus === "unverified" ? styles.restrictedPhotoFrame : null,
               ]}
@@ -1018,7 +1026,7 @@ export default function ProfileScreen() {
                   <Text
                     style={[
                       styles.restrictedPhotoText,
-                      { color: getStatusColor(visibleProfileStatus) },
+                      { color: getStatusColor(visibleProfileStatus, colors) },
                     ]}
                   >
                     {getRestrictedPhotoText({
@@ -1042,11 +1050,11 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.profileMainInfo}>
-            <Text style={styles.profileKind}>{profile.kind}</Text>
+            <Text style={[styles.profileKind, { color: colors.textMuted }]}>{profile.kind}</Text>
             <Text style={styles.profileName}>{displayName}</Text>
-            <Text style={styles.profileRole}>{displayRole}</Text>
+            <Text style={[styles.profileRole, { color: colors.text }]}>{displayRole}</Text>
 
-            <Text style={styles.profileLocation}>{displayLocation}</Text>
+            <Text style={[styles.profileLocation, { color: colors.textMuted }]}>{displayLocation}</Text>
 
             <StatusPill status={visibleProfileStatus} label={visibleProfileStatusLabel} />
           </View>
@@ -1055,14 +1063,14 @@ export default function ProfileScreen() {
         {localAffinityExplanation.reasons.length > 0 && (
           <View style={styles.affinityContextCard}>
             <View style={styles.affinityContextHeader}>
-              <Text style={styles.affinityContextEyebrow}>IA ELUS</Text>
+              <Text style={[styles.affinityContextEyebrow, { color: colors.accent }]}>IA ELUS</Text>
               <Text style={styles.affinityContextTitle}>
                 Por que essa pessoa apareceu para você
               </Text>
             </View>
             {localAffinityExplanation.reasons.slice(0, 3).map((reason, index) => (
               <View key={`affinity-ctx-${index}`} style={styles.affinityContextRow}>
-                <View style={styles.affinityContextDot} />
+                <View style={[styles.affinityContextDot, { backgroundColor: colors.accent }]} />
                 <Text style={styles.affinityContextText}>{reason}</Text>
               </View>
             ))}
@@ -1093,14 +1101,14 @@ export default function ProfileScreen() {
                 style={[
                   styles.warningTitle,
                   {
-                    color: getStatusColor(accessWarningMeta.status),
+                    color: getStatusColor(accessWarningMeta.status, colors),
                   },
                 ]}
               >
                 {accessWarningMeta.title}
               </Text>
 
-              <Text style={styles.warningText}>{accessWarningMeta.text}</Text>
+              <Text style={[styles.warningText, { color: colors.textMuted }]}>{accessWarningMeta.text}</Text>
             </View>
           </View>
         ) : null}
@@ -1108,11 +1116,11 @@ export default function ProfileScreen() {
         {canSeeFullProfile ? (
           <>
             <Section title="Sobre">
-              <Text style={styles.paragraph}>{profile.bio}</Text>
+              <Text style={[styles.paragraph, { color: colors.textMuted }]}>{profile.bio}</Text>
             </Section>
 
             <Section title="Objetivo no ELUS">
-              <Text style={styles.paragraph}>{profile.purpose}</Text>
+              <Text style={[styles.paragraph, { color: colors.textMuted }]}>{profile.purpose}</Text>
             </Section>
 
             <Section title="Dados básicos visíveis">
@@ -1150,7 +1158,7 @@ export default function ProfileScreen() {
             </Section>
 
             <Section title="Informações restritas">
-              <Text style={styles.paragraph}>
+              <Text style={[styles.paragraph, { color: colors.textMuted }]}>
                 O ELUS protege dados completos até que a verificação necessária
                 esteja concluída e exista aprovação adequada. Isso reduz
                 exposição indevida, perfis não verificados, bots e solicitações
@@ -1161,10 +1169,10 @@ export default function ProfileScreen() {
         )}
 
         <Section title="Contato">
-          <View style={styles.contactCard}>
+          <View style={[styles.contactCard, { borderColor: colors.border }]}>
             <Text style={styles.contactTitle}>Dados protegidos</Text>
 
-            <Text style={styles.contactText}>
+            <Text style={[styles.contactText, { color: colors.textMuted }]}>
               Telefone, WhatsApp, e-mail e dados sensíveis não aparecem
               automaticamente. Informações de contato só serão compartilhadas após
               solicitação e aprovação de quem recebe. Isso não cria elo nem
@@ -1175,6 +1183,7 @@ export default function ProfileScreen() {
               style={({ pressed }) => [
                 styles.contactButton,
                 !canRequestContactInformation ? styles.contactButtonDisabled : null,
+                !canRequestContactInformation ? { backgroundColor: colors.border } : null,
                 pressed ? styles.buttonPressed : null,
               ]}
               onPress={openContactInformationSelection}
@@ -1182,7 +1191,9 @@ export default function ProfileScreen() {
               <Text
                 style={[
                   styles.contactButtonText,
+                  { color: colors.background },
                   !canRequestContactInformation ? styles.contactButtonTextDisabled : null,
+                  !canRequestContactInformation ? { color: colors.textSoft } : null,
                 ]}
               >
                 {contactButtonLabel}
@@ -1190,7 +1201,7 @@ export default function ProfileScreen() {
             </Pressable>
 
             {!canRequestContactInformation && lockedReason ? (
-              <Text style={styles.lockedReason}>{lockedReason}</Text>
+              <Text style={[styles.lockedReason, { color: colors.textSoft }]}>{lockedReason}</Text>
             ) : null}
           </View>
         </Section>
@@ -1202,6 +1213,7 @@ export default function ProfileScreen() {
                 styles.safetyButton,
                 styles.safetyButtonBlock,
                 isUserBlocked && styles.safetyButtonBlocked,
+                isUserBlocked && { borderColor: colors.border },
                 pressed && styles.buttonPressed,
               ]}
               onPress={handleBlockUser}
@@ -1235,9 +1247,9 @@ export default function ProfileScreen() {
         onRequestClose={() => setBlockConfirmVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { backgroundColor: colors.surface }]}>
             <Text style={styles.modalTitle}>Bloquear usuário?</Text>
-            <Text style={styles.modalText}>
+            <Text style={[styles.modalText, { color: colors.textMuted }]}>
               Este perfil não aparecerá mais para você no Campo, no Explorar nem nas solicitações.
               Você poderá desbloqueá-lo nas configurações da sua conta.
             </Text>
@@ -1249,7 +1261,7 @@ export default function ProfileScreen() {
                 <Text style={styles.modalCancelButtonText}>Cancelar</Text>
               </Pressable>
               <Pressable
-                style={({ pressed }) => [styles.modalSendButton, { backgroundColor: "#B85C5C" }, pressed && styles.buttonPressed]}
+                style={({ pressed }) => [styles.modalSendButton, { backgroundColor: colors.danger }, pressed && styles.buttonPressed]}
                 onPress={confirmBlockUser}
               >
                 <Text style={[styles.modalSendButtonText, { color: "#FFFFFF" }]}>Bloquear</Text>
@@ -1266,17 +1278,17 @@ export default function ProfileScreen() {
         onRequestClose={closeContactInformationSelection}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { backgroundColor: colors.surface }]}>
             <Text style={styles.modalTitle}>Selecionar informações</Text>
 
-            <Text style={styles.modalText}>
+            <Text style={[styles.modalText, { color: colors.textMuted }]}>
               Escolha exatamente quais contatos deseja solicitar. O perfil pode
               aceitar, recusar ou compartilhar apenas parte das informações.
             </Text>
 
             <View style={styles.modalRulesCard}>
-              <Ionicons name="shield-checkmark-outline" size={18} color="#5E9EAB" />
-              <Text style={styles.modalRulesText}>
+              <Ionicons name="shield-checkmark-outline" size={18} color={colors.accent} />
+              <Text style={[styles.modalRulesText, { color: colors.textMuted }]}>
                 Este pedido não cria elo, não vira conexão real e não libera borda
                 colorida.
               </Text>
@@ -1317,6 +1329,7 @@ export default function ProfileScreen() {
                     key={option}
                     style={({ pressed }) => [
                       styles.optionRow,
+                      { borderColor: colors.border },
                       selected ? styles.optionRowSelected : null,
                       pressed ? styles.buttonPressed : null,
                     ]}
@@ -1326,16 +1339,18 @@ export default function ProfileScreen() {
                       style={[
                         styles.optionCheckbox,
                         selected ? styles.optionCheckboxSelected : null,
+                        selected ? { backgroundColor: colors.accent, borderColor: colors.accent } : null,
                       ]}
                     >
                       {selected ? (
-                        <Ionicons name="checkmark" size={16} color="#0B101A" />
+                        <Ionicons name="checkmark" size={16} color={colors.background} />
                       ) : null}
                     </View>
 
                     <Text
                       style={[
                         styles.optionText,
+                        { color: colors.textMuted },
                         selected ? styles.optionTextSelected : null,
                       ]}
                     >
@@ -1360,8 +1375,12 @@ export default function ProfileScreen() {
               <Pressable
                 style={({ pressed }) => [
                   styles.modalSendButton,
+                  { backgroundColor: colors.accent },
                   selectedContactInformation.length === 0
                     ? styles.modalSendButtonDisabled
+                    : null,
+                  selectedContactInformation.length === 0
+                    ? { backgroundColor: colors.border }
                     : null,
                   pressed ? styles.buttonPressed : null,
                 ]}
@@ -1370,8 +1389,12 @@ export default function ProfileScreen() {
                 <Text
                   style={[
                     styles.modalSendButtonText,
+                    { color: colors.background },
                     selectedContactInformation.length === 0
                       ? styles.modalSendButtonTextDisabled
+                      : null,
+                    selectedContactInformation.length === 0
+                      ? { color: colors.textSoft }
                       : null,
                   ]}
                 >
@@ -1389,7 +1412,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#0B101A",
   },
 
   fixedHeader: {
@@ -1398,7 +1420,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#0B101A",
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.08)",
   },
@@ -1435,7 +1456,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 7,
-    backgroundColor: "#C49A45",
     borderWidth: 1,
     borderColor: "#A9823A",
   },
@@ -1477,7 +1497,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 2,
-    color: '#5E9EAB',
     textTransform: 'uppercase',
     marginBottom: 4,
   },
@@ -1499,7 +1518,6 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#5E9EAB',
     marginTop: 7,
     marginRight: 10,
     flexShrink: 0,
@@ -1525,9 +1543,7 @@ const styles = StyleSheet.create({
   heroCard: {
     borderRadius: 30,
     padding: 18,
-    backgroundColor: "#141A26",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
   },
 
   photoWrapper: {
@@ -1540,7 +1556,6 @@ const styles = StyleSheet.create({
     height: 310,
     borderRadius: 26,
     overflow: "hidden",
-    backgroundColor: "#1C2433",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
   },
@@ -1596,7 +1611,6 @@ const styles = StyleSheet.create({
   },
 
   profileKind: {
-    color: "#A1A9B8",
     fontSize: 12,
     fontWeight: "900",
     letterSpacing: 1.5,
@@ -1612,14 +1626,12 @@ const styles = StyleSheet.create({
   },
 
   profileRole: {
-    color: "#EDEDED",
     fontSize: 16,
     fontWeight: "700",
     marginTop: 6,
   },
 
   profileLocation: {
-    color: "#A1A9B8",
     fontSize: 14,
     fontWeight: "600",
     marginTop: 6,
@@ -1669,7 +1681,6 @@ const styles = StyleSheet.create({
   },
 
   warningText: {
-    color: "#A1A9B8",
     fontSize: 13,
     lineHeight: 19,
     fontWeight: "600",
@@ -1693,7 +1704,6 @@ const styles = StyleSheet.create({
   },
 
   paragraph: {
-    color: "#A1A9B8",
     fontSize: 15,
     lineHeight: 23,
     fontWeight: "600",
@@ -1720,7 +1730,6 @@ const styles = StyleSheet.create({
 
   bulletText: {
     flex: 1,
-    color: "#A1A9B8",
     fontSize: 14,
     lineHeight: 21,
     fontWeight: "600",
@@ -1771,7 +1780,6 @@ const styles = StyleSheet.create({
     padding: 15,
     backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
   },
 
   contactTitle: {
@@ -1782,7 +1790,6 @@ const styles = StyleSheet.create({
   },
 
   contactText: {
-    color: "#A1A9B8",
     fontSize: 14,
     lineHeight: 21,
     fontWeight: "600",
@@ -1800,24 +1807,19 @@ const styles = StyleSheet.create({
   },
 
   contactButtonDisabled: {
-    backgroundColor: "rgba(255,255,255,0.10)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.14)",
   },
 
   contactButtonText: {
-    color: "#0B101A",
     fontSize: 15,
     fontWeight: "900",
     textAlign: "center",
   },
 
-  contactButtonTextDisabled: {
-    color: "#6B7280",
-  },
+  contactButtonTextDisabled: {},
 
   lockedReason: {
-    color: "#6B7280",
     fontSize: 12,
     lineHeight: 18,
     fontWeight: "700",
@@ -1836,7 +1838,6 @@ const styles = StyleSheet.create({
     width: "100%",
     maxHeight: "88%",
     borderRadius: 30,
-    backgroundColor: "#141A26",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.14)",
     padding: 18,
@@ -1851,7 +1852,6 @@ const styles = StyleSheet.create({
   },
 
   modalText: {
-    color: "#A1A9B8",
     fontSize: 14,
     lineHeight: 21,
     fontWeight: "600",
@@ -1871,7 +1871,6 @@ const styles = StyleSheet.create({
 
   modalRulesText: {
     flex: 1,
-    color: "#A1A9B8",
     fontSize: 12,
     lineHeight: 17,
     fontWeight: "800",
@@ -1920,7 +1919,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
   },
 
   optionRowSelected: {
@@ -1940,14 +1938,10 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.18)",
   },
 
-  optionCheckboxSelected: {
-    backgroundColor: "#5E9EAB",
-    borderColor: "#5E9EAB",
-  },
+  optionCheckboxSelected: {},
 
   optionText: {
     flex: 1,
-    color: "#A1A9B8",
     fontSize: 14,
     lineHeight: 19,
     fontWeight: "800",
@@ -1986,25 +1980,20 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#5E9EAB",
   },
 
   modalSendButtonDisabled: {
-    backgroundColor: "rgba(255,255,255,0.10)",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.13)",
   },
 
   modalSendButtonText: {
-    color: "#0B101A",
     fontSize: 14,
     fontWeight: "900",
     textAlign: "center",
   },
 
-  modalSendButtonTextDisabled: {
-    color: "#6B7280",
-  },
+  modalSendButtonTextDisabled: {},
 
   notFoundContainer: {
     flex: 1,
@@ -2029,7 +2018,6 @@ const styles = StyleSheet.create({
   },
 
   notFoundText: {
-    color: "#A1A9B8",
     fontSize: 15,
     lineHeight: 22,
     fontWeight: "600",
@@ -2073,7 +2061,6 @@ const styles = StyleSheet.create({
 
   safetyButtonBlocked: {
     backgroundColor: "rgba(255,255,255,0.04)",
-    borderColor: "rgba(255,255,255,0.10)",
   },
 
   safetyButtonReport: {
