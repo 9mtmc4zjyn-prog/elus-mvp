@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -13,24 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useApp } from '../src/context/AppContext';
 import { Button } from '../src/components/Button';
-
-const COLORS = {
-  background: '#0B101A',
-  header: '#0B101A',
-  panel: '#141A26',
-  panelSoft: '#1C2433',
-  border: 'rgba(255,255,255,0.08)',
-  borderStrong: 'rgba(255,255,255,0.13)',
-  text: '#EDEDED',
-  muted: '#6B7280',
-  mutedSoft: '#A1A9B8',
-  cyan: '#5E9EAB',
-  blue: '#5E9EAB',
-  gold: '#C49A45',
-  green: '#4A9A65',
-  purple: '#8B7EA8',
-  danger: '#B85C5C',
-};
+import { useTheme } from '../src/theme/ThemeContext';
 
 type VerificationPhase = 'verified' | 'in_review' | 'unverified';
 
@@ -175,20 +158,22 @@ function getUserVerificationPhase(user: any): VerificationPhase {
 
 function Header() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
       <Pressable
         onPress={() => router.back()}
         style={({ pressed }) => [
           styles.backButton,
+          { borderColor: colors.border },
           pressed && styles.buttonPressed,
         ]}
       >
-        <Ionicons name="chevron-back" size={22} color={COLORS.text} />
+        <Ionicons name="chevron-back" size={22} color={colors.text} />
       </Pressable>
 
-      <Text style={styles.headerTitle}>ELUS</Text>
+      <Text style={[styles.headerTitle, { color: colors.text }]}>ELUS</Text>
 
       <View style={styles.headerSpace} />
     </View>
@@ -196,43 +181,45 @@ function Header() {
 }
 
 function HeroCard() {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.heroCard}>
+    <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
       <View style={styles.heroGlowOne} />
       <View style={styles.heroGlowTwo} />
 
       <View style={styles.heroTopRow}>
         <View>
-          <Text style={styles.heroEyebrow}>Plano e presença</Text>
-          <Text style={styles.heroTitle}>Escolha como entrar no ELUS</Text>
+          <Text style={[styles.heroEyebrow, { color: colors.accent }]}>Plano e presença</Text>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>Escolha como entrar no ELUS</Text>
         </View>
 
         <View style={styles.heroMiniRadar}>
           <View style={styles.miniRadarRingOne} />
           <View style={styles.miniRadarRingTwo} />
-          <View style={styles.miniRadarCore} />
+          <View style={[styles.miniRadarCore, { backgroundColor: colors.accent }]} />
         </View>
       </View>
 
-      <Text style={styles.heroText}>
+      <Text style={[styles.heroText, { color: colors.textMuted }]}>
         Comece simples, valide sua identidade e evolua para recursos de rede,
         inteligência, presença local e oportunidades reais.
       </Text>
 
       <View style={styles.heroPills}>
-        <View style={styles.heroPill}>
-          <Ionicons name="person-outline" size={14} color={COLORS.cyan} />
-          <Text style={styles.heroPillText}>Pessoa</Text>
+        <View style={[styles.heroPill, { borderColor: colors.border }]}>
+          <Ionicons name="person-outline" size={14} color={colors.accent} />
+          <Text style={[styles.heroPillText, { color: colors.textMuted }]}>Pessoa</Text>
         </View>
 
-        <View style={styles.heroPill}>
-          <Ionicons name="business-outline" size={14} color={COLORS.gold} />
-          <Text style={styles.heroPillText}>Empresa</Text>
+        <View style={[styles.heroPill, { borderColor: colors.border }]}>
+          <Ionicons name="business-outline" size={14} color={colors.warning} />
+          <Text style={[styles.heroPillText, { color: colors.textMuted }]}>Empresa</Text>
         </View>
 
-        <View style={styles.heroPill}>
-          <Ionicons name="shield-checkmark-outline" size={14} color={COLORS.green} />
-          <Text style={styles.heroPillText}>Validação</Text>
+        <View style={[styles.heroPill, { borderColor: colors.border }]}>
+          <Ionicons name="shield-checkmark-outline" size={14} color={colors.success} />
+          <Text style={[styles.heroPillText, { color: colors.textMuted }]}>Validação</Text>
         </View>
       </View>
     </View>
@@ -244,24 +231,26 @@ function PlansBlockedNotice({
 }: {
   verificationPhase: VerificationPhase;
 }) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.blockedNotice}>
       <View style={styles.blockedNoticeIcon}>
-        <Ionicons name="lock-closed-outline" size={20} color={COLORS.danger} />
+        <Ionicons name="lock-closed-outline" size={20} color={colors.danger} />
       </View>
 
       <View style={styles.blockedNoticeTextWrap}>
-        <Text style={styles.blockedNoticeTitle}>
+        <Text style={[styles.blockedNoticeTitle, { color: colors.text }]}>
           Planos bloqueados até a verificação
         </Text>
 
-        <Text style={styles.blockedNoticeText}>
+        <Text style={[styles.blockedNoticeText, { color: colors.textMuted }]}>
           {verificationPhase === 'in_review'
             ? 'Sua documentação está em análise. Até a aprovação final, planos, compras, anúncios e recursos pagos permanecem bloqueados.'
             : 'Para acessar planos, compras, anúncios ou recursos pagos, sua identidade precisa ser aprovada primeiro.'}
         </Text>
 
-        <Text style={styles.blockedNoticeText}>
+        <Text style={[styles.blockedNoticeText, { color: colors.textMuted }]}>
           Pagamento não substitui verificação e não libera contato automaticamente.
         </Text>
       </View>
@@ -276,10 +265,12 @@ function SectionTitle({
   title: string;
   subtitle: string;
 }) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.sectionTitleWrap}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <Text style={styles.sectionSubtitle}>{subtitle}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+      <Text style={[styles.sectionSubtitle, { color: colors.textSoft }]}>{subtitle}</Text>
     </View>
   );
 }
@@ -295,14 +286,17 @@ function PlanCard({
   locked: boolean;
   onPress: () => void;
 }) {
-  const iconColor = plan.group === 'business' ? COLORS.gold : COLORS.cyan;
-  const selectedBorder = plan.group === 'business' ? COLORS.gold : COLORS.blue;
+  const { colors } = useTheme();
+
+  const iconColor = plan.group === 'business' ? colors.warning : colors.accent;
+  const selectedBorder = plan.group === 'business' ? colors.warning : colors.accent;
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.planCard,
+        { backgroundColor: colors.surface, borderColor: colors.borderStrong },
         selected && {
           borderColor: selectedBorder,
           backgroundColor:
@@ -318,14 +312,16 @@ function PlanCard({
         <View
           style={[
             styles.recommendedBadge,
-            plan.group === 'business' && styles.businessBadge,
+            { backgroundColor: colors.warning },
+            plan.group === 'business' && { backgroundColor: colors.success },
             locked && styles.lockedBadge,
+            locked && { borderColor: colors.border },
           ]}
         >
           <Text
             style={[
               styles.recommendedText,
-              locked && styles.lockedBadgeText,
+              locked && { color: colors.textMuted },
             ]}
           >
             Recomendado
@@ -334,8 +330,8 @@ function PlanCard({
       ) : null}
 
       {plan.premium ? (
-        <View style={styles.premiumBadge}>
-          <Text style={styles.premiumText}>Avançado</Text>
+        <View style={[styles.premiumBadge, { borderColor: colors.border }]}>
+          <Text style={[styles.premiumText, { color: colors.textMuted }]}>Avançado</Text>
         </View>
       ) : null}
 
@@ -352,7 +348,7 @@ function PlanCard({
               backgroundColor: `${selectedBorder}20`,
             },
             locked && {
-              borderColor: 'rgba(255,255,255,0.10)',
+              borderColor: colors.border,
               backgroundColor: 'rgba(255,255,255,0.035)',
             },
           ]}
@@ -360,16 +356,16 @@ function PlanCard({
           <Ionicons
             name={plan.icon}
             size={24}
-            color={locked ? COLORS.muted : iconColor}
+            color={locked ? colors.textMuted : iconColor}
           />
         </View>
 
         <View style={styles.planTitleWrap}>
-          <Text style={[styles.planName, locked && styles.lockedText]}>
+          <Text style={[styles.planName, { color: colors.text }, locked && { color: colors.textMuted }]}>
             {plan.name}
           </Text>
 
-          <Text style={[styles.planPrice, locked && styles.lockedPrice]}>
+          <Text style={[styles.planPrice, { color: colors.warning }, locked && { color: colors.textSoft }]}>
             {plan.price}
           </Text>
         </View>
@@ -384,7 +380,7 @@ function PlanCard({
           ]}
         >
           {locked ? (
-            <Ionicons name="lock-closed-outline" size={13} color={COLORS.muted} />
+            <Ionicons name="lock-closed-outline" size={13} color={colors.textMuted} />
           ) : selected ? (
             <View
               style={[
@@ -398,22 +394,22 @@ function PlanCard({
         </View>
       </View>
 
-      <Text style={[styles.planDescription, locked && styles.lockedDescription]}>
+      <Text style={[styles.planDescription, { color: colors.textMuted }, locked && { color: colors.textSoft }]}>
         {plan.description}
       </Text>
 
       <View style={styles.featuresWrap}>
         {plan.features.map((feature) => (
           <View key={feature} style={styles.featureRow}>
-            <View style={[styles.checkWrap, locked && styles.lockedCheckWrap]}>
+            <View style={[styles.checkWrap, { backgroundColor: colors.warning }, locked && styles.lockedCheckWrap]}>
               <Ionicons
                 name="checkmark"
                 size={13}
-                color={locked ? COLORS.muted : '#071019'}
+                color={locked ? colors.textSoft : '#071019'}
               />
             </View>
 
-            <Text style={[styles.featureText, locked && styles.lockedDescription]}>
+            <Text style={[styles.featureText, { color: colors.text }, locked && { color: colors.textSoft }]}>
               {feature}
             </Text>
           </View>
@@ -422,8 +418,8 @@ function PlanCard({
 
       {locked ? (
         <View style={styles.lockedPlanPill}>
-          <Ionicons name="lock-closed-outline" size={13} color={COLORS.danger} />
-          <Text style={styles.lockedPlanPillText}>
+          <Ionicons name="lock-closed-outline" size={13} color={colors.danger} />
+          <Text style={[styles.lockedPlanPillText, { color: colors.danger }]}>
             Bloqueado até a verificação
           </Text>
         </View>
@@ -434,6 +430,7 @@ function PlanCard({
 
 export default function PlansScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { user } = useApp() as any;
 
   const [selectedPlan, setSelectedPlan] = useState<PlanKey>('plus');
@@ -485,7 +482,7 @@ export default function PlansScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
 
       <Header />
@@ -496,12 +493,12 @@ export default function PlansScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.titleBlock}>
-          <Text style={styles.eyebrow}>Planos ELUS</Text>
-          <Text style={styles.title}>
+          <Text style={[styles.eyebrow, { color: colors.warning }]}>Planos ELUS</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
             {plansBlocked ? 'Verifique sua identidade' : 'Escolha seu plano'}
           </Text>
 
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
             {plansBlocked
               ? 'Planos e recursos pagos ficam disponíveis após aprovação da identidade.'
               : 'Defina como deseja começar no ELUS.'}
@@ -546,14 +543,14 @@ export default function PlansScreen() {
 
         <View style={styles.businessNotice}>
           <View style={styles.businessNoticeIcon}>
-            <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.gold} />
+            <Ionicons name="shield-checkmark-outline" size={20} color={colors.warning} />
           </View>
 
           <View style={styles.businessNoticeTextWrap}>
-            <Text style={styles.businessNoticeTitle}>
+            <Text style={[styles.businessNoticeTitle, { color: colors.text }]}>
               Empresa também precisa de validação
             </Text>
-            <Text style={styles.businessNoticeText}>
+            <Text style={[styles.businessNoticeText, { color: colors.textMuted }]}>
               Planos empresariais devem exigir identidade responsável, dados da empresa
               e validação para evitar serviços falsos ou perfis anônimos.
             </Text>
@@ -567,7 +564,7 @@ export default function PlansScreen() {
           onPress={handleContinue}
         />
 
-        <Text style={styles.footerText}>
+        <Text style={[styles.footerText, { color: colors.textSoft }]}>
           {plansBlocked
             ? 'Sua identidade precisa ser aprovada antes de qualquer compra, anúncio ou recurso pago.'
             : 'Você poderá alterar seu plano futuramente dentro do app.'}
@@ -582,16 +579,13 @@ export default function PlansScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   header: {
     height: 92,
     paddingTop: 44,
     paddingHorizontal: 18,
-    backgroundColor: COLORS.header,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -605,13 +599,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
 
   headerTitle: {
     fontSize: 17,
     lineHeight: 22,
-    color: COLORS.text,
     fontWeight: '900',
     letterSpacing: 5,
   },
@@ -647,7 +639,6 @@ const styles = StyleSheet.create({
   eyebrow: {
     fontSize: 10,
     lineHeight: 13,
-    color: COLORS.gold,
     fontWeight: '800',
     letterSpacing: 2.2,
     textTransform: 'uppercase',
@@ -657,7 +648,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 25,
     lineHeight: 31,
-    color: COLORS.text,
     fontWeight: '800',
     marginBottom: 5,
   },
@@ -665,16 +655,13 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 12,
     lineHeight: 18,
-    color: COLORS.mutedSoft,
   },
 
   heroCard: {
     minHeight: 190,
     borderRadius: 28,
     padding: 18,
-    backgroundColor: COLORS.panel,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
     marginBottom: 22,
     overflow: 'hidden',
   },
@@ -709,7 +696,6 @@ const styles = StyleSheet.create({
   heroEyebrow: {
     fontSize: 10,
     lineHeight: 13,
-    color: COLORS.cyan,
     fontWeight: '800',
     letterSpacing: 2,
     textTransform: 'uppercase',
@@ -719,7 +705,6 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 20,
     lineHeight: 25,
-    color: COLORS.text,
     fontWeight: '800',
     maxWidth: 240,
   },
@@ -757,13 +742,11 @@ const styles = StyleSheet.create({
     width: 9,
     height: 9,
     borderRadius: 5,
-    backgroundColor: COLORS.cyan,
   },
 
   heroText: {
     fontSize: 12,
     lineHeight: 18,
-    color: COLORS.mutedSoft,
     marginBottom: 14,
   },
 
@@ -780,7 +763,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
-    borderColor: COLORS.border,
     marginRight: 8,
     marginBottom: 8,
   },
@@ -788,7 +770,6 @@ const styles = StyleSheet.create({
   heroPillText: {
     marginLeft: 6,
     fontSize: 10,
-    color: COLORS.mutedSoft,
     fontWeight: '700',
   },
 
@@ -822,7 +803,6 @@ const styles = StyleSheet.create({
   blockedNoticeTitle: {
     fontSize: 13,
     lineHeight: 18,
-    color: COLORS.text,
     fontWeight: '800',
     marginBottom: 5,
   },
@@ -830,7 +810,6 @@ const styles = StyleSheet.create({
   blockedNoticeText: {
     fontSize: 11,
     lineHeight: 16,
-    color: COLORS.mutedSoft,
     marginBottom: 4,
   },
 
@@ -842,7 +821,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     lineHeight: 23,
-    color: COLORS.text,
     fontWeight: '800',
     marginBottom: 4,
   },
@@ -850,15 +828,12 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontSize: 11,
     lineHeight: 16,
-    color: COLORS.muted,
   },
 
   planCard: {
     borderRadius: 26,
     padding: 16,
-    backgroundColor: COLORS.panel,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
     marginBottom: 14,
   },
 
@@ -872,18 +847,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: COLORS.gold,
     marginBottom: 14,
-  },
-
-  businessBadge: {
-    backgroundColor: COLORS.green,
   },
 
   lockedBadge: {
     backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
 
   recommendedText: {
@@ -893,10 +862,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  lockedBadgeText: {
-    color: COLORS.mutedSoft,
-  },
-
   premiumBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 13,
@@ -904,14 +869,12 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: COLORS.border,
     marginBottom: 14,
   },
 
   premiumText: {
     fontSize: 11,
     lineHeight: 14,
-    color: COLORS.mutedSoft,
     fontWeight: '800',
   },
 
@@ -938,7 +901,6 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: 19,
     lineHeight: 24,
-    color: COLORS.text,
     fontWeight: '800',
     marginBottom: 3,
   },
@@ -946,16 +908,7 @@ const styles = StyleSheet.create({
   planPrice: {
     fontSize: 16,
     lineHeight: 21,
-    color: COLORS.gold,
     fontWeight: '800',
-  },
-
-  lockedText: {
-    color: COLORS.mutedSoft,
-  },
-
-  lockedPrice: {
-    color: COLORS.muted,
   },
 
   radioOuter: {
@@ -983,12 +936,7 @@ const styles = StyleSheet.create({
   planDescription: {
     fontSize: 12,
     lineHeight: 18,
-    color: COLORS.mutedSoft,
     marginBottom: 12,
-  },
-
-  lockedDescription: {
-    color: COLORS.muted,
   },
 
   featuresWrap: {
@@ -1005,7 +953,6 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: COLORS.gold,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -1019,7 +966,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     lineHeight: 17,
-    color: COLORS.text,
   },
 
   lockedPlanPill: {
@@ -1037,7 +983,6 @@ const styles = StyleSheet.create({
 
   lockedPlanPillText: {
     marginLeft: 6,
-    color: COLORS.danger,
     fontSize: 10,
     lineHeight: 13,
     fontWeight: '800',
@@ -1074,7 +1019,6 @@ const styles = StyleSheet.create({
   businessNoticeTitle: {
     fontSize: 13,
     lineHeight: 18,
-    color: COLORS.text,
     fontWeight: '800',
     marginBottom: 5,
   },
@@ -1082,13 +1026,11 @@ const styles = StyleSheet.create({
   businessNoticeText: {
     fontSize: 11,
     lineHeight: 16,
-    color: COLORS.mutedSoft,
   },
 
   footerText: {
     fontSize: 11,
     lineHeight: 17,
-    color: COLORS.muted,
     textAlign: 'center',
     paddingHorizontal: 20,
   },

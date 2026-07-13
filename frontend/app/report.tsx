@@ -15,18 +15,14 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useApp } from '../src/context/AppContext';
 import { Button } from '../src/components/Button';
+import { useTheme } from '../src/theme/ThemeContext';
 
 const COLORS = {
-  background: '#0B101A',
   card: 'rgba(20,26,38,0.94)',
-  border: 'rgba(255,255,255,0.10)',
   borderStrong: 'rgba(255,255,255,0.16)',
-  text: '#EDEDED',
   muted: 'rgba(237,237,237,0.82)',
   soft: 'rgba(161,169,184,0.55)',
-  blue: '#5E9EAB',
   blueLight: '#8FA3B8',
-  red: '#B85C5C',
   redSoft: 'rgba(184,92,92,0.12)',
   input: 'rgba(11,16,26,0.88)',
   selected: 'rgba(184,92,92,0.16)',
@@ -49,6 +45,7 @@ const REPORT_REASONS = [
 export default function ReportScreen() {
   const router = useRouter();
   const { user } = useApp();
+  const { colors } = useTheme();
   const params = useLocalSearchParams<{ userId?: string; userName?: string }>();
   const reportedUserId = params.userId ?? '';
   const reportedUserName = params.userName ?? 'este usuário';
@@ -102,13 +99,13 @@ export default function ReportScreen() {
 
   if (submitted) {
     return (
-      <SafeAreaView style={styles.screen}>
+      <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
         <StatusBar barStyle="light-content" />
         <View style={styles.successContainer}>
           <View style={styles.successIconWrap}>
             <Text style={styles.successIcon}>✓</Text>
           </View>
-          <Text style={styles.successTitle}>Denúncia enviada</Text>
+          <Text style={[styles.successTitle, { color: colors.text }]}>Denúncia enviada</Text>
           <Text style={styles.successText}>
             Nossa equipe irá analisar a denúncia. O usuário denunciado não será
             notificado sobre o envio da denúncia.
@@ -124,17 +121,17 @@ export default function ReportScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
 
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <Pressable
-          style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.backButton, { borderColor: colors.border }, pressed && styles.pressed]}
           onPress={() => router.back()}
         >
-          <Text style={styles.backButtonText}>‹</Text>
+          <Text style={[styles.backButtonText, { color: colors.text }]}>‹</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Denunciar</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Denunciar</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -145,20 +142,21 @@ export default function ReportScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>Denúncia sobre {reportedUserName}</Text>
+          <Text style={[styles.infoTitle, { color: colors.danger }]}>Denúncia sobre {reportedUserName}</Text>
           <Text style={styles.infoText}>
             Suas denúncias são confidenciais. O usuário denunciado não saberá que você
             fez uma denúncia. Nossa equipe analisará todas as denúncias recebidas.
           </Text>
         </View>
 
-        <Text style={styles.sectionLabel}>Motivo da denúncia</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text }]}>Motivo da denúncia</Text>
 
         {REPORT_REASONS.map((reason) => (
           <Pressable
             key={reason.id}
             style={({ pressed }) => [
               styles.reasonRow,
+              { borderColor: colors.border },
               selectedReason === reason.id && styles.reasonRowSelected,
               pressed && styles.pressed,
             ]}
@@ -167,17 +165,17 @@ export default function ReportScreen() {
             <View
               style={[
                 styles.reasonRadio,
-                selectedReason === reason.id && styles.reasonRadioSelected,
+                selectedReason === reason.id && { borderColor: colors.danger },
               ]}
             >
               {selectedReason === reason.id && (
-                <View style={styles.reasonRadioDot} />
+                <View style={[styles.reasonRadioDot, { backgroundColor: colors.danger }]} />
               )}
             </View>
             <Text
               style={[
                 styles.reasonLabel,
-                selectedReason === reason.id && styles.reasonLabelSelected,
+                selectedReason === reason.id && { color: colors.text },
               ]}
             >
               {reason.label}
@@ -185,11 +183,11 @@ export default function ReportScreen() {
           </Pressable>
         ))}
 
-        <Text style={styles.sectionLabel}>Descrição adicional (opcional)</Text>
+        <Text style={[styles.sectionLabel, { color: colors.text }]}>Descrição adicional (opcional)</Text>
 
-        <View style={styles.textAreaBox}>
+        <View style={[styles.textAreaBox, { borderColor: colors.border }]}>
           <TextInput
-            style={styles.textArea}
+            style={[styles.textArea, { color: colors.text }]}
             value={description}
             onChangeText={setDescription}
             placeholder="Descreva com mais detalhes o que aconteceu..."
@@ -232,7 +230,7 @@ export default function ReportScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+  screen: { flex: 1 },
   scroll: { flex: 1 },
   header: {
     height: 64,
@@ -240,11 +238,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.background,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
   },
-  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '800' },
+  headerTitle: { fontSize: 17, fontWeight: '800' },
   headerSpacer: { width: 40 },
   backButton: {
     width: 40,
@@ -254,9 +250,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.07)',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
-  backButtonText: { color: COLORS.text, fontSize: 30, lineHeight: 32, marginTop: -2 },
+  backButtonText: { fontSize: 30, lineHeight: 32, marginTop: -2 },
   content: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 40 },
   infoBox: {
     padding: 18,
@@ -266,10 +261,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(239,68,68,0.25)',
     marginBottom: 24,
   },
-  infoTitle: { color: COLORS.red, fontSize: 15, fontWeight: '900', marginBottom: 8 },
+  infoTitle: { fontSize: 15, fontWeight: '900', marginBottom: 8 },
   infoText: { color: COLORS.muted, fontSize: 13, lineHeight: 21, fontWeight: '600' },
   sectionLabel: {
-    color: COLORS.text,
     fontSize: 15,
     fontWeight: '900',
     marginBottom: 12,
@@ -282,7 +276,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
     backgroundColor: 'rgba(255,255,255,0.03)',
     marginBottom: 8,
   },
@@ -300,26 +293,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 14,
   },
-  reasonRadioSelected: { borderColor: COLORS.red },
   reasonRadioDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: COLORS.red,
   },
   reasonLabel: { flex: 1, color: COLORS.muted, fontSize: 14, fontWeight: '700' },
-  reasonLabelSelected: { color: COLORS.text },
   textAreaBox: {
     borderRadius: 20,
     backgroundColor: COLORS.input,
     borderWidth: 1,
-    borderColor: COLORS.border,
     padding: 16,
     marginBottom: 20,
     marginTop: 8,
   },
   textArea: {
-    color: COLORS.text,
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '600',
@@ -355,7 +343,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   successIcon: { color: '#22C55E', fontSize: 36, fontWeight: '900' },
-  successTitle: { color: COLORS.text, fontSize: 24, fontWeight: '900', marginBottom: 14, textAlign: 'center' },
+  successTitle: { fontSize: 24, fontWeight: '900', marginBottom: 14, textAlign: 'center' },
   successText: { color: COLORS.muted, fontSize: 15, lineHeight: 24, fontWeight: '600', textAlign: 'center', marginBottom: 32 },
   bottomSpace: { height: 40 },
   pressed: { opacity: 0.74 },

@@ -20,6 +20,8 @@ import { useApp, type AppUser } from '../src/context/AppContext';
 import { appUserToProfile } from '../src/utils/adaptSupabaseProfile';
 import type { Profile } from '../src/data/profiles';
 import { Button } from '../src/components/Button';
+import { useTheme } from '../src/theme/ThemeContext';
+import type { ThemeColors } from '../src/theme/theme';
 
 const ELUS_LOGO = require('../assets/images/elus-logo.png');
 const ELUS_SYMBOL = require('../assets/images/elus-symbol-cyan-purple.png');
@@ -29,26 +31,20 @@ const ELUS_VERIFIED_GREEN = require('../assets/images/elus-verified-green.png');
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const COLORS = {
-  background: '#0B101A',
   mapBase: '#080D16',
   panel: 'rgba(20,26,38,0.82)',
   panelStrong: 'rgba(20,26,38,0.94)',
-  panelSoft: 'rgba(255,255,255,0.045)',
-  border: 'rgba(255,255,255,0.10)',
   borderSoft: 'rgba(255,255,255,0.065)',
-  text: '#EDEDED',
   muted: 'rgba(161,169,184,0.75)',
   mutedSoft: 'rgba(161,169,184,0.55)',
   cyan: '#22D3EE',
   cyanSoft: 'rgba(34,211,238,0.12)',
-  green: '#4A9A65',
   gold: '#D9B46A',
   goldSoft: 'rgba(217,180,106,0.12)',
   blueLight: '#5E9EAB',
   blueSoft: 'rgba(94,158,171,0.15)',
   purple: '#A855F7',
   purpleSoft: 'rgba(168,85,247,0.10)',
-  danger: '#B85C5C',
   dangerSoft: 'rgba(184,92,92,0.12)',
 };
 
@@ -97,7 +93,7 @@ function clamp(value: number, min: number, max: number) {
 function normalizeText(value: string) {
   return String(value ?? '')
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
 }
@@ -313,16 +309,16 @@ function getKindColor(kind: PresenceKind) {
   return COLORS.cyan;
 }
 
-function getPhaseColor(phase: IdentityPhase) {
+function getPhaseColor(phase: IdentityPhase, colors: ThemeColors) {
   if (phase === 'verified') {
-    return COLORS.green;
+    return colors.success;
   }
 
   if (phase === 'in_review') {
     return COLORS.blueLight;
   }
 
-  return COLORS.danger;
+  return colors.danger;
 }
 
 function getStatusImage(phase: IdentityPhase): ImageSourcePropType {
@@ -426,12 +422,13 @@ function PresenceNodeView({
   zoomScale: number;
   currentUserPhase: IdentityPhase;
 }) {
+  const { colors } = useTheme();
   const kindColor = getKindColor(node.kind);
   const visiblePhase = getVisibleIdentityPhase({
     currentUserPhase,
     targetPhase: node.phase,
   });
-  const phaseColor = getPhaseColor(visiblePhase);
+  const phaseColor = getPhaseColor(visiblePhase, colors);
   const showLabel = zoomScale >= 0.72;
   const useStatusSymbol = visiblePhase !== 'verified';
   const borderColor = useStatusSymbol ? phaseColor : kindColor;
@@ -508,7 +505,7 @@ function PresenceNodeView({
             style={[
               styles.nodeLabelText,
               {
-                color: useStatusSymbol ? phaseColor : COLORS.text,
+                color: useStatusSymbol ? phaseColor : colors.text,
               },
             ]}
             numberOfLines={1}
@@ -522,6 +519,8 @@ function PresenceNodeView({
 }
 
 function CenterNode() {
+  const { colors } = useTheme();
+
   return (
     <View
       pointerEvents="none"
@@ -541,13 +540,14 @@ function CenterNode() {
       </View>
 
       <View style={styles.centerLabel}>
-        <Text style={styles.centerLabelText}>Você</Text>
+        <Text style={[styles.centerLabelText, { color: colors.text }]}>Você</Text>
       </View>
     </View>
   );
 }
 
 export default function PresenceMapScreen() {
+  const { colors } = useTheme();
   const { user, realUsers } = useApp() as any;
   const currentUserPhase = getCurrentUserIdentityPhase(user);
 
@@ -684,10 +684,10 @@ export default function PresenceMapScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
 
-      <View style={styles.screen}>
+      <View style={[styles.screen, { backgroundColor: colors.background }]}>
         <View style={styles.gridLayer}>
           {Array.from({ length: 12 }).map((_, index) => (
             <View
@@ -721,11 +721,12 @@ export default function PresenceMapScreen() {
           <Pressable
             style={({ pressed }) => [
               styles.backButton,
+              { borderColor: colors.border },
               pressed ? styles.pressed : null,
             ]}
             onPress={goBack}
           >
-            <Ionicons name="chevron-back" size={25} color={COLORS.text} />
+            <Ionicons name="chevron-back" size={25} color={colors.text} />
           </Pressable>
 
           <View style={styles.headerCenter}>
@@ -737,14 +738,14 @@ export default function PresenceMapScreen() {
         </View>
 
         <View style={styles.searchArea}>
-          <View style={styles.searchBox}>
+          <View style={[styles.searchBox, { borderColor: colors.border }]}>
             <Ionicons name="search" size={18} color={COLORS.mutedSoft} />
             <TextInput
               value={searchText}
               onChangeText={setSearchText}
               placeholder="Buscar pessoas, empresas, serviços ou regiões aproximadas"
               placeholderTextColor={COLORS.mutedSoft}
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.text }]}
               autoCorrect={false}
               autoCapitalize="none"
             />
@@ -770,6 +771,7 @@ export default function PresenceMapScreen() {
                   onPress={() => setActiveFilter(filter.key)}
                   style={[
                     styles.filterChip,
+                    { borderColor: colors.border },
                     active
                       ? {
                           borderColor: `${filter.color}88`,
@@ -897,7 +899,7 @@ export default function PresenceMapScreen() {
           </View>
         </GestureDetector>
 
-        <View style={styles.zoomControl}>
+        <View style={[styles.zoomControl, { borderColor: colors.border }]}>
           <Pressable
             style={({ pressed }) => [
               styles.zoomButton,
@@ -905,7 +907,7 @@ export default function PresenceMapScreen() {
             ]}
             onPress={zoomIn}
           >
-            <Ionicons name="add" size={24} color={COLORS.text} />
+            <Ionicons name="add" size={24} color={colors.text} />
           </Pressable>
 
           <View style={styles.zoomValueBox}>
@@ -919,14 +921,14 @@ export default function PresenceMapScreen() {
             ]}
             onPress={zoomOut}
           >
-            <Ionicons name="remove" size={24} color={COLORS.text} />
+            <Ionicons name="remove" size={24} color={colors.text} />
           </Pressable>
         </View>
 
-        <View style={styles.regionBadge}>
+        <View style={[styles.regionBadge, { borderColor: colors.border }]}>
           <View>
             <Text style={styles.regionKicker}>Região aproximada</Text>
-            <Text style={styles.regionTitle}>Itamarandiba · MG</Text>
+            <Text style={[styles.regionTitle, { color: colors.text }]}>Itamarandiba · MG</Text>
           </View>
 
           <View style={styles.regionCount}>
@@ -942,7 +944,7 @@ export default function PresenceMapScreen() {
         </View>
 
         {selectedNode ? (
-          <View style={styles.tooltip}>
+          <View style={[styles.tooltip, { borderColor: colors.border }]}>
             <View style={styles.tooltipTop}>
               <View
                 style={[
@@ -954,7 +956,7 @@ export default function PresenceMapScreen() {
               />
 
               <View style={styles.tooltipInfo}>
-                <Text style={styles.tooltipName} numberOfLines={1}>
+                <Text style={[styles.tooltipName, { color: colors.text }]} numberOfLines={1}>
                   {getPublicName(selectedNode.profile)}
                 </Text>
 
@@ -1021,12 +1023,10 @@ export default function PresenceMapScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   screen: {
     flex: 1,
-    backgroundColor: COLORS.background,
     overflow: 'hidden',
   },
 
@@ -1089,7 +1089,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     backgroundColor: 'rgba(255,255,255,0.075)',
     borderWidth: 1,
-    borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1132,7 +1131,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: 'rgba(4,7,13,0.82)',
     borderWidth: 1,
-    borderColor: COLORS.border,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -1141,7 +1139,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     marginRight: 8,
-    color: COLORS.text,
     fontSize: 14,
     fontWeight: '700',
     paddingVertical: 0,
@@ -1159,7 +1156,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(4,7,13,0.70)',
     borderWidth: 1,
-    borderColor: COLORS.border,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -1291,7 +1287,6 @@ const styles = StyleSheet.create({
   },
 
   centerLabelText: {
-    color: COLORS.text,
     fontSize: 16,
     fontWeight: '900',
   },
@@ -1357,7 +1352,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: 'rgba(4,7,13,0.86)',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
 
   zoomButton: {
@@ -1394,7 +1388,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: 'rgba(4,7,13,0.82)',
     borderWidth: 1,
-    borderColor: COLORS.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -1410,7 +1403,6 @@ const styles = StyleSheet.create({
 
   regionTitle: {
     marginTop: 3,
-    color: COLORS.text,
     fontSize: 23,
     fontWeight: '900',
   },
@@ -1467,7 +1459,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     backgroundColor: 'rgba(6,10,18,0.96)',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
 
   tooltipTop: {
@@ -1488,7 +1479,6 @@ const styles = StyleSheet.create({
   },
 
   tooltipName: {
-    color: COLORS.text,
     fontSize: 18,
     fontWeight: '900',
   },
