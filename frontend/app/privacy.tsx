@@ -9,6 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../src/components/Button';
+import { useTheme } from '../src/theme/ThemeContext';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -20,37 +21,13 @@ type PrivacyItem = {
 };
 
 const COLORS = {
-  background: '#0B101A',
-  surface: '#141A26',
-  surfaceSoft: '#1C2433',
   surfaceDeep: '#080D16',
 
-  text: '#EDEDED',
-  textStrong: '#EDEDED',
-  textMuted: '#A1A9B8',
-  textSoft: '#6B7280',
-
-  border: 'rgba(255,255,255,0.10)',
-  borderStrong: 'rgba(255,255,255,0.16)',
-
-  cyan: '#5E9EAB',
-  cyanSoft: 'rgba(94,158,171,0.15)',
-  cyanBorder: 'rgba(94,158,171,0.28)',
-
-  gold: '#C49A45',
-  goldSoft: 'rgba(196,154,69,0.12)',
   goldBorder: 'rgba(196,154,69,0.30)',
 
   blueLight: '#8FA3B8',
   blueLightSoft: 'rgba(143,163,184,0.14)',
   blueLightBorder: 'rgba(143,163,184,0.34)',
-
-  green: '#4A9A65',
-  greenSoft: 'rgba(74,154,101,0.12)',
-  greenBorder: 'rgba(74,154,101,0.28)',
-
-  danger: '#B85C5C',
-  white: '#EDEDED',
 };
 
 const privacyItems: PrivacyItem[] = [
@@ -86,6 +63,7 @@ const privacyItems: PrivacyItem[] = [
 
 export default function PrivacyScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   function handleAccept() {
     router.push('/profile-type' as never);
@@ -96,19 +74,24 @@ export default function PrivacyScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.background, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}
           onPress={handleBack}
           activeOpacity={0.8}
         >
-          <Ionicons name="chevron-back" size={25} color={COLORS.text} />
+          <Ionicons name="chevron-back" size={25} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.headerTextBox}>
-          <Text style={styles.headerTitle}>Privacidade</Text>
-          <Text style={styles.headerSubtitle}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Privacidade</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
             Segurança e controle no ELUS
           </Text>
         </View>
@@ -119,18 +102,18 @@ export default function PrivacyScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.heroCard}>
+        <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
           <View style={styles.heroIcon}>
             <Ionicons
               name="shield-checkmark-outline"
               size={42}
-              color={COLORS.gold}
+              color={colors.warning}
             />
           </View>
 
-          <Text style={styles.heroTitle}>Sua rede, suas regras</Text>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>Sua rede, suas regras</Text>
 
-          <Text style={styles.heroText}>
+          <Text style={[styles.heroText, { color: colors.textMuted }]}>
             O ELUS foi pensado para criar conexões relevantes com mais clareza,
             controle e confiança.
           </Text>
@@ -138,14 +121,14 @@ export default function PrivacyScreen() {
 
         <View style={styles.itemsBox}>
           {privacyItems.map((item) => (
-            <View key={item.id} style={styles.itemCard}>
+            <View key={item.id} style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
               <View style={styles.itemIconBox}>
-                <Ionicons name={item.icon} size={24} color={COLORS.gold} />
+                <Ionicons name={item.icon} size={24} color={colors.warning} />
               </View>
 
               <View style={styles.itemTextBox}>
-                <Text style={styles.itemTitle}>{item.title}</Text>
-                <Text style={styles.itemDescription}>
+                <Text style={[styles.itemTitle, { color: colors.text }]}>{item.title}</Text>
+                <Text style={[styles.itemDescription, { color: colors.textMuted }]}>
                   {item.description}
                 </Text>
               </View>
@@ -163,8 +146,8 @@ export default function PrivacyScreen() {
           </View>
 
           <View style={styles.noticeTextBox}>
-            <Text style={styles.noticeTitle}>Aviso importante</Text>
-            <Text style={styles.noticeText}>
+            <Text style={[styles.noticeTitle, { color: colors.text }]}>Aviso importante</Text>
+            <Text style={[styles.noticeText, { color: colors.textMuted }]}>
               Esta é uma versão inicial do app. As políticas finais de
               privacidade e termos de uso deverão ser revisadas antes do
               lançamento oficial.
@@ -183,7 +166,6 @@ export default function PrivacyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   header: {
@@ -193,20 +175,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.background,
   },
 
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
   },
 
   headerTextBox: {
@@ -214,14 +192,12 @@ const styles = StyleSheet.create({
   },
 
   headerTitle: {
-    color: COLORS.textStrong,
     fontSize: 24,
     lineHeight: 30,
     fontWeight: '900',
   },
 
   headerSubtitle: {
-    color: COLORS.textMuted,
     fontSize: 15,
     lineHeight: 21,
     marginTop: 2,
@@ -239,12 +215,10 @@ const styles = StyleSheet.create({
   },
 
   heroCard: {
-    backgroundColor: COLORS.surface,
     borderRadius: 30,
     paddingHorizontal: 24,
     paddingVertical: 30,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
     alignItems: 'center',
     marginBottom: 20,
   },
@@ -262,7 +236,6 @@ const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    color: COLORS.textStrong,
     fontSize: 28,
     lineHeight: 34,
     fontWeight: '900',
@@ -271,7 +244,6 @@ const styles = StyleSheet.create({
   },
 
   heroText: {
-    color: COLORS.textMuted,
     fontSize: 16,
     lineHeight: 24,
     textAlign: 'center',
@@ -284,11 +256,9 @@ const styles = StyleSheet.create({
   },
 
   itemCard: {
-    backgroundColor: COLORS.surface,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
     flexDirection: 'row',
     marginBottom: 14,
   },
@@ -310,14 +280,12 @@ const styles = StyleSheet.create({
   },
 
   itemTitle: {
-    color: COLORS.textStrong,
     fontSize: 18,
     lineHeight: 23,
     fontWeight: '900',
   },
 
   itemDescription: {
-    color: COLORS.textMuted,
     fontSize: 15,
     lineHeight: 22,
     marginTop: 6,
@@ -351,14 +319,12 @@ const styles = StyleSheet.create({
   },
 
   noticeTitle: {
-    color: COLORS.textStrong,
     fontSize: 17,
     lineHeight: 22,
     fontWeight: '900',
   },
 
   noticeText: {
-    color: COLORS.textMuted,
     fontSize: 14,
     lineHeight: 21,
     marginTop: 6,

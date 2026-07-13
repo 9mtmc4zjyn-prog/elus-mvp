@@ -9,6 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../src/context/AppContext';
+import { useTheme } from '../src/theme/ThemeContext';
 
 type AnyUser = {
   id?: string | number;
@@ -61,24 +62,13 @@ type TreeItem = {
 };
 
 const COLORS = {
-  background: '#0B101A',
-  panel: '#141A26',
-  panelSoft: '#1C2433',
   panelDeep: '#080D16',
-  border: 'rgba(255,255,255,0.08)',
-  borderStrong: 'rgba(255,255,255,0.14)',
-  text: '#EDEDED',
-  muted: '#6B7280',
-  mutedSoft: '#A1A9B8',
-  white: '#EDEDED',
   cyan: '#5E9EAB',
   cyanSoft: 'rgba(94,158,171,0.15)',
   blue: '#5E9EAB',
-  blueSoft: 'rgba(94,158,171,0.12)',
   gold: '#C49A45',
   goldSoft: 'rgba(196,154,69,0.12)',
   green: '#4A9A65',
-  greenSoft: 'rgba(74,154,101,0.12)',
   purple: '#8B7EA8',
   purpleSoft: 'rgba(139,126,168,0.12)',
   orange: '#B87A5C',
@@ -237,6 +227,7 @@ function GraphNode({
   index: number;
 }) {
   const position = graphPositions[index] ?? graphPositions[0];
+  const { colors } = useTheme();
 
   return (
     <View
@@ -257,7 +248,7 @@ function GraphNode({
           },
         ]}
       >
-        <Text style={styles.graphNodeText}>{item.initial}</Text>
+        <Text style={[styles.graphNodeText, { color: colors.text }]}>{item.initial}</Text>
       </View>
     </View>
   );
@@ -270,10 +261,12 @@ function ConnectionCard({
   item: TreeItem;
   index: number;
 }) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.connectionCard}>
+    <View style={[styles.connectionCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
       <View style={styles.connectionLineBox}>
-        <View style={styles.line} />
+        <View style={[styles.line, { backgroundColor: colors.borderStrong }]} />
         <View style={[styles.smallDot, { backgroundColor: item.color }]} />
       </View>
 
@@ -287,16 +280,16 @@ function ConnectionCard({
         ]}
       >
         <View style={[styles.avatarCore, { backgroundColor: item.color }]}>
-          <Text style={styles.avatarText}>{item.initial}</Text>
+          <Text style={[styles.avatarText, { color: colors.text }]}>{item.initial}</Text>
         </View>
       </View>
 
       <View style={styles.connectionContent}>
-        <Text style={styles.connectionName} numberOfLines={1}>
+        <Text style={[styles.connectionName, { color: colors.text }]} numberOfLines={1}>
           {item.name}
         </Text>
 
-        <Text style={styles.connectionSubtitle} numberOfLines={1}>
+        <Text style={[styles.connectionSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
           {item.subtitle}
         </Text>
 
@@ -320,7 +313,7 @@ function ConnectionCard({
         </View>
       </View>
 
-      <Text style={styles.positionNumber}>{index + 1}</Text>
+      <Text style={[styles.positionNumber, { color: colors.textMuted }]}>{index + 1}</Text>
     </View>
   );
 }
@@ -328,6 +321,7 @@ function ConnectionCard({
 export default function ConnectionsTreeScreen() {
   const router = useRouter();
   const app = useApp() as any;
+  const { colors } = useTheme();
 
   const currentUser = app?.user ?? null;
   const users: AnyUser[] = Array.isArray(app?.users) ? app.users : [];
@@ -404,20 +398,20 @@ export default function ConnectionsTreeScreen() {
   const visibleGraphItems = treeItems.slice(0, 6);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderStrong }]}
           onPress={() => router.back()}
           activeOpacity={0.8}
         >
-          <Ionicons name="chevron-back" size={24} color={COLORS.text} />
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.headerTextBox}>
           <Text style={styles.headerEyebrow}>ELUS</Text>
-          <Text style={styles.headerTitle}>Árvore de conexões</Text>
-          <Text style={styles.headerSubtitle}>Mapa vivo da sua rede ELUS</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Árvore de conexões</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>Mapa vivo da sua rede ELUS</Text>
         </View>
       </View>
 
@@ -426,11 +420,11 @@ export default function ConnectionsTreeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.heroCard}>
+        <View style={[styles.heroCard, { borderColor: colors.borderStrong }]}>
           <View style={styles.glowCyan} />
           <View style={styles.glowPurple} />
 
-          <View style={styles.ringOuter} />
+          <View style={[styles.ringOuter, { borderColor: colors.border }]} />
           <View style={styles.ringMiddle} />
           <View style={styles.ringInner} />
 
@@ -443,54 +437,54 @@ export default function ConnectionsTreeScreen() {
 
           <View style={styles.centerNode}>
             <View style={styles.mainAvatar}>
-              <Text style={styles.mainAvatarText}>
+              <Text style={[styles.mainAvatarText, { color: colors.text }]}>
                 {currentUserName.charAt(0).toUpperCase()}
               </Text>
             </View>
 
-            <Text style={styles.mainName} numberOfLines={1}>
+            <Text style={[styles.mainName, { color: colors.text }]} numberOfLines={1}>
               {currentUserName}
             </Text>
-            <Text style={styles.mainLabel}>Você no centro da rede</Text>
+            <Text style={[styles.mainLabel, { color: colors.textMuted }]}>Você no centro da rede</Text>
           </View>
 
-          <View style={styles.statsRow}>
+          <View style={[styles.statsRow, { borderColor: colors.borderStrong }]}>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{treeItems.length}</Text>
-              <Text style={styles.statLabel}>Conexões</Text>
+              <Text style={[styles.statNumber, { color: colors.text }]}>{treeItems.length}</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Conexões</Text>
             </View>
 
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.borderStrong }]} />
 
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{users.length}</Text>
-              <Text style={styles.statLabel}>Pessoas</Text>
+              <Text style={[styles.statNumber, { color: colors.text }]}>{users.length}</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Pessoas</Text>
             </View>
 
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.borderStrong }]} />
 
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{connections.length}</Text>
-              <Text style={styles.statLabel}>Vínculos</Text>
+              <Text style={[styles.statNumber, { color: colors.text }]}>{connections.length}</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Vínculos</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionEyebrow}>Rede próxima</Text>
-          <Text style={styles.sectionTitle}>Conexões próximas</Text>
-          <Text style={styles.sectionSubtitle}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Conexões próximas</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
             Relações encontradas no contexto do app.
           </Text>
         </View>
 
         {treeItems.length === 0 ? (
-          <View style={styles.emptyCard}>
+          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
             <Ionicons name="git-network-outline" size={46} color={COLORS.cyan} />
 
-            <Text style={styles.emptyTitle}>Nenhuma conexão encontrada</Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>Nenhuma conexão encontrada</Text>
 
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
               Quando você adicionar pessoas e vínculos, elas aparecerão aqui na
               sua árvore de conexões.
             </Text>
@@ -510,8 +504,8 @@ export default function ConnectionsTreeScreen() {
 
           <View style={styles.tipTextBox}>
             <Text style={styles.tipEyebrow}>IA ELUS</Text>
-            <Text style={styles.tipTitle}>Rede contextual</Text>
-            <Text style={styles.tipText}>
+            <Text style={[styles.tipTitle, { color: colors.text }]}>Rede contextual</Text>
+            <Text style={[styles.tipText, { color: colors.textMuted }]}>
               A árvore mostra vínculos e proximidades para ajudar você a entender
               quem está conectado ao seu campo.
             </Text>
@@ -525,7 +519,6 @@ export default function ConnectionsTreeScreen() {
 const styles = StyleSheet.create<any>({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   header: {
@@ -535,20 +528,16 @@ const styles = StyleSheet.create<any>({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.background,
   },
 
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: COLORS.panelSoft,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
   },
 
   headerTextBox: {
@@ -566,7 +555,6 @@ const styles = StyleSheet.create<any>({
   },
 
   headerTitle: {
-    color: COLORS.text,
     fontSize: 31,
     lineHeight: 37,
     fontWeight: '350',
@@ -574,7 +562,6 @@ const styles = StyleSheet.create<any>({
   },
 
   headerSubtitle: {
-    color: COLORS.mutedSoft,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 4,
@@ -595,7 +582,6 @@ const styles = StyleSheet.create<any>({
     borderRadius: 32,
     padding: 18,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
     overflow: 'hidden',
   },
 
@@ -625,7 +611,6 @@ const styles = StyleSheet.create<any>({
     height: 300,
     borderRadius: 150,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
     top: 48,
     left: 32,
   },
@@ -689,7 +674,6 @@ const styles = StyleSheet.create<any>({
   },
 
   graphNodeText: {
-    color: COLORS.white,
     fontSize: 17,
     fontWeight: '900',
   },
@@ -714,13 +698,11 @@ const styles = StyleSheet.create<any>({
   },
 
   mainAvatarText: {
-    color: COLORS.white,
     fontSize: 38,
     fontWeight: '900',
   },
 
   mainName: {
-    color: COLORS.text,
     fontSize: 23,
     lineHeight: 28,
     fontWeight: '800',
@@ -729,7 +711,6 @@ const styles = StyleSheet.create<any>({
   },
 
   mainLabel: {
-    color: COLORS.mutedSoft,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 4,
@@ -747,7 +728,6 @@ const styles = StyleSheet.create<any>({
     borderRadius: 22,
     paddingVertical: 15,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
   },
 
   statBox: {
@@ -756,14 +736,12 @@ const styles = StyleSheet.create<any>({
   },
 
   statNumber: {
-    color: COLORS.text,
     fontSize: 21,
     lineHeight: 25,
     fontWeight: '900',
   },
 
   statLabel: {
-    color: COLORS.mutedSoft,
     fontSize: 11,
     lineHeight: 15,
     marginTop: 4,
@@ -772,7 +750,6 @@ const styles = StyleSheet.create<any>({
   statDivider: {
     width: 1,
     height: 34,
-    backgroundColor: COLORS.borderStrong,
   },
 
   sectionHeader: {
@@ -791,7 +768,6 @@ const styles = StyleSheet.create<any>({
   },
 
   sectionTitle: {
-    color: COLORS.text,
     fontSize: 31,
     lineHeight: 37,
     fontWeight: '350',
@@ -799,23 +775,19 @@ const styles = StyleSheet.create<any>({
   },
 
   sectionSubtitle: {
-    color: COLORS.mutedSoft,
     fontSize: 13,
     lineHeight: 19,
     marginTop: 5,
   },
 
   emptyCard: {
-    backgroundColor: COLORS.panel,
     borderRadius: 25,
     padding: 24,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
     alignItems: 'center',
   },
 
   emptyTitle: {
-    color: COLORS.text,
     fontSize: 19,
     fontWeight: '800',
     marginTop: 16,
@@ -823,7 +795,6 @@ const styles = StyleSheet.create<any>({
   },
 
   emptyText: {
-    color: COLORS.mutedSoft,
     fontSize: 13,
     lineHeight: 20,
     marginTop: 10,
@@ -837,11 +808,9 @@ const styles = StyleSheet.create<any>({
   connectionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.panel,
     borderRadius: 25,
     padding: 15,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
     position: 'relative',
   },
 
@@ -855,7 +824,6 @@ const styles = StyleSheet.create<any>({
     position: 'absolute',
     width: 2,
     height: 76,
-    backgroundColor: COLORS.borderStrong,
   },
 
   smallDot: {
@@ -884,7 +852,6 @@ const styles = StyleSheet.create<any>({
   },
 
   avatarText: {
-    color: COLORS.white,
     fontSize: 20,
     fontWeight: '900',
   },
@@ -895,14 +862,12 @@ const styles = StyleSheet.create<any>({
   },
 
   connectionName: {
-    color: COLORS.text,
     fontSize: 18,
     lineHeight: 23,
     fontWeight: '800',
   },
 
   connectionSubtitle: {
-    color: COLORS.mutedSoft,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 3,
@@ -926,7 +891,6 @@ const styles = StyleSheet.create<any>({
   },
 
   positionNumber: {
-    color: COLORS.mutedSoft,
     fontSize: 13,
     fontWeight: '800',
     marginLeft: 10,
@@ -969,14 +933,12 @@ const styles = StyleSheet.create<any>({
   },
 
   tipTitle: {
-    color: COLORS.text,
     fontSize: 16,
     lineHeight: 21,
     fontWeight: '800',
   },
 
   tipText: {
-    color: COLORS.mutedSoft,
     fontSize: 12,
     lineHeight: 18,
     marginTop: 5,

@@ -9,16 +9,9 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../src/theme/ThemeContext';
 
 const COLORS = {
-  background: '#0B101A',
-  panel: '#141A26',
-  panelSoft: '#1C2433',
-  border: 'rgba(255,255,255,0.08)',
-  borderStrong: 'rgba(255,255,255,0.13)',
-  text: '#EDEDED',
-  muted: '#6B7280',
-  mutedSoft: '#A1A9B8',
   cyan: '#5E9EAB',
   gold: '#C49A45',
   goldSoft: 'rgba(196,154,69,0.10)',
@@ -51,20 +44,22 @@ function getToneColor(tone?: OptionItemProps['tone']) {
 
 function Header() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { borderBottomColor: colors.border }]}>
       <Pressable
         onPress={() => router.back()}
         style={({ pressed }) => [
           styles.backButton,
+          { borderColor: colors.border },
           pressed ? styles.buttonPressed : null,
         ]}
       >
-        <Ionicons name="chevron-back" size={22} color={COLORS.text} />
+        <Ionicons name="chevron-back" size={22} color={colors.text} />
       </Pressable>
 
-      <Text style={styles.headerLogo}>ELUS</Text>
+      <Text style={[styles.headerLogo, { color: colors.text }]}>ELUS</Text>
 
       <View style={styles.headerSpace} />
     </View>
@@ -80,13 +75,16 @@ function OptionItem({
   onPress,
 }: OptionItemProps) {
   const color = getToneColor(tone);
+  const { colors } = useTheme();
 
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
         styles.optionItem,
+        { borderBottomColor: colors.border },
         pressed ? styles.optionItemPressed : null,
+        pressed ? { backgroundColor: colors.surfaceSoft } : null,
       ]}
     >
       <View
@@ -103,19 +101,19 @@ function OptionItem({
 
       <View style={styles.optionTextWrap}>
         <View style={styles.optionTitleRow}>
-          <Text style={styles.optionTitle}>{title}</Text>
+          <Text style={[styles.optionTitle, { color: colors.text }]}>{title}</Text>
 
           {tag ? (
-            <View style={styles.optionTag}>
-              <Text style={styles.optionTagText}>{tag}</Text>
+            <View style={[styles.optionTag, { borderColor: colors.border }]}>
+              <Text style={[styles.optionTagText, { color: colors.textMuted }]}>{tag}</Text>
             </View>
           ) : null}
         </View>
 
-        <Text style={styles.optionDescription}>{description}</Text>
+        <Text style={[styles.optionDescription, { color: colors.textSoft }]}>{description}</Text>
       </View>
 
-      <Ionicons name="chevron-forward" size={17} color={COLORS.muted} />
+      <Ionicons name="chevron-forward" size={17} color={colors.textSoft} />
     </Pressable>
   );
 }
@@ -127,19 +125,23 @@ function SectionTitle({
   title: string;
   subtitle?: string;
 }) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.sectionTitleWrap}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {subtitle ? <Text style={styles.sectionSubtitle}>{subtitle}</Text> : null}
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+      {subtitle ? <Text style={[styles.sectionSubtitle, { color: colors.textSoft }]}>{subtitle}</Text> : null}
     </View>
   );
 }
 
 function HeroCard() {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.heroCard}>
+    <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
       <View style={styles.heroRadar}>
-        <View style={styles.radarCircleOne} />
+        <View style={[styles.radarCircleOne, { borderColor: colors.border }]} />
         <View style={styles.radarCircleTwo} />
         <View style={styles.radarCenter}>
           <Ionicons name="options-outline" size={24} color={COLORS.cyan} />
@@ -151,8 +153,8 @@ function HeroCard() {
 
       <View style={styles.heroTextWrap}>
         <Text style={styles.eyebrow}>Central ELUS</Text>
-        <Text style={styles.heroTitle}>OpÃ§Ãµes e sugestÃµes</Text>
-        <Text style={styles.heroDescription}>
+        <Text style={[styles.heroTitle, { color: colors.text }]}>OpÃ§Ãµes e sugestÃµes</Text>
+        <Text style={[styles.heroDescription, { color: colors.textMuted }]}>
           Ajuste sua presenÃ§a, veja conexÃµes sugeridas e acompanhe recursos de confianÃ§a do app.
         </Text>
       </View>
@@ -161,6 +163,8 @@ function HeroCard() {
 }
 
 function SecurityCard() {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.securityCard}>
       <View style={styles.securityHeader}>
@@ -169,8 +173,8 @@ function SecurityCard() {
         </View>
 
         <View style={styles.securityTextWrap}>
-          <Text style={styles.securityTitle}>ConfianÃ§a ELUS</Text>
-          <Text style={styles.securityDescription}>
+          <Text style={[styles.securityTitle, { color: colors.text }]}>ConfianÃ§a ELUS</Text>
+          <Text style={[styles.securityDescription, { color: colors.textMuted }]}>
             ConexÃµes reais exigem identidade real. A verificaÃ§Ã£o protege quem expÃµe imagem,
             dados e presenÃ§a no app.
           </Text>
@@ -181,7 +185,7 @@ function SecurityCard() {
 
       <View style={styles.securityNotice}>
         <Text style={styles.noticeTitle}>Acesso limitado</Text>
-        <Text style={styles.noticeText}>
+        <Text style={[styles.noticeText, { color: colors.textMuted }]}>
           Perfis sem verificaÃ§Ã£o nÃ£o podem solicitar contato, acessar dados completos de outros
           perfis ou aparecer publicamente como identidade validada.
         </Text>
@@ -192,9 +196,10 @@ function SecurityCard() {
 
 export default function ConnectionsOptionsScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
 
       <Header />
@@ -211,7 +216,7 @@ export default function ConnectionsOptionsScreen() {
           subtitle="Organize o que aparece para vocÃª sem transformar o ELUS em uma lista de perfis."
         />
 
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <OptionItem
             icon="people-outline"
             title="PÃ¡gina de conexÃµes"
@@ -247,7 +252,7 @@ export default function ConnectionsOptionsScreen() {
           subtitle="O plano fica aqui dentro, sem ocupar a tela principal."
         />
 
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <OptionItem
             icon="person-circle-outline"
             title="Perfil e identidade"
@@ -277,7 +282,7 @@ export default function ConnectionsOptionsScreen() {
           subtitle="Ajustes para manter o ELUS premium, menor e menos parecido com app de paquera."
         />
 
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <OptionItem
             icon="text-outline"
             title="Tamanho visual"
@@ -306,7 +311,6 @@ export default function ConnectionsOptionsScreen() {
 const styles = StyleSheet.create<any>({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
 
   header: {
@@ -315,7 +319,6 @@ const styles = StyleSheet.create<any>({
     paddingHorizontal: 18,
     backgroundColor: '#060910',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -329,13 +332,11 @@ const styles = StyleSheet.create<any>({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
 
   headerLogo: {
     fontSize: 17,
     lineHeight: 22,
-    color: COLORS.text,
     fontWeight: '900',
     letterSpacing: 5,
   },
@@ -363,9 +364,7 @@ const styles = StyleSheet.create<any>({
     minHeight: 160,
     borderRadius: 28,
     padding: 18,
-    backgroundColor: COLORS.panel,
     borderWidth: 1,
-    borderColor: COLORS.borderStrong,
     flexDirection: 'row',
     alignItems: 'center',
     overflow: 'hidden',
@@ -390,7 +389,6 @@ const styles = StyleSheet.create<any>({
     height: 74,
     borderRadius: 37,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
   },
 
   radarCircleTwo: {
@@ -454,7 +452,6 @@ const styles = StyleSheet.create<any>({
   heroTitle: {
     fontSize: 23,
     lineHeight: 28,
-    color: COLORS.text,
     fontWeight: '800',
     marginBottom: 8,
   },
@@ -462,7 +459,6 @@ const styles = StyleSheet.create<any>({
   heroDescription: {
     fontSize: 12,
     lineHeight: 18,
-    color: COLORS.mutedSoft,
   },
 
   sectionTitleWrap: {
@@ -473,7 +469,6 @@ const styles = StyleSheet.create<any>({
   sectionTitle: {
     fontSize: 17,
     lineHeight: 22,
-    color: COLORS.text,
     fontWeight: '800',
   },
 
@@ -481,14 +476,11 @@ const styles = StyleSheet.create<any>({
     marginTop: 4,
     fontSize: 11,
     lineHeight: 16,
-    color: COLORS.muted,
   },
 
   card: {
     borderRadius: 24,
-    backgroundColor: COLORS.panel,
     borderWidth: 1,
-    borderColor: COLORS.border,
     overflow: 'hidden',
     marginBottom: 22,
   },
@@ -500,12 +492,9 @@ const styles = StyleSheet.create<any>({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
   },
 
-  optionItemPressed: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
-  },
+  optionItemPressed: {},
 
   optionIconWrap: {
     width: 38,
@@ -531,14 +520,12 @@ const styles = StyleSheet.create<any>({
   optionTitle: {
     fontSize: 13,
     lineHeight: 18,
-    color: COLORS.text,
     fontWeight: '750',
   },
 
   optionDescription: {
     fontSize: 11,
     lineHeight: 16,
-    color: COLORS.muted,
   },
 
   optionTag: {
@@ -548,13 +535,11 @@ const styles = StyleSheet.create<any>({
     borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
 
   optionTagText: {
     fontSize: 9,
     lineHeight: 11,
-    color: COLORS.mutedSoft,
     fontWeight: '800',
   },
 
@@ -591,7 +576,6 @@ const styles = StyleSheet.create<any>({
   securityTitle: {
     fontSize: 14,
     lineHeight: 19,
-    color: COLORS.text,
     fontWeight: '800',
     marginBottom: 4,
   },
@@ -599,7 +583,6 @@ const styles = StyleSheet.create<any>({
   securityDescription: {
     fontSize: 11,
     lineHeight: 16,
-    color: COLORS.mutedSoft,
   },
 
   securityDivider: {
@@ -627,7 +610,6 @@ const styles = StyleSheet.create<any>({
   noticeText: {
     fontSize: 11,
     lineHeight: 17,
-    color: COLORS.mutedSoft,
   },
 
   footerSpace: {

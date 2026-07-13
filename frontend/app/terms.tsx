@@ -10,53 +10,73 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '../src/components/Button';
+import { useTheme } from '../src/theme/ThemeContext';
 
 const COLORS = {
-  background: '#0B101A',
-  card: 'rgba(20,26,38,0.94)',
-  border: 'rgba(255,255,255,0.10)',
-  text: '#EDEDED',
-  muted: 'rgba(237,237,237,0.82)',
-  soft: 'rgba(161,169,184,0.55)',
-  blue: '#5E9EAB',
   blueLight: '#8FA3B8',
-  cyan: '#5E9EAB',
-  gold: '#C49A45',
-  green: '#4A9A65',
 };
 
 function SectionTitle({ children }: { children: string }) {
-  return <Text style={styles.sectionTitle}>{children}</Text>;
+  const { colors } = useTheme();
+
+  return (
+    <Text
+      style={[
+        styles.sectionTitle,
+        { color: colors.text, borderLeftColor: colors.accent },
+      ]}
+    >
+      {children}
+    </Text>
+  );
 }
 
 function Paragraph({ children }: { children: string }) {
-  return <Text style={styles.paragraph}>{children}</Text>;
+  const { colors } = useTheme();
+
+  return (
+    <Text style={[styles.paragraph, { color: colors.text + 'D1' }]}>
+      {children}
+    </Text>
+  );
 }
 
 function BulletItem({ children }: { children: string }) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.bulletRow}>
-      <Text style={styles.bulletDot}>•</Text>
-      <Text style={styles.bulletText}>{children}</Text>
+      <Text style={[styles.bulletDot, { color: colors.accent }]}>•</Text>
+      <Text style={[styles.bulletText, { color: colors.text + 'D1' }]}>{children}</Text>
     </View>
   );
 }
 
 export default function TermsScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
 
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.background, borderBottomColor: colors.border },
+        ]}
+      >
         <Pressable
-          style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.backButton,
+            { borderColor: colors.border },
+            pressed && styles.pressed,
+          ]}
           onPress={() => router.back()}
         >
-          <Text style={styles.backButtonText}>‹</Text>
+          <Text style={[styles.backButtonText, { color: colors.text }]}>‹</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Termos de Uso</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Termos de Uso</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -69,7 +89,7 @@ export default function TermsScreen() {
           <Text style={styles.heroBadgeText}>ELUS · Vigência: junho de 2026</Text>
         </View>
 
-        <Text style={styles.introText}>
+        <Text style={[styles.introText, { color: colors.text + 'D1' }]}>
           Bem-vindo ao ELUS — uma plataforma de infraestrutura de confiança humana. Ao criar uma
           conta e usar o ELUS, você concorda integralmente com estes Termos de Uso. Leia com atenção.
         </Text>
@@ -216,9 +236,9 @@ export default function TermsScreen() {
           privacidade@elus.com.br
         </Paragraph>
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-        <Text style={styles.vigencia}>
+        <Text style={[styles.vigencia, { color: colors.textMuted + '8C' }]}>
           Estes Termos de Uso entram em vigor em junho de 2026.{'\n'}
           ELUS · Conexões que importam.
         </Text>
@@ -232,7 +252,7 @@ export default function TermsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.background },
+  screen: { flex: 1 },
   scroll: { flex: 1 },
   header: {
     height: 64,
@@ -240,11 +260,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.background,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
   },
-  headerTitle: { color: COLORS.text, fontSize: 17, fontWeight: '800' },
+  headerTitle: { fontSize: 17, fontWeight: '800' },
   headerSpacer: { width: 40 },
   backButton: {
     width: 40,
@@ -254,51 +272,45 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.07)',
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
-  backButtonText: { color: COLORS.text, fontSize: 30, lineHeight: 32, marginTop: -2 },
+  backButtonText: { fontSize: 30, lineHeight: 32, marginTop: -2 },
   content: { paddingHorizontal: 22, paddingTop: 24, paddingBottom: 40 },
   heroBadge: {
     alignSelf: 'flex-start',
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: 'rgba(45,100,255,0.12)',
+    backgroundColor: 'rgba(91,141,239,0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(45,100,255,0.30)',
+    borderColor: 'rgba(91,141,239,0.30)',
     marginBottom: 18,
   },
   heroBadgeText: { color: COLORS.blueLight, fontSize: 12, fontWeight: '800', letterSpacing: 1 },
   introText: {
-    color: COLORS.muted,
     fontSize: 15,
     lineHeight: 24,
     fontWeight: '600',
     marginBottom: 24,
   },
   sectionTitle: {
-    color: COLORS.text,
     fontSize: 17,
     fontWeight: '900',
     marginTop: 26,
     marginBottom: 10,
     borderLeftWidth: 3,
-    borderLeftColor: COLORS.blue,
     paddingLeft: 12,
   },
   paragraph: {
-    color: COLORS.muted,
     fontSize: 14,
     lineHeight: 23,
     fontWeight: '600',
     marginBottom: 10,
   },
   bulletRow: { flexDirection: 'row', marginBottom: 7, paddingLeft: 8 },
-  bulletDot: { color: COLORS.cyan, fontSize: 16, marginRight: 8, marginTop: 1, lineHeight: 22 },
-  bulletText: { flex: 1, color: COLORS.muted, fontSize: 14, lineHeight: 22, fontWeight: '600' },
-  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: 28 },
+  bulletDot: { fontSize: 16, marginRight: 8, marginTop: 1, lineHeight: 22 },
+  bulletText: { flex: 1, fontSize: 14, lineHeight: 22, fontWeight: '600' },
+  divider: { height: 1, marginVertical: 28 },
   vigencia: {
-    color: COLORS.soft,
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',
