@@ -295,7 +295,11 @@ export default function ProfileScreen() {
   }
 
   function goToPrivacy() {
-    router.push('/privacy' as never);
+    router.push('/privacy-policy' as never);
+  }
+
+  function goToTerms() {
+    router.push('/terms' as never);
   }
 
   function goToMap() {
@@ -643,6 +647,21 @@ export default function ProfileScreen() {
               <View>
                 <Text style={[styles.menuTitle, { color: colors.text }]}>Privacidade e segurança</Text>
                 <Text style={styles.menuSubtitle}>Documento, selfie, bloqueios e dados</Text>
+              </View>
+
+              <Text style={styles.menuArrow}>›</Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.menuItem,
+                pressed && styles.pressedSmall,
+              ]}
+              onPress={goToTerms}
+            >
+              <View>
+                <Text style={[styles.menuTitle, { color: colors.text }]}>Termos de Uso</Text>
+                <Text style={styles.menuSubtitle}>Regras de uso da plataforma</Text>
               </View>
 
               <Text style={styles.menuArrow}>›</Text>

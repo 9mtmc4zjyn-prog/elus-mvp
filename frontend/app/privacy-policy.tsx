@@ -177,7 +177,7 @@ export default function PrivacyPolicyScreen() {
         <BulletItem>Informação: saber com quem compartilhamos seus dados</BulletItem>
         <Paragraph>
           Para exercer qualquer desses direitos, entre em contato com nosso encarregado de
-          dados pelo e-mail: privacidade@elus.com.br
+          dados pelo e-mail: elusappbr@gmail.com
         </Paragraph>
 
         {/* 7 */}
@@ -226,8 +226,8 @@ export default function PrivacyPolicyScreen() {
           Para exercer seus direitos ou tirar dúvidas sobre esta Política de Privacidade,
           entre em contato com nosso Encarregado de Dados:
         </Paragraph>
-        <BulletItem>E-mail: privacidade@elus.com.br</BulletItem>
-        <BulletItem>Suporte geral: suporte@elus.com.br</BulletItem>
+        <BulletItem>E-mail: elusappbr@gmail.com</BulletItem>
+        <BulletItem>Suporte geral: elusappbr@gmail.com</BulletItem>
         <Paragraph>
           Respondemos solicitações relacionadas à privacidade em até 15 dias úteis.
         </Paragraph>

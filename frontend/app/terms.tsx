@@ -229,11 +229,11 @@ export default function TermsScreen() {
         <SectionTitle>12. Contato e suporte</SectionTitle>
         <Paragraph>
           Para dúvidas, solicitações ou denúncias relacionadas a estes Termos, entre em contato
-          com nossa equipe pelo e-mail: suporte@elus.com.br
+          com nossa equipe pelo e-mail: elusappbr@gmail.com
         </Paragraph>
         <Paragraph>
           Para questões relacionadas à proteção de dados, contate nosso Encarregado de Dados (DPO):
-          privacidade@elus.com.br
+          elusappbr@gmail.com
         </Paragraph>
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
