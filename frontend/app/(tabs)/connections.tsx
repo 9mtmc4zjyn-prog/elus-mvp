@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { useApp } from '../../src/context/AppContext';

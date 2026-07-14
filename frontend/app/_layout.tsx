@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Stack, usePathname, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppProvider, useApp } from '../src/context/AppContext';
 import { supabase } from '../src/lib/supabase';
@@ -179,13 +180,15 @@ function AppShell() {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={styles.root}>
-      <ThemeProvider>
-        <AppProvider>
-          <AppShell />
-        </AppProvider>
-      </ThemeProvider>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={styles.root}>
+        <ThemeProvider>
+          <AppProvider>
+            <AppShell />
+          </AppProvider>
+        </ThemeProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
 
