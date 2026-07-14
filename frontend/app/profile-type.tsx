@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import type { ComponentProps } from 'react';
 import {
   ActivityIndicator,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from './theme';
+import { useTheme } from '../src/theme/ThemeContext';
 import { supabase } from '../src/lib/supabase';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -57,6 +57,7 @@ const profileOptions: ProfileOption[] = [
 
 export default function ProfileTypeScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [selectedType, setSelectedType] = useState('personal');
   const [loading, setLoading] = useState(false);
 
@@ -96,10 +97,10 @@ export default function ProfileTypeScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
           onPress={handleBack}
           activeOpacity={0.8}
           disabled={loading}
@@ -108,8 +109,8 @@ export default function ProfileTypeScreen() {
         </TouchableOpacity>
 
         <View style={styles.headerTextBox}>
-          <Text style={styles.headerTitle}>Tipo de perfil</Text>
-          <Text style={styles.headerSubtitle}>Escolha como deseja preparar seu perfil</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Tipo de perfil</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>Escolha como deseja preparar seu perfil</Text>
         </View>
       </View>
 
@@ -118,14 +119,14 @@ export default function ProfileTypeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.heroCard}>
-          <View style={styles.heroIcon}>
+        <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={[styles.heroIcon, { backgroundColor: colors.background, borderColor: colors.border }]}>
             <Ionicons name="people-outline" size={42} color={colors.accent} />
           </View>
 
-          <Text style={styles.heroTitle}>Como você quer preparar sua presença?</Text>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>Como você quer preparar sua presença?</Text>
 
-          <Text style={styles.heroText}>
+          <Text style={[styles.heroText, { color: colors.textMuted }]}>
             Você pode preparar seu perfil agora. Essas escolhas ajudam o ELUS a
             organizar sua experiência, mas só serão exibidas plenamente após a
             aprovação da identidade.
@@ -139,48 +140,64 @@ export default function ProfileTypeScreen() {
             return (
               <TouchableOpacity
                 key={option.id}
-                style={[styles.optionCard, isSelected && styles.optionCardSelected]}
+                style={[
+                  styles.optionCard,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
+                  isSelected && { borderColor: colors.accent, backgroundColor: colors.surfaceElevated },
+                ]}
                 onPress={() => setSelectedType(option.id)}
                 activeOpacity={0.85}
                 disabled={loading}
               >
-                <View style={[styles.optionIconBox, isSelected && styles.optionIconBoxSelected]}>
+                <View
+                  style={[
+                    styles.optionIconBox,
+                    { backgroundColor: colors.background, borderColor: colors.border },
+                    isSelected && { backgroundColor: colors.accent, borderColor: colors.accent },
+                  ]}
+                >
                   <Ionicons
                     name={option.icon}
                     size={28}
-                    color={isSelected ? colors.white : colors.accent}
+                    color={isSelected ? '#FFFFFF' : colors.accent}
                   />
                 </View>
 
                 <View style={styles.optionTextBox}>
-                  <Text style={styles.optionTitle}>{option.title}</Text>
-                  <Text style={styles.optionDescription}>{option.description}</Text>
+                  <Text style={[styles.optionTitle, { color: colors.text }]}>{option.title}</Text>
+                  <Text style={[styles.optionDescription, { color: colors.textMuted }]}>{option.description}</Text>
                 </View>
 
-                <View style={[styles.radioOuter, isSelected && styles.radioOuterSelected]}>
-                  {isSelected ? <View style={styles.radioInner} /> : null}
+                <View
+                  style={[
+                    styles.radioOuter,
+                    { borderColor: colors.border },
+                    isSelected && { borderColor: colors.accent },
+                  ]}
+                >
+                  {isSelected ? <View style={[styles.radioInner, { backgroundColor: colors.accent }]} /> : null}
                 </View>
               </TouchableOpacity>
             );
           })}
         </View>
 
-        <View style={styles.infoCard}>
+        <View style={[styles.infoCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
           <Ionicons name="information-circle-outline" size={24} color={colors.accent} />
           <View style={styles.infoTextBox}>
-            <Text style={styles.infoTitle}>Você pode alterar depois</Text>
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoTitle, { color: colors.text }]}>Você pode alterar depois</Text>
+            <Text style={[styles.infoText, { color: colors.textMuted }]}>
               Essas escolhas ajudam a preparar seu perfil, mas só terão efeito
               completo após a aprovação da identidade. Até lá, o uso continua limitado.
             </Text>
           </View>
         </View>
 
-        <View style={styles.ruleCard}>
+        <View style={[styles.ruleCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
           <Ionicons name="shield-checkmark-outline" size={24} color={colors.accent} />
           <View style={styles.infoTextBox}>
-            <Text style={styles.infoTitle}>Regra central ELUS</Text>
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoTitle, { color: colors.text }]}>Regra central ELUS</Text>
+            <Text style={[styles.infoText, { color: colors.textMuted }]}>
               Afinidade pode aparecer automaticamente. Conexão real só acontece
               com identidade verificada e aprovação.
             </Text>
@@ -188,28 +205,28 @@ export default function ProfileTypeScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.continueButton, loading && styles.buttonDisabled]}
+          style={[styles.continueButton, { backgroundColor: colors.accent }, loading && styles.buttonDisabled]}
           onPress={handleContinue}
           activeOpacity={0.85}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color={colors.white} />
+            <ActivityIndicator color="#FFFFFF" />
           ) : (
             <>
               <Text style={styles.continueButtonText}>Continuar</Text>
-              <Ionicons name="arrow-forward" size={20} color={colors.white} />
+              <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
             </>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.secondaryButton}
+          style={[styles.secondaryButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
           onPress={handleBack}
           activeOpacity={0.85}
           disabled={loading}
         >
-          <Text style={styles.secondaryButtonText}>Voltar</Text>
+          <Text style={[styles.secondaryButtonText, { color: colors.text }]}>Voltar</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -217,37 +234,34 @@ export default function ProfileTypeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: { paddingTop: 62, paddingHorizontal: 20, paddingBottom: 18, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.background },
-  backButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginRight: 14, borderWidth: 1, borderColor: colors.border },
+  container: { flex: 1 },
+  header: { paddingTop: 62, paddingHorizontal: 20, paddingBottom: 18, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1 },
+  backButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', marginRight: 14, borderWidth: 1 },
   headerTextBox: { flex: 1 },
-  headerTitle: { color: colors.text, fontSize: 22, fontWeight: '900' },
-  headerSubtitle: { color: colors.textMuted, fontSize: 14, marginTop: 3 },
+  headerTitle: { fontSize: 22, fontWeight: '900' },
+  headerSubtitle: { fontSize: 14, marginTop: 3 },
   scroll: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 42 },
-  heroCard: { backgroundColor: colors.surface, borderRadius: 28, padding: 24, borderWidth: 1, borderColor: colors.border, alignItems: 'center', marginBottom: 20 },
-  heroIcon: { width: 88, height: 88, borderRadius: 44, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
-  heroTitle: { color: colors.text, fontSize: 26, fontWeight: '900', textAlign: 'center' },
-  heroText: { color: colors.textMuted, fontSize: 15, lineHeight: 22, textAlign: 'center', marginTop: 10 },
+  heroCard: { borderRadius: 28, padding: 24, borderWidth: 1, alignItems: 'center', marginBottom: 20 },
+  heroIcon: { width: 88, height: 88, borderRadius: 44, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
+  heroTitle: { fontSize: 26, fontWeight: '900', textAlign: 'center' },
+  heroText: { fontSize: 15, lineHeight: 22, textAlign: 'center', marginTop: 10 },
   optionsBox: { gap: 14 },
-  optionCard: { backgroundColor: colors.surface, borderRadius: 24, padding: 18, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center' },
-  optionCardSelected: { borderColor: colors.primary, backgroundColor: colors.surfaceLight },
-  optionIconBox: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
-  optionIconBoxSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  optionCard: { borderRadius: 24, padding: 18, borderWidth: 1, flexDirection: 'row', alignItems: 'center' },
+  optionIconBox: { width: 56, height: 56, borderRadius: 28, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginRight: 14 },
   optionTextBox: { flex: 1 },
-  optionTitle: { color: colors.text, fontSize: 17, fontWeight: '900' },
-  optionDescription: { color: colors.textMuted, fontSize: 14, lineHeight: 20, marginTop: 5 },
-  radioOuter: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginLeft: 10 },
-  radioOuterSelected: { borderColor: colors.primary },
-  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary },
-  infoCard: { marginTop: 22, backgroundColor: colors.surfaceLight, borderRadius: 22, padding: 18, borderWidth: 1, borderColor: colors.border, flexDirection: 'row' },
-  ruleCard: { marginTop: 14, backgroundColor: colors.surfaceLight, borderRadius: 22, padding: 18, borderWidth: 1, borderColor: colors.border, flexDirection: 'row' },
+  optionTitle: { fontSize: 17, fontWeight: '900' },
+  optionDescription: { fontSize: 14, lineHeight: 20, marginTop: 5 },
+  radioOuter: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginLeft: 10 },
+  radioInner: { width: 12, height: 12, borderRadius: 6 },
+  infoCard: { marginTop: 22, borderRadius: 22, padding: 18, borderWidth: 1, flexDirection: 'row' },
+  ruleCard: { marginTop: 14, borderRadius: 22, padding: 18, borderWidth: 1, flexDirection: 'row' },
   infoTextBox: { flex: 1, marginLeft: 12 },
-  infoTitle: { color: colors.text, fontSize: 16, fontWeight: '900' },
-  infoText: { color: colors.textMuted, fontSize: 14, lineHeight: 20, marginTop: 5 },
-  continueButton: { height: 58, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 24 },
-  continueButtonText: { color: colors.white, fontSize: 17, fontWeight: '900' },
+  infoTitle: { fontSize: 16, fontWeight: '900' },
+  infoText: { fontSize: 14, lineHeight: 20, marginTop: 5 },
+  continueButton: { height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 24 },
+  continueButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
   buttonDisabled: { opacity: 0.6 },
-  secondaryButton: { height: 56, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
-  secondaryButtonText: { color: colors.text, fontSize: 16, fontWeight: '800' },
+  secondaryButton: { height: 56, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
+  secondaryButtonText: { fontSize: 16, fontWeight: '800' },
 });

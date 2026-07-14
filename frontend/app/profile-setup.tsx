@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from './theme';
+import { useTheme } from '../src/theme/ThemeContext';
 import { supabase } from '../src/lib/supabase';
 import { INTEREST_CATEGORIES } from '../src/data/interestSuggestions';
 
@@ -54,6 +54,7 @@ const presenceOptions: PresenceOption[] = [
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
@@ -121,13 +122,13 @@ export default function ProfileSetupScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.keyboard}
+      style={[styles.keyboard, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
           <TouchableOpacity
-            style={styles.backButton}
+            style={[styles.backButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={handleBack}
             activeOpacity={0.8}
             disabled={loading}
@@ -136,8 +137,8 @@ export default function ProfileSetupScreen() {
           </TouchableOpacity>
 
           <View style={styles.headerTextBox}>
-            <Text style={styles.headerTitle}>Criar perfil</Text>
-            <Text style={styles.headerSubtitle}>Prepare sua presença no ELUS</Text>
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Criar perfil</Text>
+            <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>Prepare sua presença no ELUS</Text>
           </View>
         </View>
 
@@ -147,31 +148,31 @@ export default function ProfileSetupScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.heroCard}>
-            <View style={styles.avatarCircle}>
+          <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={[styles.avatarCircle, { backgroundColor: colors.background, borderColor: colors.accent }]}>
               <Image source={ELUS_SYMBOL} style={styles.avatarSymbol} resizeMode="cover" />
             </View>
 
-            <Text style={styles.heroTitle}>Seu perfil ELUS</Text>
+            <Text style={[styles.heroTitle, { color: colors.text }]}>Seu perfil ELUS</Text>
 
-            <Text style={styles.heroText}>
+            <Text style={[styles.heroText, { color: colors.textMuted }]}>
               Você pode preparar seu perfil agora. Enquanto sua identidade não
               for aprovada, o uso continuará limitado.
             </Text>
           </View>
 
-          <View style={styles.formCard}>
-            <Text style={styles.sectionTitle}>Informações básicas</Text>
+          <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Informações básicas</Text>
 
-            <Text style={styles.sectionSubtitle}>
+            <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
               Esses dados ajudam a montar seu perfil, mas informações completas
               só serão exibidas após verificação aprovada.
             </Text>
 
-            <View style={styles.inputBox}>
+            <View style={[styles.inputBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
               <Ionicons name="person-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="Seu nome"
                 placeholderTextColor={colors.textMuted}
                 value={name}
@@ -180,10 +181,10 @@ export default function ProfileSetupScreen() {
               />
             </View>
 
-            <View style={styles.inputBox}>
+            <View style={[styles.inputBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
               <Ionicons name="location-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
                 placeholder="Cidade"
                 placeholderTextColor={colors.textMuted}
                 value={city}
@@ -192,9 +193,9 @@ export default function ProfileSetupScreen() {
               />
             </View>
 
-            <View style={styles.textAreaBox}>
+            <View style={[styles.textAreaBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
               <TextInput
-                style={styles.textArea}
+                style={[styles.textArea, { color: colors.text }]}
                 placeholder="Escreva uma breve descrição sobre você"
                 placeholderTextColor={colors.textMuted}
                 value={bio}
@@ -206,17 +207,17 @@ export default function ProfileSetupScreen() {
             </View>
           </View>
 
-          <View style={styles.interestsCard}>
-            <Text style={styles.sectionTitle}>Interesses</Text>
+          <View style={[styles.interestsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Interesses</Text>
 
-            <Text style={styles.sectionSubtitle}>
+            <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
               Escolha os temas que mais têm a ver com você. Isso ajuda o ELUS a
               sugerir afinidades melhores.
             </Text>
 
             {INTEREST_CATEGORIES.map((category) => (
               <View key={category.id} style={styles.interestCategoryBlock}>
-                <Text style={styles.interestCategoryTitle}>{category.title}</Text>
+                <Text style={[styles.interestCategoryTitle, { color: colors.textMuted }]}>{category.title}</Text>
 
                 <View style={styles.interestChipsRow}>
                   {category.interests.map((interest) => {
@@ -226,10 +227,23 @@ export default function ProfileSetupScreen() {
                       <Pressable
                         key={interest.id}
                         onPress={() => toggleInterest(interest.id)}
-                        style={[styles.interestChip, isSelected && styles.interestChipOn]}
+                        style={[
+                          styles.interestChip,
+                          { borderColor: colors.border, backgroundColor: colors.background },
+                          isSelected && {
+                            borderColor: `${colors.accent}6B`,
+                            backgroundColor: `${colors.accent}1A`,
+                          },
+                        ]}
                         disabled={loading}
                       >
-                        <Text style={[styles.interestChipText, isSelected && styles.interestChipTextOn]}>
+                        <Text
+                          style={[
+                            styles.interestChipText,
+                            { color: colors.textMuted },
+                            isSelected && { color: colors.accent },
+                          ]}
+                        >
                           {interest.label}
                         </Text>
                       </Pressable>
@@ -242,19 +256,32 @@ export default function ProfileSetupScreen() {
             <View style={styles.interestChipsRow}>
               <Pressable
                 onPress={() => setShowCustomInterestInput((prev) => !prev)}
-                style={[styles.outroChip, showCustomInterestInput && styles.interestChipOn]}
+                style={[
+                  styles.outroChip,
+                  { borderColor: colors.accent, backgroundColor: colors.background },
+                  showCustomInterestInput && {
+                    borderColor: `${colors.accent}6B`,
+                    backgroundColor: `${colors.accent}1A`,
+                  },
+                ]}
                 disabled={loading}
               >
-                <Text style={[styles.interestChipText, showCustomInterestInput && styles.interestChipTextOn]}>
+                <Text
+                  style={[
+                    styles.interestChipText,
+                    { color: colors.textMuted },
+                    showCustomInterestInput && { color: colors.accent },
+                  ]}
+                >
                   Outro +
                 </Text>
               </Pressable>
             </View>
 
             {showCustomInterestInput ? (
-              <View style={styles.customInterestInputBox}>
+              <View style={[styles.customInterestInputBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
                 <TextInput
-                  style={styles.customInterestInput}
+                  style={[styles.customInterestInput, { color: colors.text }]}
                   placeholder="Digite outros interesses separados por vírgula"
                   placeholderTextColor={colors.textMuted}
                   value={customInterestsText}
@@ -265,10 +292,10 @@ export default function ProfileSetupScreen() {
             ) : null}
           </View>
 
-          <View style={styles.presenceCard}>
-            <Text style={styles.sectionTitle}>Modo de presença após aprovação</Text>
+          <View style={[styles.presenceCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Modo de presença após aprovação</Text>
 
-            <Text style={styles.sectionSubtitle}>
+            <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
               Escolha como deseja aparecer depois que sua identidade for
               aprovada. Antes disso, seu perfil continua restrito.
             </Text>
@@ -280,26 +307,42 @@ export default function ProfileSetupScreen() {
                 return (
                   <TouchableOpacity
                     key={option.id}
-                    style={[styles.optionCard, isSelected && styles.optionCardSelected]}
+                    style={[
+                      styles.optionCard,
+                      { backgroundColor: colors.background, borderColor: colors.border },
+                      isSelected && { borderColor: colors.accent, backgroundColor: colors.surfaceElevated },
+                    ]}
                     onPress={() => setPresenceMode(option.id)}
                     activeOpacity={0.85}
                     disabled={loading}
                   >
-                    <View style={[styles.optionIcon, isSelected && styles.optionIconSelected]}>
+                    <View
+                      style={[
+                        styles.optionIcon,
+                        { backgroundColor: colors.surface, borderColor: colors.border },
+                        isSelected && { backgroundColor: colors.accent, borderColor: colors.accent },
+                      ]}
+                    >
                       <Ionicons
                         name={option.icon}
                         size={24}
-                        color={isSelected ? colors.white : colors.accent}
+                        color={isSelected ? '#FFFFFF' : colors.accent}
                       />
                     </View>
 
                     <View style={styles.optionTextBox}>
-                      <Text style={styles.optionTitle}>{option.title}</Text>
-                      <Text style={styles.optionDescription}>{option.description}</Text>
+                      <Text style={[styles.optionTitle, { color: colors.text }]}>{option.title}</Text>
+                      <Text style={[styles.optionDescription, { color: colors.textMuted }]}>{option.description}</Text>
                     </View>
 
-                    <View style={[styles.radioOuter, isSelected && styles.radioOuterSelected]}>
-                      {isSelected ? <View style={styles.radioInner} /> : null}
+                    <View
+                      style={[
+                        styles.radioOuter,
+                        { borderColor: colors.border },
+                        isSelected && { borderColor: colors.accent },
+                      ]}
+                    >
+                      {isSelected ? <View style={[styles.radioInner, { backgroundColor: colors.accent }]} /> : null}
                     </View>
                   </TouchableOpacity>
                 );
@@ -307,11 +350,11 @@ export default function ProfileSetupScreen() {
             </View>
           </View>
 
-          <View style={styles.ruleCard}>
+          <View style={[styles.ruleCard, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
             <Ionicons name="shield-checkmark-outline" size={23} color={colors.accent} />
             <View style={styles.ruleTextBox}>
-              <Text style={styles.ruleTitle}>Regra central ELUS</Text>
-              <Text style={styles.ruleText}>
+              <Text style={[styles.ruleTitle, { color: colors.text }]}>Regra central ELUS</Text>
+              <Text style={[styles.ruleText, { color: colors.textMuted }]}>
                 Afinidade pode aparecer automaticamente. Conexão real só com
                 identidade verificada e aprovação.
               </Text>
@@ -319,22 +362,22 @@ export default function ProfileSetupScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.continueButton, loading && styles.buttonDisabled]}
+            style={[styles.continueButton, { backgroundColor: colors.accent }, loading && styles.buttonDisabled]}
             onPress={handleContinue}
             activeOpacity={0.85}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={colors.white} />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <>
                 <Text style={styles.continueButtonText}>Continuar</Text>
-                <Ionicons name="arrow-forward" size={20} color={colors.white} />
+                <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
               </>
             )}
           </TouchableOpacity>
 
-          <Text style={styles.footerText}>
+          <Text style={[styles.footerText, { color: colors.textMuted }]}>
             Você poderá editar essas informações depois. Elas ajudam a preparar
             seu perfil, mas só terão efeito completo após a aprovação da identidade.
           </Text>
@@ -345,66 +388,59 @@ export default function ProfileSetupScreen() {
 }
 
 const styles = StyleSheet.create({
-  keyboard: { flex: 1, backgroundColor: colors.background },
-  container: { flex: 1, backgroundColor: colors.background },
-  header: { paddingTop: 62, paddingHorizontal: 20, paddingBottom: 18, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.background },
-  backButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', marginRight: 14, borderWidth: 1, borderColor: colors.border },
+  keyboard: { flex: 1 },
+  container: { flex: 1 },
+  header: { paddingTop: 62, paddingHorizontal: 20, paddingBottom: 18, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1 },
+  backButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', marginRight: 14, borderWidth: 1 },
   headerTextBox: { flex: 1 },
-  headerTitle: { color: colors.text, fontSize: 22, fontWeight: '900' },
-  headerSubtitle: { color: colors.textMuted, fontSize: 14, marginTop: 3 },
+  headerTitle: { fontSize: 22, fontWeight: '900' },
+  headerSubtitle: { fontSize: 14, marginTop: 3 },
   scroll: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 42 },
-  heroCard: { backgroundColor: colors.surface, borderRadius: 28, padding: 24, borderWidth: 1, borderColor: colors.border, alignItems: 'center', marginBottom: 18 },
-  avatarCircle: { width: 104, height: 104, borderRadius: 52, backgroundColor: colors.background, borderWidth: 2, borderColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginBottom: 16, overflow: 'hidden' },
+  heroCard: { borderRadius: 28, padding: 24, borderWidth: 1, alignItems: 'center', marginBottom: 18 },
+  avatarCircle: { width: 104, height: 104, borderRadius: 52, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginBottom: 16, overflow: 'hidden' },
   avatarSymbol: { width: '100%', height: '100%' },
-  heroTitle: { color: colors.text, fontSize: 26, fontWeight: '900', textAlign: 'center' },
-  heroText: { color: colors.textMuted, fontSize: 15, lineHeight: 23, textAlign: 'center', marginTop: 10 },
-  formCard: { backgroundColor: colors.surface, borderRadius: 24, padding: 20, borderWidth: 1, borderColor: colors.border, marginBottom: 18 },
-  sectionTitle: { color: colors.text, fontSize: 20, fontWeight: '900', marginBottom: 12 },
-  sectionSubtitle: { color: colors.textMuted, fontSize: 14, lineHeight: 21, marginBottom: 14 },
-  inputBox: { height: 56, borderRadius: 18, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 },
+  heroTitle: { fontSize: 26, fontWeight: '900', textAlign: 'center' },
+  heroText: { fontSize: 15, lineHeight: 23, textAlign: 'center', marginTop: 10 },
+  formCard: { borderRadius: 24, padding: 20, borderWidth: 1, marginBottom: 18 },
+  sectionTitle: { fontSize: 20, fontWeight: '900', marginBottom: 12 },
+  sectionSubtitle: { fontSize: 14, lineHeight: 21, marginBottom: 14 },
+  inputBox: { height: 56, borderRadius: 18, borderWidth: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, color: colors.text, fontSize: 16 },
-  textAreaBox: { minHeight: 112, borderRadius: 18, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16, paddingVertical: 14 },
-  textArea: { flex: 1, color: colors.text, fontSize: 16, lineHeight: 22 },
-  presenceCard: { backgroundColor: colors.surface, borderRadius: 24, padding: 20, borderWidth: 1, borderColor: colors.border },
+  input: { flex: 1, fontSize: 16 },
+  textAreaBox: { minHeight: 112, borderRadius: 18, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 14 },
+  textArea: { flex: 1, fontSize: 16, lineHeight: 22 },
+  presenceCard: { borderRadius: 24, padding: 20, borderWidth: 1 },
   optionsBox: { gap: 12 },
-  optionCard: { backgroundColor: colors.background, borderRadius: 18, borderWidth: 1, borderColor: colors.border, padding: 14, flexDirection: 'row', alignItems: 'center' },
-  optionCardSelected: { borderColor: colors.primary, backgroundColor: colors.surfaceLight },
-  optionIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  optionIconSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  optionCard: { borderRadius: 18, borderWidth: 1, padding: 14, flexDirection: 'row', alignItems: 'center' },
+  optionIcon: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   optionTextBox: { flex: 1 },
-  optionTitle: { color: colors.text, fontSize: 16, fontWeight: '900' },
-  optionDescription: { color: colors.textMuted, fontSize: 13, lineHeight: 19, marginTop: 4 },
-  radioOuter: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginLeft: 10 },
-  radioOuterSelected: { borderColor: colors.primary },
-  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.primary },
-  ruleCard: { marginTop: 18, backgroundColor: colors.surfaceLight, borderRadius: 22, padding: 18, borderWidth: 1, borderColor: colors.border, flexDirection: 'row' },
+  optionTitle: { fontSize: 16, fontWeight: '900' },
+  optionDescription: { fontSize: 13, lineHeight: 19, marginTop: 4 },
+  radioOuter: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginLeft: 10 },
+  radioInner: { width: 12, height: 12, borderRadius: 6 },
+  ruleCard: { marginTop: 18, borderRadius: 22, padding: 18, borderWidth: 1, flexDirection: 'row' },
   ruleTextBox: { flex: 1, marginLeft: 12 },
-  ruleTitle: { color: colors.text, fontSize: 16, fontWeight: '900' },
-  ruleText: { color: colors.textMuted, fontSize: 14, lineHeight: 20, marginTop: 5 },
-  continueButton: { height: 58, borderRadius: 18, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 24 },
-  continueButtonText: { color: colors.white, fontSize: 17, fontWeight: '900' },
+  ruleTitle: { fontSize: 16, fontWeight: '900' },
+  ruleText: { fontSize: 14, lineHeight: 20, marginTop: 5 },
+  continueButton: { height: 58, borderRadius: 18, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, marginTop: 24 },
+  continueButtonText: { color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
   buttonDisabled: { opacity: 0.6 },
-  footerText: { color: colors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 16, lineHeight: 19 },
-  interestsCard: { backgroundColor: colors.surface, borderRadius: 24, padding: 20, borderWidth: 1, borderColor: colors.border, marginBottom: 18 },
+  footerText: { fontSize: 13, textAlign: 'center', marginTop: 16, lineHeight: 19 },
+  interestsCard: { borderRadius: 24, padding: 20, borderWidth: 1, marginBottom: 18 },
   interestCategoryBlock: { marginBottom: 16 },
-  interestCategoryTitle: { color: colors.textMuted, fontSize: 13, fontWeight: '800', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 },
+  interestCategoryTitle: { fontSize: 13, fontWeight: '800', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 },
   interestChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  interestChip: { minHeight: 36, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, paddingHorizontal: 13, paddingVertical: 9 },
+  interestChip: { minHeight: 36, borderRadius: 18, borderWidth: 1, paddingHorizontal: 13, paddingVertical: 9 },
   outroChip: {
     minHeight: 36,
     borderRadius: 18,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: colors.accent,
-    backgroundColor: colors.background,
     paddingHorizontal: 13,
     paddingVertical: 9,
   },
-  interestChipOn: { borderColor: colors.cyanBorder, backgroundColor: colors.cyanSoft },
-  interestChipText: { color: colors.textMuted, fontSize: 12, lineHeight: 16, fontWeight: '800' },
-  interestChipTextOn: { color: colors.accent },
-  customInterestInputBox: { marginTop: 12, height: 52, borderRadius: 16, backgroundColor: colors.background, borderWidth: 1, borderColor: colors.border, justifyContent: 'center', paddingHorizontal: 16 },
-  customInterestInput: { color: colors.text, fontSize: 15 },
+  interestChipText: { fontSize: 12, lineHeight: 16, fontWeight: '800' },
+  customInterestInputBox: { marginTop: 12, height: 52, borderRadius: 16, borderWidth: 1, justifyContent: 'center', paddingHorizontal: 16 },
+  customInterestInput: { fontSize: 15 },
 });

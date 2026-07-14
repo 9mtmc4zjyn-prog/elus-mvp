@@ -13,7 +13,7 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors } from '../theme';
+import { useTheme } from '../../src/theme/ThemeContext';
 import { useApp } from '../../src/context/AppContext';
 import type {
   AppUser,
@@ -483,6 +483,8 @@ export default function RequestsScreen() {
     rejectContactInformationRequest,
   } = useApp();
 
+  const { colors } = useTheme();
+
   const [selectedContactRequest, setSelectedContactRequest] =
     useState<ContactInformationRequest | null>(null);
   const [selectedMethodIds, setSelectedMethodIds] = useState<string[]>([]);
@@ -742,7 +744,7 @@ export default function RequestsScreen() {
         onRequestClose={closeContactShareSelector}
       >
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={styles.modalTitle}>Compartilhar informações</Text>
 
             <Text style={styles.modalSubtitle}>
@@ -755,7 +757,7 @@ export default function RequestsScreen() {
               <Ionicons
                 name="shield-checkmark-outline"
                 size={18}
-                color={colors.cyan}
+                color={colors.accent}
               />
 
               <Text style={styles.modalRuleText}>
@@ -767,7 +769,7 @@ export default function RequestsScreen() {
             <View style={styles.modalUtilityRow}>
               <TouchableOpacity
                 activeOpacity={0.85}
-                style={styles.modalUtilityButton}
+                style={[styles.modalUtilityButton, { borderColor: colors.border }]}
                 onPress={selectAllRequestedMethods}
               >
                 <Text style={styles.modalUtilityButtonText}>Selecionar tudo</Text>
@@ -775,7 +777,7 @@ export default function RequestsScreen() {
 
               <TouchableOpacity
                 activeOpacity={0.85}
-                style={styles.modalUtilityButton}
+                style={[styles.modalUtilityButton, { borderColor: colors.border }]}
                 onPress={clearSelectedMethods}
               >
                 <Text style={styles.modalUtilityButtonText}>Limpar</Text>
@@ -792,6 +794,7 @@ export default function RequestsScreen() {
                     activeOpacity={0.85}
                     style={[
                       styles.modalOption,
+                      { borderColor: colors.border },
                       selected ? styles.modalOptionSelected : null,
                     ]}
                     onPress={() => toggleSelectedMethod(methodId)}
@@ -799,11 +802,11 @@ export default function RequestsScreen() {
                     <View
                       style={[
                         styles.modalOptionCircle,
-                        selected ? styles.modalOptionCircleSelected : null,
+                        selected ? { backgroundColor: colors.accent, borderColor: colors.accent } : null,
                       ]}
                     >
                       {selected ? (
-                        <Ionicons name="checkmark" size={18} color={colors.bg} />
+                        <Ionicons name="checkmark" size={18} color={colors.background} />
                       ) : null}
                     </View>
 
@@ -823,7 +826,7 @@ export default function RequestsScreen() {
             <View style={styles.modalActionRow}>
               <TouchableOpacity
                 activeOpacity={0.85}
-                style={styles.modalCancelButton}
+                style={[styles.modalCancelButton, { borderColor: colors.border }]}
                 onPress={closeContactShareSelector}
               >
                 <Text style={styles.modalCancelButtonText}>Cancelar</Text>
@@ -834,15 +837,17 @@ export default function RequestsScreen() {
                 disabled={!canShareSelectedMethods}
                 style={[
                   styles.modalConfirmButton,
-                  !canShareSelectedMethods ? styles.modalConfirmButtonDisabled : null,
+                  { backgroundColor: colors.accent },
+                  !canShareSelectedMethods ? { ...styles.modalConfirmButtonDisabled, borderColor: colors.border } : null,
                 ]}
                 onPress={confirmContactInformationShare}
               >
                 <Text
                   style={[
                     styles.modalConfirmButtonText,
+                    { color: colors.background },
                     !canShareSelectedMethods
-                      ? styles.modalConfirmButtonTextDisabled
+                      ? { color: colors.textMuted }
                       : null,
                   ]}
                 >
@@ -863,7 +868,7 @@ export default function RequestsScreen() {
     request: ContactInformationRequest;
     direction: 'incoming' | 'outgoing';
   }) {
-    const contactColor = colors.cyan;
+    const contactColor = colors.accent;
     const otherUserId =
       direction === 'incoming' ? request.fromUserId : request.toUserId;
     const statusMeta = getContactRequestStatusMeta(request.status);
@@ -872,7 +877,7 @@ export default function RequestsScreen() {
     const protectedLabel = protectedPreviewLabel(otherUserId);
 
     return (
-      <View key={request.id} style={styles.contactInfoCard}>
+      <View key={request.id} style={[styles.contactInfoCard, { backgroundColor: colors.surface }]}>
         <View style={styles.requestHeader}>
           <ContactRequestAvatar
             users={safeUsers}
@@ -912,7 +917,7 @@ export default function RequestsScreen() {
           </View>
         </View>
 
-        <Text style={styles.requestDescription}>
+        <Text style={[styles.requestDescription, { color: colors.textMuted }]}>
           Solicitado: {requestedLabels || 'Informações de contato'}
         </Text>
 
@@ -930,7 +935,7 @@ export default function RequestsScreen() {
           <Ionicons
             name="shield-checkmark-outline"
             size={16}
-            color={colors.cyan}
+            color={colors.accent}
           />
 
           <Text style={styles.contactRuleText}>
@@ -942,20 +947,20 @@ export default function RequestsScreen() {
         {direction === 'incoming' && isPendingRequestStatus(request.status) ? (
           <View style={styles.actionRow}>
             <TouchableOpacity
-              style={styles.acceptButton}
+              style={[styles.acceptButton, { backgroundColor: colors.accent }]}
               activeOpacity={0.85}
               onPress={() => openContactShareSelector(request)}
             >
-              <Ionicons name="checkmark" size={20} color={colors.bg} />
-              <Text style={styles.acceptButtonText}>Compartilhar</Text>
+              <Ionicons name="checkmark" size={20} color={colors.background} />
+              <Text style={[styles.acceptButtonText, { color: colors.background }]}>Compartilhar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.rejectButton}
+              style={[styles.rejectButton, { borderColor: colors.border }]}
               activeOpacity={0.85}
               onPress={() => handleRejectContactInformationRequest(request.id)}
             >
-              <Ionicons name="close" size={20} color={colors.white} />
+              <Ionicons name="close" size={20} color="#FFFFFF" />
               <Text style={styles.rejectButtonText}>Recusar</Text>
             </TouchableOpacity>
           </View>
@@ -965,13 +970,13 @@ export default function RequestsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>
-          <Text style={styles.logo}>ELUS</Text>
+          <Text style={[styles.logo, { color: colors.accent }]}>ELUS</Text>
           <Text style={styles.title}>Solicitações</Text>
           <Text style={styles.subtitle}>
             Acompanhe pedidos de vínculo e pedidos de informações. Conexões
@@ -1027,9 +1032,9 @@ export default function RequestsScreen() {
           </View>
         </View>
 
-        <View style={styles.summaryCard}>
+        <View style={[styles.summaryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.summaryIcon}>
-            <Ionicons name="key-outline" size={34} color={colors.cyan} />
+            <Ionicons name="key-outline" size={34} color={colors.accent} />
           </View>
 
           <View style={styles.summaryTextBox}>
@@ -1038,7 +1043,7 @@ export default function RequestsScreen() {
                 ? '1 solicitação pendente'
                 : `${totalPending} solicitações pendentes`}
             </Text>
-            <Text style={styles.summaryText}>
+            <Text style={[styles.summaryText, { color: colors.textMuted }]}>
               Solicitações de conexão e solicitações de informações aparecem
               separadas. Nenhuma solicitação libera contato automaticamente.
             </Text>
@@ -1050,12 +1055,12 @@ export default function RequestsScreen() {
         <Text style={styles.sectionTitle}>Recebidas</Text>
 
         {pendingIncoming.length === 0 ? (
-          <View style={styles.emptyCard}>
+          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.emptyIcon}>
               <Ionicons
                 name="checkmark-done-outline"
                 size={24}
-                color={colors.textTertiary}
+                color={colors.textMuted}
               />
             </View>
 
@@ -1063,7 +1068,7 @@ export default function RequestsScreen() {
               <Text style={styles.emptyTitle}>
                 Nenhuma solicitação de conexão pendente
               </Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
                 Quando alguém quiser criar um vínculo que precisa de aprovação,
                 ele aparecerá aqui. A conexão real continuará dependendo de
                 identidade verificada dos dois lados.
@@ -1073,7 +1078,7 @@ export default function RequestsScreen() {
         ) : (
           pendingIncoming.map((request) => {
             const relation = relationshipColors[request.kind];
-            const color = relation?.color || colors.cyan;
+            const color = relation?.color || colors.accent;
             const requesterPhase = getUserPhase(request.fromUserId);
             const requesterProtectedLabel = protectedPreviewLabel(request.fromUserId);
             const canAcceptThisRequest =
@@ -1088,7 +1093,7 @@ export default function RequestsScreen() {
             });
 
             return (
-              <View key={request.id} style={styles.requestCard}>
+              <View key={request.id} style={[styles.requestCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <View style={styles.requestHeader}>
                   <RequestAvatar
                     users={safeUsers}
@@ -1135,7 +1140,7 @@ export default function RequestsScreen() {
                   </View>
                 </View>
 
-                <Text style={styles.requestDescription}>{request.label}</Text>
+                <Text style={[styles.requestDescription, { color: colors.textMuted }]}>{request.label}</Text>
 
                 {!canAcceptThisRequest ? (
                   <View
@@ -1175,7 +1180,8 @@ export default function RequestsScreen() {
                   <TouchableOpacity
                     style={[
                       styles.acceptButton,
-                      !canAcceptThisRequest ? styles.acceptButtonDisabled : null,
+                      { backgroundColor: colors.accent },
+                      !canAcceptThisRequest ? { ...styles.acceptButtonDisabled, borderColor: colors.border } : null,
                     ]}
                     activeOpacity={0.85}
                     onPress={() =>
@@ -1190,15 +1196,16 @@ export default function RequestsScreen() {
                       name={canAcceptThisRequest ? 'checkmark' : 'lock-closed'}
                       size={20}
                       color={
-                        canAcceptThisRequest ? colors.bg : colors.textTertiary
+                        canAcceptThisRequest ? colors.background : colors.textMuted
                       }
                     />
 
                     <Text
                       style={[
                         styles.acceptButtonText,
+                        { color: colors.background },
                         !canAcceptThisRequest
-                          ? styles.acceptButtonTextDisabled
+                          ? { color: colors.textMuted }
                           : null,
                       ]}
                     >
@@ -1207,11 +1214,11 @@ export default function RequestsScreen() {
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={styles.rejectButton}
+                    style={[styles.rejectButton, { borderColor: colors.border }]}
                     activeOpacity={0.85}
                     onPress={() => handleRejectRequest(request.id)}
                   >
-                    <Ionicons name="close" size={20} color={colors.white} />
+                    <Ionicons name="close" size={20} color="#FFFFFF" />
                     <Text style={styles.rejectButtonText}>Recusar</Text>
                   </TouchableOpacity>
                 </View>
@@ -1223,12 +1230,12 @@ export default function RequestsScreen() {
         <Text style={styles.sectionTitle}>Enviadas</Text>
 
         {safeOutgoingConnectionRequests.length === 0 ? (
-          <View style={styles.emptyCard}>
+          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.emptyIcon}>
               <Ionicons
                 name="paper-plane-outline"
                 size={24}
-                color={colors.textTertiary}
+                color={colors.textMuted}
               />
             </View>
 
@@ -1236,7 +1243,7 @@ export default function RequestsScreen() {
               <Text style={styles.emptyTitle}>
                 Nenhuma solicitação de conexão enviada
               </Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
                 Quando você pedir um vínculo, ele aparecerá aqui. Contato e
                 dados completos continuam bloqueados até aprovação adequada.
               </Text>
@@ -1245,7 +1252,7 @@ export default function RequestsScreen() {
         ) : (
           safeOutgoingConnectionRequests.map((request) => {
             const relation = relationshipColors[request.kind];
-            const color = relation?.color || colors.cyan;
+            const color = relation?.color || colors.accent;
             const targetPhase = getUserPhase(request.toUserId);
             const targetProtectedLabel = protectedPreviewLabel(request.toUserId);
             const canBecomeRealConnection =
@@ -1258,7 +1265,7 @@ export default function RequestsScreen() {
             });
 
             return (
-              <View key={request.id} style={styles.sentCard}>
+              <View key={request.id} style={[styles.sentCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <RequestAvatar
                   users={safeUsers}
                   userId={request.toUserId}
@@ -1282,7 +1289,7 @@ export default function RequestsScreen() {
 
                   {!canBecomeRealConnection &&
                   !isRejectedRequestStatus(request.status) ? (
-                    <Text style={styles.sentBlockedText}>
+                    <Text style={[styles.sentBlockedText, { color: colors.textMuted }]}>
                       Não pode virar conexão real sem verificação dos dois lados.
                     </Text>
                   ) : null}
@@ -1320,7 +1327,7 @@ export default function RequestsScreen() {
 
             {historyIncoming.map((request) => {
               const relation = relationshipColors[request.kind];
-              const color = relation?.color || colors.cyan;
+              const color = relation?.color || colors.accent;
               const requesterPhase = getUserPhase(request.fromUserId);
               const requesterProtectedLabel = protectedPreviewLabel(request.fromUserId);
               const canBecomeRealConnection =
@@ -1333,7 +1340,7 @@ export default function RequestsScreen() {
               });
 
               return (
-                <View key={request.id} style={styles.historyCard}>
+                <View key={request.id} style={[styles.historyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                   <View style={[styles.historyDot, { backgroundColor: color }]} />
 
                   <View style={styles.requestTextBox}>
@@ -1366,12 +1373,12 @@ export default function RequestsScreen() {
         <Text style={styles.sectionTitle}>Recebidas</Text>
 
         {pendingIncomingContactRequests.length === 0 ? (
-          <View style={styles.emptyCard}>
+          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.emptyIcon}>
               <Ionicons
                 name="id-card-outline"
                 size={24}
-                color={colors.textTertiary}
+                color={colors.textMuted}
               />
             </View>
 
@@ -1379,7 +1386,7 @@ export default function RequestsScreen() {
               <Text style={styles.emptyTitle}>
                 Nenhuma solicitação de informações pendente
               </Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
                 Pedidos de telefone, WhatsApp, Instagram, e-mail, endereço e
                 outros dados aparecerão aqui. Isso não cria elo automaticamente.
               </Text>
@@ -1397,12 +1404,12 @@ export default function RequestsScreen() {
         <Text style={styles.sectionTitle}>Enviadas</Text>
 
         {safeOutgoingContactRequests.length === 0 ? (
-          <View style={styles.emptyCard}>
+          <View style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.emptyIcon}>
               <Ionicons
                 name="send-outline"
                 size={24}
-                color={colors.textTertiary}
+                color={colors.textMuted}
               />
             </View>
 
@@ -1410,7 +1417,7 @@ export default function RequestsScreen() {
               <Text style={styles.emptyTitle}>
                 Nenhuma solicitação de informações enviada
               </Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
                 Quando você solicitar telefone, WhatsApp, Instagram, e-mail ou
                 outros dados, o pedido aparecerá aqui separado das conexões.
               </Text>
@@ -1438,7 +1445,7 @@ export default function RequestsScreen() {
           </View>
         ) : null}
 
-        <Text style={styles.footer}>
+        <Text style={[styles.footer, { color: colors.textMuted }]}>
           ELUS · Afinidade, informação compartilhada e conexão real são camadas
           separadas. Conexões reais só acontecem com identidade verificada e
           aprovação.
@@ -1453,7 +1460,6 @@ export default function RequestsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
 
   content: {
@@ -1466,21 +1472,20 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    color: colors.cyan,
     fontSize: 20,
     fontWeight: '900',
     letterSpacing: 7,
   },
 
   title: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 38,
     fontWeight: '200',
     marginTop: 8,
   },
 
   subtitle: {
-    color: colors.silver,
+    color: '#C0C7D2',
     fontSize: 15,
     lineHeight: 22,
     marginTop: 10,
@@ -1516,7 +1521,7 @@ const styles = StyleSheet.create({
   },
 
   gateText: {
-    color: colors.silver,
+    color: '#C0C7D2',
     fontSize: 13,
     lineHeight: 19,
     fontWeight: '700',
@@ -1540,10 +1545,8 @@ const styles = StyleSheet.create({
   },
 
   summaryCard: {
-    backgroundColor: colors.surface,
     borderRadius: 26,
     borderWidth: 1,
-    borderColor: colors.border,
     padding: 18,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1567,20 +1570,19 @@ const styles = StyleSheet.create({
   },
 
   summaryTitle: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 21,
     fontWeight: '900',
   },
 
   summaryText: {
-    color: colors.textTertiary,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 5,
   },
 
   groupTitle: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 28,
     fontWeight: '900',
     marginBottom: 15,
@@ -1588,7 +1590,7 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 24,
     fontWeight: '900',
     marginBottom: 14,
@@ -1596,16 +1598,13 @@ const styles = StyleSheet.create({
   },
 
   requestCard: {
-    backgroundColor: colors.surface,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: colors.border,
     padding: 18,
     marginBottom: 18,
   },
 
   contactInfoCard: {
-    backgroundColor: colors.surface,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(34,211,238,0.20)',
@@ -1639,20 +1638,19 @@ const styles = StyleSheet.create({
   },
 
   requestTitle: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '900',
   },
 
   requestSubtitle: {
-    color: colors.silver,
+    color: '#C0C7D2',
     fontSize: 13,
     lineHeight: 18,
     marginTop: 3,
   },
 
   requestDescription: {
-    color: colors.textTertiary,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 14,
@@ -1667,7 +1665,7 @@ const styles = StyleSheet.create({
   },
 
   contactNoteText: {
-    color: colors.silver,
+    color: '#C0C7D2',
     fontSize: 12,
     lineHeight: 17,
     fontWeight: '700',
@@ -1687,7 +1685,7 @@ const styles = StyleSheet.create({
 
   contactRuleText: {
     flex: 1,
-    color: colors.silver,
+    color: '#C0C7D2',
     fontSize: 12,
     lineHeight: 17,
     fontWeight: '800',
@@ -1745,7 +1743,6 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.cyan,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -1755,19 +1752,15 @@ const styles = StyleSheet.create({
   acceptButtonDisabled: {
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: colors.border,
   },
 
   acceptButtonText: {
-    color: colors.bg,
     fontSize: 14,
     fontWeight: '900',
     marginLeft: 6,
   },
 
-  acceptButtonTextDisabled: {
-    color: colors.textTertiary,
-  },
+  acceptButtonTextDisabled: {},
 
   rejectButton: {
     flex: 1,
@@ -1775,7 +1768,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: 'rgba(255,255,255,0.07)',
     borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -1783,17 +1775,15 @@ const styles = StyleSheet.create({
   },
 
   rejectButtonText: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '900',
     marginLeft: 6,
   },
 
   sentCard: {
-    backgroundColor: colors.surface,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: colors.border,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1801,7 +1791,6 @@ const styles = StyleSheet.create({
   },
 
   sentBlockedText: {
-    color: colors.textTertiary,
     fontSize: 11,
     lineHeight: 16,
     fontWeight: '700',
@@ -1809,10 +1798,8 @@ const styles = StyleSheet.create({
   },
 
   emptyCard: {
-    backgroundColor: colors.surface,
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: colors.border,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1834,23 +1821,20 @@ const styles = StyleSheet.create({
   },
 
   emptyTitle: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '900',
   },
 
   emptyText: {
-    color: colors.textTertiary,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 4,
   },
 
   historyCard: {
-    backgroundColor: colors.surface,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: colors.border,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1865,19 +1849,17 @@ const styles = StyleSheet.create({
   },
 
   historyTitle: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '800',
   },
 
   historySubtitle: {
-    color: colors.textTertiary,
     fontSize: 12,
     marginTop: 3,
   },
 
   footer: {
-    color: colors.textTertiary,
     textAlign: 'center',
     marginTop: 24,
     fontSize: 12,
@@ -1897,20 +1879,18 @@ const styles = StyleSheet.create({
     maxHeight: '92%',
     borderRadius: 28,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: '#141A26',
     padding: 20,
   },
 
   modalTitle: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 28,
     lineHeight: 33,
     fontWeight: '900',
   },
 
   modalSubtitle: {
-    color: colors.silver,
+    color: '#C0C7D2',
     fontSize: 14,
     lineHeight: 21,
     fontWeight: '700',
@@ -1930,7 +1910,7 @@ const styles = StyleSheet.create({
 
   modalRuleText: {
     flex: 1,
-    color: colors.silver,
+    color: '#C0C7D2',
     fontSize: 12,
     lineHeight: 17,
     fontWeight: '800',
@@ -1949,13 +1929,12 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     backgroundColor: 'rgba(255,255,255,0.07)',
     borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   modalUtilityButtonText: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '900',
   },
@@ -1968,7 +1947,6 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: 'rgba(255,255,255,0.06)',
     flexDirection: 'row',
     alignItems: 'center',
@@ -1991,20 +1969,17 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
 
-  modalOptionCircleSelected: {
-    backgroundColor: colors.cyan,
-    borderColor: colors.cyan,
-  },
+  modalOptionCircleSelected: {},
 
   modalOptionText: {
     flex: 1,
-    color: colors.silver,
+    color: '#C0C7D2',
     fontSize: 15,
     fontWeight: '900',
   },
 
   modalOptionTextSelected: {
-    color: colors.white,
+    color: '#FFFFFF',
   },
 
   modalActionRow: {
@@ -2018,14 +1993,13 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: 'rgba(255,255,255,0.07)',
     borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
   },
 
   modalCancelButtonText: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '900',
   },
@@ -2034,7 +2008,6 @@ const styles = StyleSheet.create({
     flex: 1.2,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.cyan,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
@@ -2043,16 +2016,12 @@ const styles = StyleSheet.create({
   modalConfirmButtonDisabled: {
     backgroundColor: 'rgba(255,255,255,0.10)',
     borderWidth: 1,
-    borderColor: colors.border,
   },
 
   modalConfirmButtonText: {
-    color: colors.bg,
     fontSize: 14,
     fontWeight: '900',
   },
 
-  modalConfirmButtonTextDisabled: {
-    color: colors.textTertiary,
-  },
+  modalConfirmButtonTextDisabled: {},
 });
