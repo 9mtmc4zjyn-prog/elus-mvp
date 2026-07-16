@@ -9,7 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '../src/components/Button';
-import { useTheme } from '../src/theme/ThemeContext';
+import { useTheme, useThemeColors } from '../src/theme/ThemeContext';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -18,16 +18,6 @@ type PrivacyItem = {
   title: string;
   description: string;
   icon: IconName;
-};
-
-const COLORS = {
-  surfaceDeep: '#080D16',
-
-  goldBorder: 'rgba(196,154,69,0.30)',
-
-  blueLight: '#8FA3B8',
-  blueLightSoft: 'rgba(143,163,184,0.14)',
-  blueLightBorder: 'rgba(143,163,184,0.34)',
 };
 
 const privacyItems: PrivacyItem[] = [
@@ -63,7 +53,17 @@ const privacyItems: PrivacyItem[] = [
 
 export default function PrivacyScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const colors = useThemeColors();
+
+  const COLORS = {
+    surfaceDeep: colors.background,
+
+    goldBorder: 'rgba(196,154,69,0.30)',
+
+    blueLight: '#8FA3B8',
+    blueLightSoft: 'rgba(143,163,184,0.14)',
+    blueLightBorder: 'rgba(143,163,184,0.34)',
+  };
 
   function handleAccept() {
     router.push('/profile-type' as never);
@@ -103,7 +103,12 @@ export default function PrivacyScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
-          <View style={styles.heroIcon}>
+          <View
+            style={[
+              styles.heroIcon,
+              { backgroundColor: colors.background, borderColor: COLORS.goldBorder },
+            ]}
+          >
             <Ionicons
               name="shield-checkmark-outline"
               size={42}
@@ -122,7 +127,12 @@ export default function PrivacyScreen() {
         <View style={styles.itemsBox}>
           {privacyItems.map((item) => (
             <View key={item.id} style={[styles.itemCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
-              <View style={styles.itemIconBox}>
+              <View
+                style={[
+                  styles.itemIconBox,
+                  { backgroundColor: colors.background, borderColor: COLORS.goldBorder },
+                ]}
+              >
                 <Ionicons name={item.icon} size={24} color={colors.warning} />
               </View>
 
@@ -136,8 +146,24 @@ export default function PrivacyScreen() {
           ))}
         </View>
 
-        <View style={styles.noticeCard}>
-          <View style={styles.noticeIconBox}>
+        <View
+          style={[
+            styles.noticeCard,
+            {
+              backgroundColor: COLORS.blueLightSoft,
+              borderColor: COLORS.blueLightBorder,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.noticeIconBox,
+              {
+                backgroundColor: colors.background,
+                borderColor: COLORS.blueLightBorder,
+              },
+            ]}
+          >
             <Ionicons
               name="information-circle-outline"
               size={24}
@@ -227,9 +253,7 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: COLORS.surfaceDeep,
     borderWidth: 1,
-    borderColor: COLORS.goldBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -267,9 +291,7 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: COLORS.surfaceDeep,
     borderWidth: 1,
-    borderColor: COLORS.goldBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -294,11 +316,9 @@ const styles = StyleSheet.create({
 
   noticeCard: {
     marginTop: 6,
-    backgroundColor: COLORS.blueLightSoft,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: COLORS.blueLightBorder,
     flexDirection: 'row',
   },
 
@@ -306,9 +326,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: COLORS.surfaceDeep,
     borderWidth: 1,
-    borderColor: COLORS.blueLightBorder,
     alignItems: 'center',
     justifyContent: 'center',
   },

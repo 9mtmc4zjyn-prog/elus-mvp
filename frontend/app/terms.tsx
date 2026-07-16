@@ -10,11 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Button } from '../src/components/Button';
-import { useTheme } from '../src/theme/ThemeContext';
-
-const COLORS = {
-  blueLight: '#8FA3B8',
-};
+import { useTheme, useThemeColors } from '../src/theme/ThemeContext';
 
 function SectionTitle({ children }: { children: string }) {
   const { colors } = useTheme();
@@ -54,7 +50,7 @@ function BulletItem({ children }: { children: string }) {
 
 export default function TermsScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const colors = useThemeColors();
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -69,7 +65,7 @@ export default function TermsScreen() {
         <Pressable
           style={({ pressed }) => [
             styles.backButton,
-            { borderColor: colors.border },
+            { backgroundColor: colors.surfaceSoft, borderColor: colors.border },
             pressed && styles.pressed,
           ]}
           onPress={() => router.back()}
@@ -85,8 +81,15 @@ export default function TermsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.heroBadge}>
-          <Text style={styles.heroBadgeText}>ELUS · Vigência: junho de 2026</Text>
+        <View
+          style={[
+            styles.heroBadge,
+            { backgroundColor: colors.accentSoft },
+          ]}
+        >
+          <Text style={[styles.heroBadgeText, { color: colors.textMuted }]}>
+            ELUS · Vigência: junho de 2026
+          </Text>
         </View>
 
         <Text style={[styles.introText, { color: colors.text + 'D1' }]}>
@@ -270,7 +273,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.07)',
     borderWidth: 1,
   },
   backButtonText: { fontSize: 30, lineHeight: 32, marginTop: -2 },
@@ -280,12 +282,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: 'rgba(91,141,239,0.12)',
     borderWidth: 1,
     borderColor: 'rgba(91,141,239,0.30)',
     marginBottom: 18,
   },
-  heroBadgeText: { color: COLORS.blueLight, fontSize: 12, fontWeight: '800', letterSpacing: 1 },
+  heroBadgeText: { fontSize: 12, fontWeight: '800', letterSpacing: 1 },
   introText: {
     fontSize: 15,
     lineHeight: 24,

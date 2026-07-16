@@ -104,22 +104,8 @@ export default function LoginScreen() {
     router.replace('/(tabs)' as never);
   }
 
-  async function forgotPassword() {
-    if (!email.trim()) {
-      Alert.alert('Informe seu e-mail', 'Digite o e-mail acima para receber o link de recuperação.');
-      return;
-    }
-
-    setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
-    setLoading(false);
-
-    if (error) {
-      Alert.alert('Erro', error.message);
-      return;
-    }
-
-    Alert.alert('E-mail enviado', 'Verifique sua caixa de entrada para redefinir a senha.');
+  function forgotPassword() {
+    router.push('/forgot-password' as never);
   }
 
   function goToSignup() {

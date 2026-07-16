@@ -51,7 +51,8 @@ function isPreAppRoute(pathname: string, segments: readonly string[]) {
     path === '/verification' ||
     path === '/terms' ||
     path === '/privacy' ||
-    path === '/privacy-policy'
+    path === '/privacy-policy' ||
+    path === '/forgot-password'
   );
 }
 

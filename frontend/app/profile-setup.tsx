@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../src/theme/ThemeContext';
 import { supabase } from '../src/lib/supabase';
 import { INTEREST_CATEGORIES } from '../src/data/interestSuggestions';
+import { PREFERENCE_CATEGORIES } from '../src/data/preferenceSuggestions';
 
 const ELUS_SYMBOL = require('../assets/brand/elus_symbol_main.png');
 
@@ -64,6 +65,9 @@ export default function ProfileSetupScreen() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [showCustomInterestInput, setShowCustomInterestInput] = useState(false);
   const [customInterestsText, setCustomInterestsText] = useState('');
+  const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
+  const [showCustomPreferenceInput, setShowCustomPreferenceInput] = useState(false);
+  const [customPreferencesText, setCustomPreferencesText] = useState('');
 
   async function handleContinue() {
     setLoading(true);
@@ -84,9 +88,17 @@ export default function ProfileSetupScreen() {
 
     const allInterests = [...selectedInterests, ...customInterests];
 
+    const customPreferences = customPreferencesText
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+
+    const allPreferences = [...selectedPreferences, ...customPreferences];
+
     const updates: Record<string, string | string[]> = {
       presence_mode: presenceMode,
       interests: allInterests,
+      preferences: allPreferences,
     };
 
     if (name.trim()) updates.name = name.trim();
@@ -113,6 +125,14 @@ export default function ProfileSetupScreen() {
       current.includes(interestId)
         ? current.filter((id) => id !== interestId)
         : [...current, interestId]
+    );
+  }
+
+  function togglePreference(preferenceId: string) {
+    setSelectedPreferences((current) =>
+      current.includes(preferenceId)
+        ? current.filter((id) => id !== preferenceId)
+        : [...current, preferenceId]
     );
   }
 
@@ -286,6 +306,90 @@ export default function ProfileSetupScreen() {
                   placeholderTextColor={colors.textMuted}
                   value={customInterestsText}
                   onChangeText={setCustomInterestsText}
+                  editable={!loading}
+                />
+              </View>
+            ) : null}
+          </View>
+
+          <View style={[styles.interestsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Preferências</Text>
+
+            <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+              Que tipo de conexão você está buscando no ELUS?
+            </Text>
+
+            {PREFERENCE_CATEGORIES.map((category) => (
+              <View key={category.id} style={styles.interestCategoryBlock}>
+                <Text style={[styles.interestCategoryTitle, { color: colors.textMuted }]}>{category.title}</Text>
+
+                <View style={styles.interestChipsRow}>
+                  {category.preferences.map((preference) => {
+                    const isSelected = selectedPreferences.includes(preference.id);
+
+                    return (
+                      <Pressable
+                        key={preference.id}
+                        onPress={() => togglePreference(preference.id)}
+                        style={[
+                          styles.interestChip,
+                          { borderColor: colors.border, backgroundColor: colors.background },
+                          isSelected && {
+                            borderColor: `${colors.accent}6B`,
+                            backgroundColor: `${colors.accent}1A`,
+                          },
+                        ]}
+                        disabled={loading}
+                      >
+                        <Text
+                          style={[
+                            styles.interestChipText,
+                            { color: colors.textMuted },
+                            isSelected && { color: colors.accent },
+                          ]}
+                        >
+                          {preference.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ))}
+
+            <View style={styles.interestChipsRow}>
+              <Pressable
+                onPress={() => setShowCustomPreferenceInput((prev) => !prev)}
+                style={[
+                  styles.outroChip,
+                  { borderColor: colors.accent, backgroundColor: colors.background },
+                  showCustomPreferenceInput && {
+                    borderColor: `${colors.accent}6B`,
+                    backgroundColor: `${colors.accent}1A`,
+                  },
+                ]}
+                disabled={loading}
+              >
+                <Text
+                  style={[
+                    styles.interestChipText,
+                    { color: colors.textMuted },
+                    showCustomPreferenceInput && { color: colors.accent },
+                  ]}
+                >
+                  Outro +
+                </Text>
+              </Pressable>
+            </View>
+
+            {showCustomPreferenceInput ? (
+              <View style={[styles.customInterestInputBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                <TextInput
+                  style={[styles.customInterestInput, { color: colors.text }]}
+                  placeholder="Digite outras preferências separadas por vírgula"
+                  placeholderTextColor={colors.textMuted}
+                  value={customPreferencesText}
+                  onChangeText={setCustomPreferencesText}
                   editable={!loading}
                 />
               </View>

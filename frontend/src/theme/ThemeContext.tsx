@@ -77,3 +77,7 @@ export function useTheme(): ThemeContextValue {
 
   return context;
 }
+
+export function useThemeColors(): ThemeColors {
+  return useTheme().colors;
+}

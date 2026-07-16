@@ -9,7 +9,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../src/theme/ThemeContext';
+import { useTheme, useThemeColors } from '../src/theme/ThemeContext';
 
 const COLORS = {
   cyan: '#5E9EAB',
@@ -44,15 +44,15 @@ function getToneColor(tone?: OptionItemProps['tone']) {
 
 function Header() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const colors = useThemeColors();
 
   return (
-    <View style={[styles.header, { borderBottomColor: colors.border }]}>
+    <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
       <Pressable
         onPress={() => router.back()}
         style={({ pressed }) => [
           styles.backButton,
-          { borderColor: colors.border },
+          { backgroundColor: colors.surfaceSoft, borderColor: colors.border },
           pressed ? styles.buttonPressed : null,
         ]}
       >
@@ -75,7 +75,7 @@ function OptionItem({
   onPress,
 }: OptionItemProps) {
   const color = getToneColor(tone);
-  const { colors } = useTheme();
+  const colors = useThemeColors();
 
   return (
     <Pressable
@@ -104,7 +104,7 @@ function OptionItem({
           <Text style={[styles.optionTitle, { color: colors.text }]}>{title}</Text>
 
           {tag ? (
-            <View style={[styles.optionTag, { borderColor: colors.border }]}>
+            <View style={[styles.optionTag, { backgroundColor: colors.surfaceSoft, borderColor: colors.border }]}>
               <Text style={[styles.optionTagText, { color: colors.textMuted }]}>{tag}</Text>
             </View>
           ) : null}
@@ -196,7 +196,7 @@ function SecurityCard() {
 
 export default function ConnectionsOptionsScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const colors = useThemeColors();
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -317,7 +317,6 @@ const styles = StyleSheet.create<any>({
     height: 92,
     paddingTop: 44,
     paddingHorizontal: 18,
-    backgroundColor: '#060910',
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     alignItems: 'center',
@@ -330,7 +329,6 @@ const styles = StyleSheet.create<any>({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
   },
 
@@ -533,7 +531,6 @@ const styles = StyleSheet.create<any>({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
   },
 

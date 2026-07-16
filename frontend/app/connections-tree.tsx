@@ -9,7 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../src/context/AppContext';
-import { useTheme } from '../src/theme/ThemeContext';
+import { useTheme, useThemeColors } from '../src/theme/ThemeContext';
 
 type AnyUser = {
   id?: string | number;
@@ -321,7 +321,7 @@ function ConnectionCard({
 export default function ConnectionsTreeScreen() {
   const router = useRouter();
   const app = useApp() as any;
-  const { colors } = useTheme();
+  const colors = useThemeColors();
 
   const currentUser = app?.user ?? null;
   const users: AnyUser[] = Array.isArray(app?.users) ? app.users : [];
@@ -428,8 +428,8 @@ export default function ConnectionsTreeScreen() {
           <View style={styles.ringMiddle} />
           <View style={styles.ringInner} />
 
-          <View style={styles.axisVertical} />
-          <View style={styles.axisHorizontal} />
+          <View style={[styles.axisVertical, { backgroundColor: colors.surfaceSoft }]} />
+          <View style={[styles.axisHorizontal, { backgroundColor: colors.surfaceSoft }]} />
 
           {visibleGraphItems.map((item, index) => (
             <GraphNode key={`graph-${item.id}`} item={item} index={index} />
@@ -643,7 +643,6 @@ const styles = StyleSheet.create<any>({
     height: 280,
     top: 60,
     left: '50%',
-    backgroundColor: 'rgba(255,255,255,0.05)',
   },
 
   axisHorizontal: {
@@ -652,7 +651,6 @@ const styles = StyleSheet.create<any>({
     width: 280,
     left: 42,
     top: 198,
-    backgroundColor: 'rgba(255,255,255,0.05)',
   },
 
   graphNode: {

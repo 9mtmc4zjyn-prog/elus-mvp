@@ -646,6 +646,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Ignora o evento de recuperação de senha — a tela
+      // forgot-password.tsx é responsável por todo esse fluxo
+      // (verificar código, atualizar senha e deslogar ao final).
+      // Sem este early return, este listener trataria a sessão
+      // temporária de recovery como um login normal.
+      if (event === 'PASSWORD_RECOVERY') {
+        return;
+      }
+
       if (session?.user) {
         const uid = session.user.id;
         loadUserFromSupabase(uid);

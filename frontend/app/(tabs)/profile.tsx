@@ -302,6 +302,10 @@ export default function ProfileScreen() {
     router.push('/terms' as never);
   }
 
+  function goToDeleteAccount() {
+    router.push('/delete-account' as never);
+  }
+
   function goToMap() {
     router.push('/(tabs)/map' as never);
   }
@@ -662,6 +666,21 @@ export default function ProfileScreen() {
               <View>
                 <Text style={[styles.menuTitle, { color: colors.text }]}>Termos de Uso</Text>
                 <Text style={styles.menuSubtitle}>Regras de uso da plataforma</Text>
+              </View>
+
+              <Text style={styles.menuArrow}>›</Text>
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.menuItem,
+                pressed && styles.pressedSmall,
+              ]}
+              onPress={goToDeleteAccount}
+            >
+              <View>
+                <Text style={[styles.menuTitle, { color: colors.danger }]}>Excluir minha conta</Text>
+                <Text style={styles.menuSubtitle}>Remoção permanente de perfil e dados (LGPD)</Text>
               </View>
 
               <Text style={styles.menuArrow}>›</Text>
