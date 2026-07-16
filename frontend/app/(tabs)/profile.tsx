@@ -671,6 +671,8 @@ export default function ProfileScreen() {
               <Text style={styles.menuArrow}>›</Text>
             </Pressable>
 
+            <Button label="Configurações" variant="secondary" onPress={() => router.push('/settings')} containerStyle={styles.settingsButton} />
+
             <Pressable
               style={({ pressed }) => [
                 styles.menuItem,
@@ -1060,4 +1062,5 @@ const styles = StyleSheet.create<any>({
     fontSize: 13,
     fontWeight: '900',
   },
+  settingsButton: { marginTop: 8 },
 });
