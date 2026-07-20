@@ -68,11 +68,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 1000;
+            z-index: 10000;
             background: color-mix(in srgb, var(--bg) 85%, transparent);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
             isolation: isolate;
+            pointer-events: auto;
         }
         .logo {
             font-size: 1.5rem;
@@ -135,15 +136,18 @@
             border: none;
             color: var(--text);
             cursor: pointer;
-            width: 44px;
-            height: 44px;
-            min-width: 44px;
-            min-height: 44px;
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            min-height: 48px;
             align-items: center;
             justify-content: center;
             position: relative;
-            z-index: 1002;
+            z-index: 10050;
             flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            pointer-events: auto;
         }
         .menu-toggle svg {
             width: 26px;
@@ -994,18 +998,24 @@
         }
 
         if (toggle && nav) {
-            // click + pointerup(touch) com debounce → evita abrir/fechar no mesmo toque
             let lastToggleAt = 0;
             function onToggleInteract(e) {
                 const now = Date.now();
-                if (now - lastToggleAt < 350) return;
+                if (now - lastToggleAt < 400) return;
                 lastToggleAt = now;
                 toggleMenu(e);
             }
-            toggle.addEventListener('click', onToggleInteract);
+
+            // Handlers redundantes para iOS Safari / WebViews
+            toggle.addEventListener('click', onToggleInteract, { passive: false });
             toggle.addEventListener('pointerup', (e) => {
-                if (e.pointerType === 'touch') onToggleInteract(e);
-            });
+                if (e.pointerType === 'touch' || e.pointerType === 'pen') onToggleInteract(e);
+            }, { passive: false });
+            toggle.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                onToggleInteract(e);
+            }, { passive: false });
+
             nav.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
             document.addEventListener('keydown', e => {
                 if (e.key === 'Escape' && nav.classList.contains('open')) {
@@ -1013,7 +1023,7 @@
                     toggle.focus();
                 }
             });
-            document.addEventListener('pointerup', (e) => {
+            document.addEventListener('click', (e) => {
                 if (!nav.classList.contains('open')) return;
                 if (nav.contains(e.target) || toggle.contains(e.target)) return;
                 closeMenu();
