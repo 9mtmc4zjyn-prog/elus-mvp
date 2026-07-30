@@ -104,4 +104,8 @@ Para reverter só a 014/015 no remoto (se necessário), usar os blocos `REVERTER
 
 ## Commits nesta branch
 
-(Preenchido após o commit local.)
+| Hash | Mensagem |
+|------|----------|
+| `6b093b8` | `fix(interest-cards): corrige views RLS e enforcement de plano no banco` |
+
+**Não houve `git push`.** Branch só local para revisão do Cleber.
