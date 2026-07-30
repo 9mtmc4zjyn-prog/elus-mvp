@@ -40,6 +40,9 @@ export type AppUser = {
   instagram?: string;
   city?: string;
   state?: string;
+  surname?: string;
+  originCity?: string;
+  originState?: string;
   verified: boolean;
   verificationStatus?: VerificationStatus;
   verificationSubmittedAt?: string;
@@ -495,7 +498,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try {
         const { data: profileRows } = await supabase
           .from('profiles')
-          .select('id, name, city, state, presence_mode, photo_url, last_seen_at')
+          .select(
+            'id, name, city, state, surname, origin_city, origin_state, presence_mode, photo_url, last_seen_at'
+          )
           .neq('id', currentUserId)
           .limit(100);
 
@@ -540,6 +545,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             presenceMode: (profile.presence_mode as PresenceMode) || 'personal',
             city: profile.city || '',
             state: profile.state || '',
+            surname: profile.surname || '',
+            originCity: profile.origin_city || '',
+            originState: profile.origin_state || '',
             verified: verStatus === 'verified',
             verificationStatus: verStatus,
             interests: [],
@@ -613,6 +621,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             name: profileData.name || 'Novo usuário ELUS',
             city: profileData.city || '',
             state: profileData.state || '',
+            surname: profileData.surname || '',
+            originCity: profileData.origin_city || '',
+            originState: profileData.origin_state || '',
             presenceMode: profileData.presence_mode || 'personal',
             verified: verificationData?.status === 'verified',
             verificationStatus: verificationData?.status || 'unverified',
