@@ -1,24 +1,31 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   Image,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 
-import BrandMark from '../../src/components/BrandMark';
 import ProfileAvatar from '../../src/components/ProfileAvatar';
+import IconButton from '../../src/components/IconButton';
+import { InterestCardView } from '../../src/components/InterestCardView';
 import { useApp } from '../../src/context/AppContext';
 import { supabase } from '../../src/lib/supabase';
 import { Button } from '../../src/components/Button';
-import { useTheme } from '../../src/theme/ThemeContext';
+import { useThemeColors } from '../../src/theme/ThemeContext';
 import type { ThemeColors } from '../../src/theme/theme';
+import {
+  fetchActiveInterestCards,
+  type InterestCardRow,
+} from '../../src/utils/interestCardsApi';
 
 const WATERMARK = require('../../assets/watermark/elus_symbol_watermark_10.png');
 
@@ -180,11 +187,55 @@ function getDaysSince(date?: string) {
   return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
 }
 
+type MenuItemProps = {
+  label: string;
+  subtitle: string;
+  onPress: () => void;
+  colors: ThemeColors;
+  isDestructive?: boolean;
+};
+
+function MenuItem({ label, subtitle, onPress, colors, isDestructive }: MenuItemProps) {
+  return (
+    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
+      <View style={styles.menuItemText}>
+        <Text
+          style={[
+            styles.menuItemLabel,
+            { color: isDestructive ? colors.danger : colors.text },
+          ]}
+        >
+          {label}
+        </Text>
+        <Text style={[styles.menuItemSubtitle, { color: colors.textSoft }]}>{subtitle}</Text>
+      </View>
+      <Text style={[styles.chevron, { color: colors.textSoft }]}>›</Text>
+    </TouchableOpacity>
+  );
+}
+
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, updateUser, logout, getConnectionBranches } = useApp();
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const { colors } = useTheme();
+  const [activeInterestCards, setActiveInterestCards] = useState<InterestCardRow[]>(
+    [],
+  );
+  const colors = useThemeColors();
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        if (!user?.id) return;
+        const cards = await fetchActiveInterestCards(user.id);
+        if (!cancelled) setActiveInterestCards(cards);
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [user?.id]),
+  );
 
   async function handleAvatarPress() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -246,6 +297,27 @@ export default function ProfileScreen() {
     }
   }
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message: `Meu perfil no ELUS: https://elus.app/perfil/${user.id}`,
+      });
+    } catch {
+      // usuário cancelou
+    }
+  };
+
+  async function handleLogout() {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.warn('[ELUS] Falha ao encerrar sessão no servidor durante o logout:', error.message);
+    }
+
+    logout();
+    router.replace('/login' as never);
+  }
+
   const verificationStatus = normalizeVerificationStatus(
     user.verificationStatus,
     user.verified
@@ -282,45 +354,6 @@ export default function ProfileScreen() {
     user.companyName ||
     'Construindo uma rede contextual de conexões humanas reais.';
 
-  function goToVerification() {
-    router.push('/verification' as never);
-  }
-
-  function goToEditProfile() {
-    router.push('/profile-setup' as never);
-  }
-
-  function goToPlans() {
-    router.push('/plans' as never);
-  }
-
-  function goToPrivacy() {
-    router.push('/privacy-policy' as never);
-  }
-
-  function goToTerms() {
-    router.push('/terms' as never);
-  }
-
-  function goToDeleteAccount() {
-    router.push('/delete-account' as never);
-  }
-
-  function goToMap() {
-    router.push('/(tabs)/map' as never);
-  }
-
-  async function handleLogout() {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      console.warn('[ELUS] Falha ao encerrar sessão no servidor durante o logout:', error.message);
-    }
-
-    logout();
-    router.replace('/login' as never);
-  }
-
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <Image source={WATERMARK} style={styles.watermarkOne} resizeMode="contain" />
@@ -331,22 +364,19 @@ export default function ProfileScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {/* HEADER com compartilhar */}
         <View style={styles.header}>
-          <BrandMark variant="horizontal" size="small" />
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.headerButton,
-              { borderColor: colors.borderStrong },
-              pressed && styles.pressedSmall,
-            ]}
-            onPress={goToPrivacy}
-          >
-            <Text style={[styles.headerButtonText, { color: colors.text }]}>⋯</Text>
-          </Pressable>
+          <Text style={[styles.appName, { color: colors.text }]}>ELUS</Text>
+          <IconButton
+            icon="share-outline"
+            onPress={handleShare}
+            backgroundColor={colors.surface}
+            accessibilityLabel="Compartilhar perfil"
+          />
         </View>
 
-        <View style={[styles.profileCard, { borderColor: colors.borderStrong }]}>
+        {/* CARD DO PERFIL */}
+        <View style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.borderStrong }]}>
           <Pressable
             onPress={handleAvatarPress}
             disabled={uploadingAvatar}
@@ -360,7 +390,12 @@ export default function ProfileScreen() {
               ringColors={ringColors}
               verified={isVerified}
             />
-            <View style={[styles.avatarEditBadge, { backgroundColor: colors.accent, borderColor: colors.background }]}>
+            <View
+              style={[
+                styles.avatarEditBadge,
+                { backgroundColor: colors.accent, borderColor: colors.background },
+              ]}
+            >
               <Text style={[styles.avatarEditBadgeText, { color: colors.text }]}>
                 {uploadingAvatar ? '…' : '✎'}
               </Text>
@@ -371,17 +406,15 @@ export default function ProfileScreen() {
             {user.name}
           </Text>
 
-          <Text style={styles.profileMeta}>
+          <Text style={[styles.profileMeta, { color: colors.textMuted }]}>
             {profileTypeLabel} · {presenceModeLabel}
           </Text>
 
-          <Text style={styles.profileLocation}>
+          <Text style={[styles.profileLocation, { color: colors.textSoft }]}>
             {[user.city, user.state].filter(Boolean).join(' · ') || 'Localização não informada'}
           </Text>
 
-          <Text style={[styles.profileHeadline, { color: colors.text }]}>
-            {headline}
-          </Text>
+          <Text style={[styles.profileHeadline, { color: colors.text }]}>{headline}</Text>
 
           <View style={styles.statusRow}>
             <View
@@ -393,50 +426,70 @@ export default function ProfileScreen() {
                 },
               ]}
             >
-              <View
-                style={[
-                  styles.statusDot,
-                  {
-                    backgroundColor: verificationColor,
-                  },
-                ]}
-              />
-
-              <Text
-                style={[
-                  styles.statusPillText,
-                  {
-                    color: verificationColor,
-                  },
-                ]}
-              >
+              <View style={[styles.statusDot, { backgroundColor: verificationColor }]} />
+              <Text style={[styles.statusPillText, { color: verificationColor }]}>
                 {getVerificationTitle(verificationStatus)}
               </Text>
             </View>
 
-            <View style={styles.planPill}>
-              <Text style={styles.planPillText}>{planLabel}</Text>
+            <View
+              style={[
+                styles.planPill,
+                { backgroundColor: colors.accentSoft, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.planPillText, { color: colors.textMuted }]}>{planLabel}</Text>
             </View>
           </View>
         </View>
 
+        {/* Cards de status de interesse */}
+        <View
+          style={[
+            styles.interestSection,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.sectionKicker, { color: colors.accent }]}>
+            Status de interesse
+          </Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Ofereço / Procuro
+          </Text>
+          <Text style={[styles.sectionText, { color: colors.textMuted }]}>
+            Sinal temporário de 24 horas no seu perfil e no Campo de Presença.
+          </Text>
+
+          {activeInterestCards.length > 0 ? (
+            <View style={styles.interestCardsList}>
+              {activeInterestCards.map((card) => (
+                <InterestCardView key={card.id} card={card} variant="full" />
+              ))}
+            </View>
+          ) : (
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+              Nenhum card ativo no momento.
+            </Text>
+          )}
+
+          <Button
+            label="Gerenciar meus cards"
+            variant="secondary"
+            onPress={() => router.push('/interest-cards' as never)}
+          />
+        </View>
+
+        {/* Verificação */}
         <View
           style={[
             styles.verificationCard,
-            isVerified ? styles.verifiedCard : styles.pendingCard,
             {
+              backgroundColor: colors.surface,
               borderColor: `${verificationColor}44`,
             },
           ]}
         >
-          <Text
-            style={[
-              styles.sectionKicker,
-              {
-                color: verificationColor,
-              },
-            ]}
-          >
+          <Text style={[styles.sectionKicker, { color: verificationColor }]}>
             Verificação de identidade
           </Text>
 
@@ -444,7 +497,7 @@ export default function ProfileScreen() {
             {getVerificationTitle(verificationStatus)}
           </Text>
 
-          <Text style={styles.sectionText}>
+          <Text style={[styles.sectionText, { color: colors.textMuted }]}>
             {getVerificationDescription(verificationStatus)}
           </Text>
 
@@ -460,19 +513,10 @@ export default function ProfileScreen() {
             <View
               style={[
                 styles.verificationIconBox,
-                {
-                  backgroundColor: `${verificationColor}18`,
-                },
+                { backgroundColor: `${verificationColor}18` },
               ]}
             >
-              <Text
-                style={[
-                  styles.verificationIcon,
-                  {
-                    color: verificationColor,
-                  },
-                ]}
-              >
+              <Text style={[styles.verificationIcon, { color: verificationColor }]}>
                 {isVerified ? '✓' : isInReview ? '◌' : '◎'}
               </Text>
             </View>
@@ -481,10 +525,9 @@ export default function ProfileScreen() {
               <Text style={[styles.verificationInfoTitle, { color: colors.text }]}>
                 Selfie com documento oficial
               </Text>
-
-              <Text style={styles.verificationInfoText}>
-                A validação é feita uma única vez com selfie segurando CIN/RG, CNH,
-                passaporte ou CRNM/RNE.
+              <Text style={[styles.verificationInfoText, { color: colors.textMuted }]}>
+                A validação é feita uma única vez com selfie segurando CIN/RG, CNH, passaporte ou
+                CRNM/RNE.
               </Text>
             </View>
           </View>
@@ -492,7 +535,13 @@ export default function ProfileScreen() {
           <View
             style={
               isVerified
-                ? styles.successBox
+                ? [
+                    styles.successBox,
+                    {
+                      backgroundColor: `${colors.success}1A`,
+                      borderColor: `${colors.success}44`,
+                    },
+                  ]
                 : [
                     styles.limitedBox,
                     {
@@ -506,24 +555,20 @@ export default function ProfileScreen() {
               style={
                 isVerified
                   ? [styles.successTitle, { color: colors.success }]
-                  : [
-                      styles.limitedTitle,
-                      {
-                        color: verificationColor,
-                      },
-                    ]
+                  : [styles.limitedTitle, { color: verificationColor }]
               }
             >
               {getVerificationMainCardTitle(verificationStatus)}
             </Text>
 
-            <Text style={isVerified ? styles.successText : styles.limitedText}>
+            <Text style={[styles.limitedText, { color: colors.textMuted }]}>
               {getVerificationMainCardText(verificationStatus)}
             </Text>
 
             {isLimited ? (
-              <Text style={styles.limitedText}>
-                Prazo estimado: {daysLeft} dia{daysLeft === 1 ? '' : 's'} restante{daysLeft === 1 ? '' : 's'}
+              <Text style={[styles.limitedText, { color: colors.textMuted }]}>
+                Prazo estimado: {daysLeft} dia{daysLeft === 1 ? '' : 's'} restante
+                {daysLeft === 1 ? '' : 's'}
                 {daysLeft === 0
                   ? ' para regularizar o perfil.'
                   : ' para concluir a verificação.'}
@@ -535,18 +580,28 @@ export default function ProfileScreen() {
             <Button
               label={isInReview ? 'Ver status da análise →' : 'Verificar identidade agora →'}
               variant="primary"
-              onPress={goToVerification}
+              onPress={() => router.push('/verification' as never)}
             />
           ) : (
-            <Button
-              label="Ver status da verificação"
-              variant="secondary"
-              onPress={goToVerification}
-            />
+            <>
+              <Button
+                label="Ver status da verificação"
+                variant="secondary"
+                onPress={() => router.push('/verification' as never)}
+              />
+
+              <Button
+                label="Verificação profissional (conselho)"
+                variant="secondary"
+                icon="ribbon-outline"
+                onPress={() => router.push('/professional-verification' as never)}
+              />
+            </>
           )}
         </View>
 
-        <View style={styles.bondsCard}>
+        {/* Afinidades */}
+        <View style={[styles.bondsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.sectionKicker, { color: colors.warning }]}>Perfil ELUS</Text>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Afinidades declaradas</Text>
 
@@ -555,155 +610,101 @@ export default function ProfileScreen() {
               {affinityBranches.map((branch) => (
                 <View
                   key={branch.kind}
-                  style={[
-                    styles.bondPill,
-                    {
-                      borderColor: branch.color,
-                    },
-                  ]}
+                  style={[styles.bondPill, { borderColor: branch.color }]}
                 >
-                  <View
-                    style={[
-                      styles.bondDot,
-                      {
-                        backgroundColor: branch.color,
-                      },
-                    ]}
-                  />
-
-                  <Text
-                    style={[
-                      styles.bondText,
-                      {
-                        color: branch.color,
-                      },
-                    ]}
-                  >
-                    {branch.title}
-                  </Text>
+                  <View style={[styles.bondDot, { backgroundColor: branch.color }]} />
+                  <Text style={[styles.bondText, { color: branch.color }]}>{branch.title}</Text>
                 </View>
               ))}
             </View>
           ) : (
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
               Suas afinidades declaradas aparecerão aqui conforme você preencher seu perfil.
             </Text>
           )}
         </View>
 
-        <View style={styles.actionsCard}>
-          <Text style={[styles.sectionKicker, { color: colors.warning }]}>Configurações</Text>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Gerenciar perfil</Text>
+        {/* LISTA DE ITENS */}
+        <View style={[styles.menuSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <MenuItem
+            label="Editar perfil"
+            subtitle="Nome, foto, presença e interesses"
+            onPress={() => router.push('/profile-setup' as never)}
+            colors={colors}
+          />
 
-          <View style={styles.menuList}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.menuItem,
-                pressed && styles.pressedSmall,
-              ]}
-              onPress={goToEditProfile}
-            >
-              <View>
-                <Text style={[styles.menuTitle, { color: colors.text }]}>Editar perfil</Text>
-                <Text style={styles.menuSubtitle}>Nome, foto, presença e interesses</Text>
-              </View>
+          <MenuItem
+            label="Meu campo"
+            subtitle="Ver sua presença e afinidades próximas"
+            onPress={() => router.push('/(tabs)/map' as never)}
+            colors={colors}
+          />
 
-              <Text style={styles.menuArrow}>›</Text>
-            </Pressable>
+          <MenuItem
+            label="Meus cards"
+            subtitle="Ofereço / Procuro — status de interesse"
+            onPress={() => router.push('/interest-cards' as never)}
+            colors={colors}
+          />
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.menuItem,
-                pressed && styles.pressedSmall,
-              ]}
-              onPress={goToMap}
-            >
-              <View>
-                <Text style={[styles.menuTitle, { color: colors.text }]}>Meu campo</Text>
-                <Text style={styles.menuSubtitle}>Ver sua presença e afinidades próximas</Text>
-              </View>
+          <MenuItem
+            label="Planos"
+            subtitle="Plano atual, limites e recursos premium"
+            onPress={() => router.push('/plans' as never)}
+            colors={colors}
+          />
 
-              <Text style={styles.menuArrow}>›</Text>
-            </Pressable>
+          <MenuItem
+            label="Privacidade e segurança"
+            subtitle="Documento, selfie, bloqueios e dados"
+            onPress={() => router.push('/privacy-policy' as never)}
+            colors={colors}
+          />
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.menuItem,
-                pressed && styles.pressedSmall,
-              ]}
-              onPress={goToPlans}
-            >
-              <View>
-                <Text style={[styles.menuTitle, { color: colors.text }]}>Planos</Text>
-                <Text style={styles.menuSubtitle}>Plano atual, limites e recursos premium</Text>
-              </View>
+          <MenuItem
+            label="Termos de Uso"
+            subtitle="Regras de uso da plataforma"
+            onPress={() => router.push('/terms' as never)}
+            colors={colors}
+          />
 
-              <Text style={styles.menuArrow}>›</Text>
-            </Pressable>
+          <MenuItem
+            label="Configurações"
+            subtitle="Ajustes de conta e preferências"
+            onPress={() => router.push('/settings' as never)}
+            colors={colors}
+          />
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.menuItem,
-                pressed && styles.pressedSmall,
-              ]}
-              onPress={goToPrivacy}
-            >
-              <View>
-                <Text style={[styles.menuTitle, { color: colors.text }]}>Privacidade e segurança</Text>
-                <Text style={styles.menuSubtitle}>Documento, selfie, bloqueios e dados</Text>
-              </View>
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-              <Text style={styles.menuArrow}>›</Text>
-            </Pressable>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.menuItem,
-                pressed && styles.pressedSmall,
-              ]}
-              onPress={goToTerms}
-            >
-              <View>
-                <Text style={[styles.menuTitle, { color: colors.text }]}>Termos de Uso</Text>
-                <Text style={styles.menuSubtitle}>Regras de uso da plataforma</Text>
-              </View>
-
-              <Text style={styles.menuArrow}>›</Text>
-            </Pressable>
-
-            <Button label="Configurações" variant="secondary" onPress={() => router.push('/settings')} containerStyle={styles.settingsButton} />
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.menuItem,
-                pressed && styles.pressedSmall,
-              ]}
-              onPress={goToDeleteAccount}
-            >
-              <View>
-                <Text style={[styles.menuTitle, { color: colors.danger }]}>Excluir minha conta</Text>
-                <Text style={styles.menuSubtitle}>Remoção permanente de perfil e dados (LGPD)</Text>
-              </View>
-
-              <Text style={styles.menuArrow}>›</Text>
-            </Pressable>
-          </View>
+          <MenuItem
+            label="Excluir minha conta"
+            subtitle="Remoção permanente de perfil e dados (LGPD)"
+            onPress={() => router.push('/delete-account' as never)}
+            colors={colors}
+            isDestructive
+          />
         </View>
 
-        <View style={styles.brandCard}>
-          <Text style={[styles.brandCardTitle, { color: colors.text }]}>ELUS</Text>
-          <Text style={styles.brandCardText}>
+        {/* FOOTER ELUS + SAIR */}
+        <View style={[styles.footer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[styles.footerBrand, { color: colors.text }]}>E L U S</Text>
+          <Text style={[styles.footerTagline, { color: colors.textSoft }]}>
             Conexões reais, com identidade real e acesso simples.
           </Text>
+          <Button
+            label="Sair da conta"
+            variant="destructiveSecondary"
+            onPress={handleLogout}
+            containerStyle={styles.logoutButton}
+          />
         </View>
-
-        <Button label="Sair da conta" variant="destructiveSecondary" onPress={handleLogout} />
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create<any>({
+const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
@@ -737,26 +738,14 @@ const styles = StyleSheet.create<any>({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  headerButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: 'rgba(16,19,29,0.92)',
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerButtonText: {
-    fontSize: 28,
-    lineHeight: 28,
+  appName: {
+    fontSize: 22,
     fontWeight: '900',
-    marginTop: -6,
+    letterSpacing: 4,
   },
-
   profileCard: {
     padding: 24,
     borderRadius: 34,
-    backgroundColor: COLORS.card,
     borderWidth: 1,
     alignItems: 'center',
   },
@@ -770,14 +759,12 @@ const styles = StyleSheet.create<any>({
   },
   profileMeta: {
     marginTop: 8,
-    color: COLORS.muted,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
   },
   profileLocation: {
     marginTop: 7,
-    color: COLORS.soft,
     fontSize: 15,
     textAlign: 'center',
   },
@@ -818,28 +805,29 @@ const styles = StyleSheet.create<any>({
     paddingHorizontal: 13,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: 'rgba(91,141,239,0.14)',
     borderWidth: 1,
-    borderColor: 'rgba(143,179,255,0.30)',
   },
   planPillText: {
-    color: COLORS.blueLight,
     fontSize: 12,
     fontWeight: '900',
   },
-
+  interestSection: {
+    marginTop: 18,
+    padding: 20,
+    borderRadius: 30,
+    borderWidth: 1,
+    gap: 10,
+  },
+  interestCardsList: {
+    gap: 10,
+    marginTop: 4,
+    marginBottom: 4,
+  },
   verificationCard: {
     marginTop: 18,
     padding: 20,
     borderRadius: 30,
-    backgroundColor: COLORS.card,
     borderWidth: 1,
-  },
-  verifiedCard: {
-    borderColor: 'rgba(54,211,153,0.28)',
-  },
-  pendingCard: {
-    borderColor: 'rgba(255,107,107,0.30)',
   },
   sectionKicker: {
     fontSize: 12,
@@ -856,7 +844,6 @@ const styles = StyleSheet.create<any>({
   },
   sectionText: {
     marginTop: 10,
-    color: COLORS.muted,
     fontSize: 15,
     lineHeight: 23,
     fontWeight: '700',
@@ -865,9 +852,7 @@ const styles = StyleSheet.create<any>({
     marginTop: 18,
     padding: 17,
     borderRadius: 24,
-    backgroundColor: 'rgba(91,141,239,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(143,179,255,0.24)',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -875,13 +860,11 @@ const styles = StyleSheet.create<any>({
     width: 46,
     height: 46,
     borderRadius: 16,
-    backgroundColor: 'rgba(91,141,239,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
   },
   verificationIcon: {
-    color: COLORS.blueLight,
     fontSize: 24,
     fontWeight: '900',
   },
@@ -894,7 +877,6 @@ const styles = StyleSheet.create<any>({
   },
   verificationInfoText: {
     marginTop: 5,
-    color: COLORS.muted,
     fontSize: 13,
     lineHeight: 20,
     fontWeight: '700',
@@ -903,28 +885,18 @@ const styles = StyleSheet.create<any>({
     marginTop: 16,
     padding: 16,
     borderRadius: 24,
-    backgroundColor: 'rgba(54,211,153,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(54,211,153,0.28)',
   },
   successTitle: {
     fontSize: 15,
     fontWeight: '900',
     marginBottom: 7,
   },
-  successText: {
-    color: COLORS.muted,
-    fontSize: 14,
-    lineHeight: 22,
-    fontWeight: '700',
-  },
   limitedBox: {
     marginTop: 16,
     padding: 16,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,107,107,0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255,107,107,0.24)',
   },
   limitedTitle: {
     fontSize: 15,
@@ -932,7 +904,6 @@ const styles = StyleSheet.create<any>({
     marginBottom: 7,
   },
   limitedText: {
-    color: COLORS.muted,
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '700',
@@ -942,15 +913,7 @@ const styles = StyleSheet.create<any>({
     marginTop: 18,
     padding: 20,
     borderRadius: 30,
-    backgroundColor: COLORS.card,
     borderWidth: 1,
-  },
-  bondsExplanation: {
-    marginTop: 10,
-    color: COLORS.muted,
-    fontSize: 14,
-    lineHeight: 21,
-    fontWeight: '700',
   },
   bondWrap: {
     marginTop: 15,
@@ -980,68 +943,64 @@ const styles = StyleSheet.create<any>({
   },
   emptyText: {
     marginTop: 12,
-    color: COLORS.muted,
     fontSize: 14,
     lineHeight: 21,
     fontWeight: '700',
   },
-
-  actionsCard: {
+  menuSection: {
     marginTop: 18,
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 30,
-    backgroundColor: COLORS.card,
     borderWidth: 1,
-  },
-  menuList: {
-    marginTop: 16,
   },
   menuItem: {
     minHeight: 72,
     paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderSoft,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  menuTitle: {
+  menuItemText: {
+    flex: 1,
+    marginRight: 12,
+  },
+  menuItemLabel: {
     fontSize: 16,
     fontWeight: '900',
   },
-  menuSubtitle: {
+  menuItemSubtitle: {
     marginTop: 5,
-    color: COLORS.muted,
     fontSize: 13,
     lineHeight: 18,
-    maxWidth: 275,
   },
-  menuArrow: {
-    color: COLORS.soft,
+  chevron: {
     fontSize: 30,
     fontWeight: '700',
-    marginLeft: 12,
   },
-
-  brandCard: {
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: 6,
+  },
+  footer: {
     marginTop: 18,
     padding: 18,
     borderRadius: 26,
-    backgroundColor: 'rgba(255,255,255,0.035)',
     borderWidth: 1,
-    borderColor: COLORS.borderSoft,
   },
-  brandCardTitle: {
+  footerBrand: {
     fontSize: 18,
     fontWeight: '900',
     letterSpacing: 5,
   },
-  brandCardText: {
+  footerTagline: {
     marginTop: 8,
-    color: COLORS.muted,
     fontSize: 14,
     lineHeight: 21,
     fontWeight: '700',
+  },
+  logoutButton: {
+    marginTop: 16,
   },
   pressedSmall: {
     opacity: 0.72,
@@ -1062,5 +1021,4 @@ const styles = StyleSheet.create<any>({
     fontSize: 13,
     fontWeight: '900',
   },
-  settingsButton: { marginTop: 8 },
 });

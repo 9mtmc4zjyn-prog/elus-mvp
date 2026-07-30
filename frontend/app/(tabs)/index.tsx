@@ -16,6 +16,18 @@ import { useApp, type AppUser } from '../../src/context/AppContext';
 import { appUserToProfile } from '../../src/utils/adaptSupabaseProfile';
 import type { Profile } from '../../src/data/profiles';
 import { getLocalAffinityExplanation } from '../../src/utils/elusIntelligenceRules';
+import {
+  rankSuggestions,
+  logSuggestionEvent,
+  getWeeklyShownSuggestionIds,
+  applyFreePlanWeeklyQuota,
+} from '../../src/utils/suggestionRanking';
+import { isFreeTierUser } from '../../src/utils/planTier';
+import {
+  fetchActiveInterestCardsForUsers,
+  type InterestCardRow,
+} from '../../src/utils/interestCardsApi';
+import { InterestCardView } from '../../src/components/InterestCardView';
 import { Button } from '../../src/components/Button';
 import { useTheme } from '../../src/theme/ThemeContext';
 import type { ThemeColors } from '../../src/theme/theme';
@@ -507,10 +519,12 @@ function SignalCard({
   profile,
   currentUser,
   currentUserStatus,
+  interestCards = [],
 }: {
   profile: Profile;
   currentUser: AppUser;
   currentUserStatus: VerificationVisualStatus;
+  interestCards?: InterestCardRow[];
 }) {
   const router = useRouter();
   const { colors } = useTheme();
@@ -610,6 +624,10 @@ function SignalCard({
           </Text>
 
           <Text style={[styles.signalDistance, { color: colors.textSoft }]}>{displayDistance}</Text>
+
+          {interestCards.slice(0, 2).map((card) => (
+            <InterestCardView key={card.id} card={card} variant="compact" />
+          ))}
         </View>
 
         <View
@@ -752,7 +770,143 @@ export default function HomeScreen() {
     ...allProfiles.filter((profile) => !onlineProfileIds.has(profile.id)),
   ].slice(0, radarPositions.length);
 
-  const signalProfiles = (onlineProfiles.length > 0 ? onlineProfiles : allProfiles).slice(0, 3);
+  // Fallback enquanto o ranking (Fase 1 do plano de IA, sem IA externa
+  // ainda) carrega ou se ele falhar — mantém o comportamento antigo.
+  const fallbackSignalProfiles = (onlineProfiles.length > 0 ? onlineProfiles : allProfiles).slice(0, 3);
+  const [rankedSignalProfiles, setRankedSignalProfiles] = React.useState<Profile[]>([]);
+  const [interestCardsByUser, setInterestCardsByUser] = React.useState<
+    Map<string, InterestCardRow[]>
+  >(new Map());
+
+  // Sobrevive a re-execuções do efeito abaixo (ex.: refresh de token do
+  // Supabase, que troca a referência de `realUsers` sem o usuário ter
+  // saído da tela) para não logar "shown" de novo pro mesmo candidato
+  // enquanto o componente Home continuar montado. Zera naturalmente
+  // quando a tela é desmontada/remontada (nova visita conta de novo).
+  const shownThisSessionRef = React.useRef<Set<string>>(new Set());
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function rankAndLogSuggestions() {
+      if (!user?.id || realUsers.length === 0) {
+        if (!cancelled) setRankedSignalProfiles([]);
+        return;
+      }
+
+      const onlineAppUsers = realUsers.filter((candidate) => candidate.isOnline);
+      const pool = onlineAppUsers.length > 0 ? onlineAppUsers : realUsers;
+
+      try {
+        const ranked = await rankSuggestions(
+          user.id,
+          {
+            id: user.id,
+            city: user.city,
+            state: user.state,
+            surname: user.surname,
+            originCity: user.originCity,
+            originState: user.originState,
+          },
+          pool.map((candidate) => ({
+            id: candidate.id,
+            city: candidate.city,
+            state: candidate.state,
+            surname: candidate.surname,
+            originCity: candidate.originCity,
+            originState: candidate.originState,
+          }))
+        );
+
+        if (cancelled) return;
+
+        // Cota do plano Essencial (grátis): 3 sugestões novas por semana
+        // (roadmap oficial, seção 3.2). Planos pagos não têm corte de
+        // cota aqui — a Home continua mostrando sempre as 3 melhores.
+        // Checa a assinatura real em `subscriptions` (não só o campo
+        // legado user.plan) — ver src/utils/planTier.ts.
+        const isFreePlan = await isFreeTierUser(user.id, user.plan);
+
+        if (cancelled) return;
+
+        const alreadyShownThisWeek = isFreePlan
+          ? await getWeeklyShownSuggestionIds(user.id)
+          : new Set<string>();
+
+        if (cancelled) return;
+
+        const selected = isFreePlan
+          ? applyFreePlanWeeklyQuota(ranked, alreadyShownThisWeek, true)
+          : ranked.slice(0, 3);
+
+        const poolById = new Map(pool.map((candidate) => [candidate.id, candidate]));
+
+        const selectedProfiles = selected
+          .map((entry) => poolById.get(entry.candidate.id))
+          .filter((candidate): candidate is AppUser => Boolean(candidate))
+          .map(appUserToProfile);
+
+        setRankedSignalProfiles(selectedProfiles);
+
+        // Log "shown" para virar dataset de treino nas Semanas 5-8 do
+        // plano de IA. Só loga quem ainda não foi logado nesta sessão
+        // (evita duplicar quando o efeito reroda por refresh de token) e,
+        // pro plano grátis, quem já contava pra cota semanal também não
+        // precisa logar de novo. Falha silenciosa, não deve travar a Home.
+        selected.forEach((entry) => {
+          if (shownThisSessionRef.current.has(entry.candidate.id)) return;
+          if (isFreePlan && alreadyShownThisWeek.has(entry.candidate.id)) {
+            shownThisSessionRef.current.add(entry.candidate.id);
+            return;
+          }
+
+          shownThisSessionRef.current.add(entry.candidate.id);
+          logSuggestionEvent({
+            viewerUserId: user.id,
+            suggestedUserId: entry.candidate.id,
+            priority: entry.priority,
+            score: entry.score,
+            reason: entry.reason,
+            action: 'shown',
+          });
+        });
+      } catch {
+        if (!cancelled) setRankedSignalProfiles([]);
+      }
+    }
+
+    rankAndLogSuggestions();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, realUsers]);
+
+  const signalProfiles =
+    rankedSignalProfiles.length > 0 ? rankedSignalProfiles : fallbackSignalProfiles;
+
+  const signalProfileIdsKey = signalProfiles.map((p) => p.id).join(',');
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const ids = signalProfileIdsKey
+      ? signalProfileIdsKey.split(',').filter(Boolean)
+      : [];
+    if (ids.length === 0) {
+      setInterestCardsByUser(new Map());
+      return;
+    }
+
+    (async () => {
+      const map = await fetchActiveInterestCardsForUsers(ids);
+      if (!cancelled) setInterestCardsByUser(map);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [signalProfileIdsKey]);
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -823,6 +977,7 @@ export default function HomeScreen() {
             profile={profile}
             currentUser={user}
             currentUserStatus={currentVerificationStatus}
+            interestCards={interestCardsByUser.get(profile.id) ?? []}
           />
         ))}
 

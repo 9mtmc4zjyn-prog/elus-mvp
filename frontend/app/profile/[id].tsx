@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Image,
@@ -22,6 +22,12 @@ import {
   type IdentityPhase,
 } from "../../src/utils/connectionRules";
 import { getLocalAffinityExplanation } from "../../src/utils/elusIntelligenceRules";
+import { InterestCardView } from "../../src/components/InterestCardView";
+import {
+  fetchActiveInterestCards,
+  recordInterestCardViews,
+  type InterestCardRow,
+} from "../../src/utils/interestCardsApi";
 import { useTheme } from "../../src/theme/ThemeContext";
 import type { ThemeColors } from "../../src/theme/theme";
 
@@ -682,6 +688,8 @@ export default function ProfileScreen() {
   const [selectedContactInformation, setSelectedContactInformation] = useState<string[]>([]);
   const [blockConfirmVisible, setBlockConfirmVisible] = useState(false);
   const [blockedLocally, setBlockedLocally] = useState(false);
+  const [interestCards, setInterestCards] = useState<InterestCardRow[]>([]);
+  const recordedViewsRef = useRef<Set<string>>(new Set());
 
   const profile = useMemo(() => {
     const realUser = (realUsers as AppUser[]).find((u) => u.id === rawId);
@@ -689,6 +697,37 @@ export default function ProfileScreen() {
 
     return null;
   }, [rawId, realUsers]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!rawId) {
+      setInterestCards([]);
+      return;
+    }
+
+    (async () => {
+      const cards = await fetchActiveInterestCards(rawId);
+      if (!cancelled) setInterestCards(cards);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rawId]);
+
+  useEffect(() => {
+    if (!user?.id || !rawId || rawId === user.id) return;
+    if (interestCards.length === 0) return;
+
+    const pending = interestCards
+      .map((c) => c.id)
+      .filter((id) => !recordedViewsRef.current.has(id));
+
+    if (pending.length === 0) return;
+
+    pending.forEach((id) => recordedViewsRef.current.add(id));
+    void recordInterestCardViews({ cardIds: pending, viewerId: user.id });
+  }, [interestCards, rawId, user?.id]);
 
   const openPlans = () => {
     router.push("/plans" as never);
@@ -1059,6 +1098,24 @@ export default function ProfileScreen() {
             <StatusPill status={visibleProfileStatus} label={visibleProfileStatusLabel} />
           </View>
         </View>
+
+        {interestCards.length > 0 ? (
+          <View
+            style={[
+              styles.interestCardsSection,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.interestCardsKicker, { color: colors.accent }]}>
+              Status de interesse
+            </Text>
+            <View style={styles.interestCardsList}>
+              {interestCards.map((card) => (
+                <InterestCardView key={card.id} card={card} variant="full" />
+              ))}
+            </View>
+          </View>
+        ) : null}
 
         {localAffinityExplanation.reasons.length > 0 && (
           <View style={styles.affinityContextCard}>
@@ -1477,6 +1534,25 @@ const styles = StyleSheet.create({
   content: {
     padding: 18,
     paddingBottom: 32,
+  },
+
+  interestCardsSection: {
+    marginTop: 12,
+    padding: 16,
+    borderRadius: 22,
+    borderWidth: 1,
+    gap: 10,
+  },
+
+  interestCardsKicker: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+
+  interestCardsList: {
+    gap: 10,
   },
 
   affinityContextCard: {
