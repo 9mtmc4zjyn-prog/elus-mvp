@@ -49,8 +49,8 @@ export const PROFESSIONAL_COUNCILS: ProfessionalCouncil[] = [
     lookupScope: 'national',
     requiresLogin: false,
     lookupStatus: 'verified',
-    hasKnownApi: false,
-    notes: 'Busca por nome, CRP ou CPF. Retorna status (ativo/cancelado/transferido), região e data de registro.',
+    hasKnownApi: true,
+    notes: 'Busca por nome, CRP ou CPF. Retorna status (ativo/cancelado/transferido), região e data de registro. API comercial disponível (Infosimples — Conselho Federal de Psicologia / Cadastro).',
   },
   {
     id: 'CRM',
@@ -136,6 +136,7 @@ export const PROFESSIONAL_COUNCILS: ProfessionalCouncil[] = [
     lookupScope: 'national',
     requiresLogin: false,
     lookupStatus: 'to_confirm',
+    hasKnownApi: false,
   },
   {
     id: 'CRMV',
@@ -145,6 +146,8 @@ export const PROFESSIONAL_COUNCILS: ProfessionalCouncil[] = [
     lookupScope: 'national',
     requiresLogin: false,
     lookupStatus: 'to_confirm',
+    hasKnownApi: true,
+    notes: 'API comercial disponível (Infosimples — Conselho Federal de Medicina Veterinária / Cadastro).',
   },
   {
     id: 'CRF',
@@ -154,6 +157,8 @@ export const PROFESSIONAL_COUNCILS: ProfessionalCouncil[] = [
     lookupScope: 'by_state',
     requiresLogin: false,
     lookupStatus: 'to_confirm',
+    hasKnownApi: true,
+    notes: 'API comercial disponível (Infosimples — Conselho Federal de Farmácia / Cadastro, com regionais como CRF/SP e CRF/GO).',
   },
   {
     id: 'CRN',
@@ -163,6 +168,7 @@ export const PROFESSIONAL_COUNCILS: ProfessionalCouncil[] = [
     lookupScope: 'by_state',
     requiresLogin: false,
     lookupStatus: 'to_confirm',
+    hasKnownApi: false,
   },
   {
     id: 'CREFITO',
@@ -172,6 +178,7 @@ export const PROFESSIONAL_COUNCILS: ProfessionalCouncil[] = [
     lookupScope: 'by_state',
     requiresLogin: false,
     lookupStatus: 'to_confirm',
+    hasKnownApi: false,
   },
   {
     id: 'CRECI',
@@ -181,6 +188,7 @@ export const PROFESSIONAL_COUNCILS: ProfessionalCouncil[] = [
     lookupScope: 'by_state',
     requiresLogin: false,
     lookupStatus: 'to_confirm',
+    hasKnownApi: false,
   },
   {
     id: 'CRA',
@@ -190,6 +198,7 @@ export const PROFESSIONAL_COUNCILS: ProfessionalCouncil[] = [
     lookupScope: 'by_state',
     requiresLogin: false,
     lookupStatus: 'to_confirm',
+    hasKnownApi: false,
   },
 ];
 
