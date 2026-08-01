@@ -76,6 +76,7 @@ export default function DeleteAccountScreen() {
             {[
               'Seu perfil será removido permanentemente',
               'Suas conexões serão desfeitas',
+              'Suas mensagens enviadas e recebidas serão apagadas (a conversa inteira some para você e para quem conversou com você)',
               'Seus dados de verificação serão apagados',
               'Suas solicitações e bloqueios serão removidos',
               'O cancelamento é imediato e sem possibilidade de recuperação',
