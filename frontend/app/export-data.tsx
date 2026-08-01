@@ -25,6 +25,13 @@ type VerificationExportRow = {
   created_at: string;
 };
 
+type MessageExportRow = {
+  conversation_id: string;
+  com: string;
+  conteudo: string;
+  enviado_em: string;
+};
+
 export default function ExportDataScreen() {
   const colors = useThemeColors();
   const router = useRouter();
@@ -57,6 +64,7 @@ export default function ExportDataScreen() {
         outgoingContactRequestsResult,
         incomingContactRequestsResult,
         reportsResult,
+        conversationsResult,
       ] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', uid).maybeSingle(),
         supabase
@@ -85,6 +93,10 @@ export default function ExportDataScreen() {
           .from('reports')
           .select('id, reporter_id, reported_id, type, category, reason, status, created_at')
           .eq('reporter_id', uid),
+        supabase
+          .from('conversations')
+          .select('id, from_user_id, to_user_id')
+          .or(`from_user_id.eq.${uid},to_user_id.eq.${uid}`),
       ]);
 
       const firstError =
@@ -96,13 +108,54 @@ export default function ExportDataScreen() {
         incomingConnectionRequestsResult.error ||
         outgoingContactRequestsResult.error ||
         incomingContactRequestsResult.error ||
-        reportsResult.error;
+        reportsResult.error ||
+        conversationsResult.error;
 
       if (firstError) {
         throw new Error(firstError.message);
       }
 
       const verifications = (verificationResult.data ?? []) as VerificationExportRow[];
+
+      // Só as mensagens que o próprio usuário escreveu — não as que a outra
+      // pessoa escreveu para ele, para não exportar dado pessoal de terceiro
+      // sem o consentimento dele.
+      const conversationRows = conversationsResult.data ?? [];
+      let messagesExport: MessageExportRow[] = [];
+
+      if (conversationRows.length > 0) {
+        const conversationIds = conversationRows.map((c) => c.id);
+        const otherUserIds = Array.from(
+          new Set(
+            conversationRows.map((c) => (c.from_user_id === uid ? c.to_user_id : c.from_user_id))
+          )
+        );
+
+        const [{ data: ownMessages }, { data: otherProfiles }] = await Promise.all([
+          supabase
+            .from('messages')
+            .select('conversation_id, content, created_at')
+            .eq('sender_id', uid)
+            .in('conversation_id', conversationIds)
+            .order('created_at', { ascending: true }),
+          supabase.from('profiles').select('id, name').in('id', otherUserIds),
+        ]);
+
+        const conversationOtherUserMap = new Map<string, string>();
+        conversationRows.forEach((c) => {
+          conversationOtherUserMap.set(c.id, c.from_user_id === uid ? c.to_user_id : c.from_user_id);
+        });
+
+        const nameByUserId = new Map<string, string>();
+        (otherProfiles ?? []).forEach((p: any) => nameByUserId.set(p.id, p.name));
+
+        messagesExport = (ownMessages ?? []).map((m: any) => ({
+          conversation_id: m.conversation_id as string,
+          com: nameByUserId.get(conversationOtherUserMap.get(m.conversation_id) ?? '') || 'Usuário ELUS',
+          conteudo: m.content as string,
+          enviado_em: m.created_at as string,
+        }));
+      }
 
       const exportPayload = {
         exportado_em: new Date().toISOString(),
@@ -126,6 +179,7 @@ export default function ExportDataScreen() {
         },
         verifications,
         reports: reportsResult.data ?? [],
+        mensagens: messagesExport,
       };
 
       const json = JSON.stringify(exportPayload, null, 2);
@@ -166,6 +220,7 @@ export default function ExportDataScreen() {
             'Solicitações de contato (inclui approved_method_ids)',
             'Status de verificação de identidade (sem arquivos de imagem)',
             'Denúncias que você enviou (não as recebidas sobre você)',
+            'Mensagens que você enviou (não as que você recebeu de outras pessoas)',
           ].map((item) => (
             <Text key={item} style={[styles.listItem, { color: colors.textSoft }]}>
               • {item}
