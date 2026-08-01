@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useApp } from '../../src/context/AppContext';
 import { appUserToProfile } from '../../src/utils/adaptSupabaseProfile';
@@ -805,6 +806,70 @@ function RequestsAccessCard({
   );
 }
 
+function MessagesAccessCard({
+  currentUserVerified,
+  currentUserStatus,
+  onOpenMessages,
+}: {
+  currentUserVerified: boolean;
+  currentUserStatus: VerificationPhase;
+  onOpenMessages: () => void;
+}) {
+  const { colors } = useTheme();
+  const statusColor = currentUserVerified
+    ? colors.accent
+    : getCurrentUserStatusColor(currentUserStatus, colors);
+
+  return (
+    <View
+      style={[
+        styles.requestsAccessCard,
+        {
+          borderColor: `${statusColor}34`,
+          backgroundColor: `${statusColor}10`,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.requestsAccessIconBox,
+          {
+            borderColor: `${statusColor}38`,
+            backgroundColor: `${statusColor}12`,
+          },
+        ]}
+      >
+        <Ionicons name="chatbubbles-outline" size={26} color={statusColor} />
+      </View>
+
+      <View style={styles.requestsAccessInfo}>
+        <Text style={[styles.cardKicker, { color: colors.warning }]}>Mensagens</Text>
+
+        <Text
+          style={[
+            styles.requestsAccessTitle,
+            {
+              color: statusColor,
+            },
+          ]}
+        >
+          Conversas com conexões aprovadas
+        </Text>
+
+        <Text style={styles.requestsAccessText}>
+          Só entre perfis com conexão real aceita. Nenhum gate de plano.
+        </Text>
+
+        <Button
+          label="Abrir mensagens →"
+          variant="secondary"
+          onPress={onOpenMessages}
+        />
+      </View>
+    </View>
+  );
+}
+
 function ActiveConnectionsList({
   items,
   onOpenProfile,
@@ -999,6 +1064,10 @@ export default function ConnectionsScreen() {
     router.push('/(tabs)/requests' as never);
   }
 
+  function openMessages() {
+    router.push('/messages' as never);
+  }
+
   function openActiveConnections() {
     if (activeConnectionItems.length === 0) {
       return;
@@ -1057,6 +1126,12 @@ export default function ConnectionsScreen() {
               currentUserVerified={currentUserVerified}
               currentUserStatus={currentUserStatus}
               onOpenRequests={openRequests}
+            />
+
+            <MessagesAccessCard
+              currentUserVerified={currentUserVerified}
+              currentUserStatus={currentUserStatus}
+              onOpenMessages={openMessages}
             />
 
             <ActiveConnectionsList

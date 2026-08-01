@@ -28,6 +28,7 @@ import {
   recordInterestCardViews,
   type InterestCardRow,
 } from "../../src/utils/interestCardsApi";
+import { findOrCreateConversation } from "../../src/utils/messagesApi";
 import { useTheme } from "../../src/theme/ThemeContext";
 import type { ThemeColors } from "../../src/theme/theme";
 
@@ -689,6 +690,7 @@ export default function ProfileScreen() {
   const [blockConfirmVisible, setBlockConfirmVisible] = useState(false);
   const [blockedLocally, setBlockedLocally] = useState(false);
   const [interestCards, setInterestCards] = useState<InterestCardRow[]>([]);
+  const [openingConversation, setOpeningConversation] = useState(false);
   const recordedViewsRef = useRef<Set<string>>(new Set());
 
   const profile = useMemo(() => {
@@ -824,15 +826,17 @@ export default function ProfileScreen() {
         isPendingStatus(request.status)
     );
 
-  const hasAcceptedConnection =
-    Boolean(targetAppUserId) &&
-    connections.some((connection) => {
-      const sameUsers =
-        (connection.fromUserId === user.id && connection.toUserId === targetAppUserId) ||
-        (connection.fromUserId === targetAppUserId && connection.toUserId === user.id);
+  const acceptedConnection = Boolean(targetAppUserId)
+    ? connections.find((connection) => {
+        const sameUsers =
+          (connection.fromUserId === user.id && connection.toUserId === targetAppUserId) ||
+          (connection.fromUserId === targetAppUserId && connection.toUserId === user.id);
 
-      return sameUsers && connection.status === "accepted";
-    });
+        return sameUsers && connection.status === "accepted";
+      })
+    : undefined;
+
+  const hasAcceptedConnection = Boolean(acceptedConnection);
 
   const connectionRules = evaluateConnectionRules({
     currentUserPhase,
@@ -944,6 +948,25 @@ export default function ProfileScreen() {
     const reportedId = rawId || profileId || targetAppUserId;
     const reportedName = profile?.name ? profile.name.split(" ")[0] : "este usuário";
     router.push(`/report?userId=${reportedId}&userName=${encodeURIComponent(reportedName)}` as never);
+  }
+
+  async function handleOpenMessages() {
+    if (!acceptedConnection || openingConversation) return;
+
+    setOpeningConversation(true);
+    const result = await findOrCreateConversation({
+      connectionId: acceptedConnection.id,
+      fromUserId: acceptedConnection.fromUserId,
+      toUserId: acceptedConnection.toUserId,
+    });
+    setOpeningConversation(false);
+
+    if ("error" in result) {
+      Alert.alert("Não foi possível abrir a conversa", result.error);
+      return;
+    }
+
+    router.push(`/messages/${result.id}` as never);
   }
 
   function toggleContactInformationOption(option: string) {
@@ -1262,6 +1285,23 @@ export default function ProfileScreen() {
             ) : null}
           </View>
         </Section>
+
+        {hasAcceptedConnection ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.messageButton,
+              { backgroundColor: colors.accent },
+              pressed ? styles.buttonPressed : null,
+              openingConversation ? styles.messageButtonDisabled : null,
+            ]}
+            onPress={handleOpenMessages}
+            disabled={openingConversation}
+          >
+            <Text style={[styles.messageButtonText, { color: colors.background }]}>
+              {openingConversation ? "Abrindo conversa..." : "Mensagem"}
+            </Text>
+          </Pressable>
+        ) : null}
 
         {!isCurrentUserProfile ? (
           <View style={styles.safetyActionsRow}>
@@ -2110,6 +2150,23 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: "rgba(255,255,255,0.08)",
     overflow: "hidden",
+  },
+
+  messageButton: {
+    marginTop: 16,
+    minHeight: 54,
+    borderRadius: 27,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  messageButtonDisabled: {
+    opacity: 0.7,
+  },
+
+  messageButtonText: {
+    fontSize: 16,
+    fontWeight: "900",
   },
 
   safetyActionsRow: {

@@ -46,9 +46,16 @@ export default function ReportScreen() {
   const router = useRouter();
   const { user } = useApp();
   const { colors } = useTheme();
-  const params = useLocalSearchParams<{ userId?: string; userName?: string }>();
+  const params = useLocalSearchParams<{ userId?: string; userName?: string; messageId?: string }>();
   const reportedUserId = params.userId ?? '';
   const reportedUserName = params.userName ?? 'este usuário';
+  const reportedMessageId = params.messageId || null;
+
+  // Denúncia de mensagem é sempre sobre conduta (a policy criar_denuncia_conduta
+  // exige type='conduta'); não faz sentido reportar identidade a partir de um chat.
+  const availableReasons = reportedMessageId
+    ? REPORT_REASONS.filter((reason) => reason.type === 'conduta')
+    : REPORT_REASONS;
 
   const [selectedReason, setSelectedReason] = useState('');
   const [description, setDescription] = useState('');
@@ -81,6 +88,7 @@ export default function ReportScreen() {
         category: selectedReason,
         reason: description.trim() || null,
         status: 'pendente',
+        message_id: reportedMessageId,
       });
 
       if (error) {
@@ -147,11 +155,17 @@ export default function ReportScreen() {
             Suas denúncias são confidenciais. O usuário denunciado não saberá que você
             fez uma denúncia. Nossa equipe analisará todas as denúncias recebidas.
           </Text>
+
+          {reportedMessageId ? (
+            <Text style={[styles.infoText, styles.infoTextMessage]}>
+              Você está denunciando uma mensagem específica desta conversa.
+            </Text>
+          ) : null}
         </View>
 
         <Text style={[styles.sectionLabel, { color: colors.text }]}>Motivo da denúncia</Text>
 
-        {REPORT_REASONS.map((reason) => (
+        {availableReasons.map((reason) => (
           <Pressable
             key={reason.id}
             style={({ pressed }) => [
@@ -263,6 +277,7 @@ const styles = StyleSheet.create({
   },
   infoTitle: { fontSize: 15, fontWeight: '900', marginBottom: 8 },
   infoText: { color: COLORS.muted, fontSize: 13, lineHeight: 21, fontWeight: '600' },
+  infoTextMessage: { marginTop: 10, fontStyle: 'italic', color: COLORS.blueLight },
   sectionLabel: {
     fontSize: 15,
     fontWeight: '900',
