@@ -46,6 +46,7 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textSoft }]}>Dados e privacidade</Text>
         <Button label="Política de Privacidade" variant="secondary" onPress={() => router.push('/privacy-policy')} containerStyle={styles.actionButton} />
+        <Button label="Exportar meus dados" variant="secondary" onPress={() => router.push('/export-data')} containerStyle={styles.actionButton} />
         <Button label="Excluir minha conta" variant="destructiveSecondary" onPress={() => router.push('/delete-account')} containerStyle={styles.actionButton} />
       </View>
     </ScrollView>
