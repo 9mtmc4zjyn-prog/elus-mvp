@@ -308,8 +308,10 @@ function normalizeStoredUser(data: Partial<AppUser>): AppUser {
   let verificationStatus: VerificationStatus = 'unverified';
 
   if (requestedVerificationStatus === 'verified') {
-    verificationStatus =
-      profileCompleted && !isPlaceholderUser ? 'verified' : 'unverified';
+    // "Verificado" depende de verifications.status + o usuário já ter um nome
+    // de verdade preenchido — não exige mais profile_completed (foto, bio etc),
+    // mas evita mostrar "✓ Verificado" com nome ainda placeholder.
+    verificationStatus = !isPlaceholderUser ? 'verified' : 'unverified';
   } else if (
     requestedVerificationStatus === 'in_review' ||
     requestedVerificationStatus === 'pending'
