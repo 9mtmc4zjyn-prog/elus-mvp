@@ -18,6 +18,10 @@ const diditWebhookSecret = Deno.env.get('DIDIT_WEBHOOK_SECRET');
 // Janela de tolerância pra X-Timestamp, em segundos.
 const TIMESTAMP_TOLERANCE_SECONDS = 5 * 60;
 
+// Formato de uuid (qualquer variante) — usado pra distinguir vendor_data
+// real (user_id do ELUS) de valores de teste da Didit (ex.: "test-vendor-data-123").
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -144,21 +148,33 @@ serve(async (req) => {
     return jsonResponse({ error: 'Webhook não configurado no servidor.' }, 500);
   }
 
-  // Lê o corpo BRUTO antes de qualquer parse — reserializar (ex.: via
-  // req.json() e depois JSON.stringify de novo) muda espaçamento/ordem de
-  // chaves e quebra a validação de assinatura, que é sobre os bytes exatos
-  // que a Didit enviou.
-  const rawBody = await req.text();
+  let rawBody: string;
+  let verification: WebhookVerificationResult;
 
-  const signatureHeader = req.headers.get('X-Signature');
-  const timestampHeader = req.headers.get('X-Timestamp');
+  try {
+    // Lê o corpo BRUTO antes de qualquer parse — reserializar (ex.: via
+    // req.json() e depois JSON.stringify de novo) muda espaçamento/ordem de
+    // chaves e quebra a validação de assinatura, que é sobre os bytes exatos
+    // que a Didit enviou.
+    rawBody = await req.text();
 
-  const verification = await verifyWebhookSignature({
-    rawBody,
-    signatureHeader,
-    timestampHeader,
-    secret: diditWebhookSecret,
-  });
+    const signatureHeader = req.headers.get('X-Signature');
+    const timestampHeader = req.headers.get('X-Timestamp');
+
+    verification = await verifyWebhookSignature({
+      rawBody,
+      signatureHeader,
+      timestampHeader,
+      secret: diditWebhookSecret,
+    });
+  } catch (verificationError) {
+    // Qualquer erro inesperado nesta etapa (corpo ilegível, crypto falhando,
+    // header em formato inesperado etc.) é tratado como "não deu pra
+    // validar a assinatura" — um endpoint público nunca deve vazar stack
+    // trace nem responder 500 por causa de payload/headers malformados.
+    console.error('didit-webhook: erro inesperado ao validar assinatura:', verificationError);
+    return jsonResponse({ error: 'Assinatura inválida' }, 401);
+  }
 
   if (!verification.valid) {
     console.warn('didit-webhook: assinatura rejeitada:', verification.reason);
@@ -181,6 +197,17 @@ serve(async (req) => {
     // Responde 200 mesmo assim — payload malformado não deve fazer a Didit
     // ficar re-tentando indefinidamente; só logamos pra investigar depois.
     return jsonResponse({ ok: true, warning: 'payload incompleto, ignorado' });
+  }
+
+  // vendor_data devia ser sempre um user_id real (uuid) do ELUS, mas os
+  // eventos de TESTE da Didit mandam um valor de mentira (ex.:
+  // "test-vendor-data-123"). Sem essa checagem, o UPDATE abaixo estoura
+  // 22P02 (invalid input syntax for type uuid) sem tratamento -> 500.
+  // Trata como evento de teste/inválido: loga e responde 200 sem tocar
+  // no banco, em vez de derrubar a function.
+  if (!UUID_REGEX.test(userId)) {
+    console.warn(`didit-webhook: vendor_data não é um UUID válido (provável evento de teste da Didit): "${userId}"`);
+    return jsonResponse({ ok: true, warning: 'vendor_data não é um UUID válido, ignorado' });
   }
 
   // service_role — contorna a RLS que bloqueia o próprio usuário de setar
