@@ -32,18 +32,10 @@ function jsonResponse(body: Record<string, unknown>, status = 200): Response {
 /**
  * HMAC-SHA256 do corpo bruto, em hex.
  *
- * Confirmado contra a documentação oficial da Didit (2026-08): hex, HMAC
- * simples sobre o corpo bruto, sem concatenar o timestamp na mensagem —
- * exatamente como implementado abaixo, via header `X-Signature`.
- *
- * PENDÊNCIA: a doc da Didit também menciona em outro lugar um header
- * `X-Signature-V2`, com esquema diferente (JSON canônico em vez de corpo
- * bruto) — pode ser página desatualizada ou versão mais nova da API, ainda
- * não confirmado na prática. Se ao testar pela ferramenta "testar webhook"
- * do console Didit vier `X-Signature-V2` em vez de `X-Signature`, ou a
- * verificação abaixo falhar consistentemente com assinatura aparentemente
- * válida, essa é a primeira coisa a revisar (troca de header + provável
- * mudança na forma de montar a mensagem assinada, não só o nome do header).
+ * Confirmado em produção (01/08/2026, teste real via console Didit): a
+ * requisição inclui um header X-Signature puro, além de X-Signature-Simple
+ * e X-Signature-V2 — o esquema simples (HMAC-SHA256 hex sobre corpo bruto)
+ * implementado aqui é o correto.
  */
 export async function computeHmacSha256Hex(secret: string, message: string): Promise<string> {
   const enc = new TextEncoder();
