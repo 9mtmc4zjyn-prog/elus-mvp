@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as WebBrowser from 'expo-web-browser';
 import { supabase } from '../src/lib/supabase';
 import { useApp } from '../src/context/AppContext';
 import { Chip } from '../src/components/Chip';
@@ -29,7 +30,7 @@ const GOLD_SYMBOL = require('../assets/images/elus-symbol-orange.png');
 
 type DocumentType = 'CIN/RG' | 'CNH' | 'Passaporte' | 'CRNM/RNE';
 type VerificationStatus = 'unverified' | 'pending' | 'in_review' | 'verified';
-type VerificationStep = 'document' | 'selfie' | 'selfie_with_document';
+type VerificationStep = 'choice' | 'document' | 'selfie' | 'selfie_with_document';
 
 const DOCUMENT_TYPES: DocumentType[] = ['CIN/RG', 'CNH', 'Passaporte', 'CRNM/RNE'];
 
@@ -84,8 +85,10 @@ export default function VerificationScreen() {
   const { submitIdentityVerification } = useApp();
   const { colors } = useTheme();
 
-  const [currentStep, setCurrentStep] = useState<VerificationStep>('document');
+  const [currentStep, setCurrentStep] = useState<VerificationStep>('choice');
   const [checkingStatus, setCheckingStatus] = useState(true);
+  const [creatingDiditSession, setCreatingDiditSession] = useState(false);
+  const [diditNotice, setDiditNotice] = useState<string | null>(null);
 
   const [selectedDocument, setSelectedDocument] = useState<DocumentType>('CIN/RG');
   const [documentPhotoUri, setDocumentPhotoUri] = useState<string | null>(null);
@@ -128,7 +131,7 @@ export default function VerificationScreen() {
         setSelfieSent(hasSelfie);
         setSelfieWithDocumentSent(hasSelfieWithDocument);
 
-        if (!hasDocument) setCurrentStep('document');
+        if (!hasDocument) setCurrentStep('choice');
         else if (!hasSelfie) setCurrentStep('selfie');
         else setCurrentStep('selfie_with_document');
       } catch {
@@ -177,6 +180,103 @@ export default function VerificationScreen() {
 
   function goBack() {
     router.back();
+  }
+
+  function chooseManual() {
+    setDiditNotice(null);
+    setCurrentStep('document');
+  }
+
+  async function fetchCurrentVerificationStatus(): Promise<VerificationStatus | null> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data } = await supabase
+      .from('verifications')
+      .select('status')
+      .eq('user_id', user.id)
+      .eq('is_current', true)
+      .maybeSingle();
+
+    return (data?.status as VerificationStatus | undefined) ?? null;
+  }
+
+  async function startDiditVerification() {
+    if (creatingDiditSession || loading) return;
+
+    setDiditNotice(null);
+    setCreatingDiditSession(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-didit-session');
+
+      if (error || !data?.url) {
+        Alert.alert(
+          'Não foi possível iniciar a verificação instantânea',
+          'Tente novamente ou use a verificação manual.',
+          [
+            { text: 'Verificação manual', onPress: chooseManual },
+            { text: 'Tentar de novo', onPress: startDiditVerification },
+            { text: 'Cancelar', style: 'cancel' },
+          ]
+        );
+        return;
+      }
+
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url as string,
+        'frontend://verification-callback'
+      );
+
+      if (result.type !== 'success') {
+        // Usuário fechou a aba da Didit antes de concluir o fluxo.
+        setDiditNotice('Verificação não concluída. Você pode tentar de novo ou usar a verificação manual.');
+        return;
+      }
+
+      // A Didit redirecionou de volta — o webhook pode levar alguns
+      // segundos pra processar. Refetch com 1 nova tentativa espaçada
+      // antes de decidir.
+      let status = await fetchCurrentVerificationStatus();
+      if (status !== 'verified') {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        status = await fetchCurrentVerificationStatus();
+      }
+
+      if (status === 'verified') {
+        setVerificationStatus('verified');
+      } else if (status === 'in_review') {
+        // Fila real — o webhook escreveu in_review de fato (hoje é sempre
+        // revisão manual via SQL, mas o texto "aguardando análise" é
+        // verdadeiro aqui: existe algo pendente de fato).
+        setVerificationStatus('in_review');
+      } else {
+        // Ainda "pending" depois do retry: o webhook não escreveu nada
+        // (Declined/Abandoned na Didit não gravam status novo — decisão da
+        // Fase 3) ou está genuinamente lento. Sem como distinguir os dois
+        // com o que temos, e sem fila real por trás desse pending residual
+        // (não existe admin queue, só SQL manual sob pedido) — mostrar
+        // "aguardando até 48h" aqui seria uma promessa falsa. Mantém
+        // verificationStatus como está (não vira in_review) e usa o mesmo
+        // aviso acionável da tela de escolha, que já oferece os dois botões
+        // (instantânea de novo / manual).
+        setDiditNotice(
+          'Não conseguimos confirmar automaticamente dessa vez. Você pode tentar a verificação instantânea de novo, ou usar a verificação manual (documento + selfie).'
+        );
+      }
+    } catch {
+      Alert.alert(
+        'Erro inesperado',
+        'Não foi possível concluir a verificação instantânea. Tente novamente.',
+        [
+          { text: 'Verificação manual', onPress: chooseManual },
+          { text: 'Tentar de novo', onPress: startDiditVerification },
+          { text: 'Cancelar', style: 'cancel' },
+        ]
+      );
+    } finally {
+      setCreatingDiditSession(false);
+    }
   }
 
   function selectDocument(document: DocumentType) {
@@ -593,33 +693,101 @@ export default function VerificationScreen() {
                   </View>
                 </View>
 
-                <View style={styles.goldBox}>
-                  <Text style={[styles.goldTitle, { color: colors.warning }]}>Verificação indispensável</Text>
-                  <Text style={styles.goldText}>
-                    O ELUS valida perfis em 3 etapas: foto do documento, selfie e
-                    selfie segurando o documento. Não pediremos isso em todo login
-                    após a validação.
-                  </Text>
-                </View>
+                {currentStep !== 'choice' ? (
+                  <View style={styles.goldBox}>
+                    <Text style={[styles.goldTitle, { color: colors.warning }]}>Verificação indispensável</Text>
+                    <Text style={styles.goldText}>
+                      O ELUS valida perfis em 3 etapas: foto do documento, selfie e
+                      selfie segurando o documento. Não pediremos isso em todo login
+                      após a validação.
+                    </Text>
+                  </View>
+                ) : null}
 
-                <View style={styles.stepIndicatorRow}>
-                  {STEP_ORDER.map((step, index) => {
-                    const isDone = index < stepIndex;
-                    const isActive = index === stepIndex;
-                    return (
-                      <View
-                        key={step}
-                        style={[
-                          styles.stepDot,
-                          isDone && { backgroundColor: colors.success },
-                          isActive && styles.stepDotActive,
-                          isActive && { backgroundColor: colors.accent },
+                {currentStep !== 'choice' ? (
+                  <View style={styles.stepIndicatorRow}>
+                    {STEP_ORDER.map((step, index) => {
+                      const isDone = index < stepIndex;
+                      const isActive = index === stepIndex;
+                      return (
+                        <View
+                          key={step}
+                          style={[
+                            styles.stepDot,
+                            isDone && { backgroundColor: colors.success },
+                            isActive && styles.stepDotActive,
+                            isActive && { backgroundColor: colors.accent },
+                          ]}
+                        />
+                      );
+                    })}
+                    <Text style={styles.stepLabel}>Etapa {stepIndex + 1} de 3</Text>
+                  </View>
+                ) : null}
+
+                {currentStep === 'choice' && !isLocked ? (
+                  <>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                      Como você quer verificar sua identidade?
+                    </Text>
+
+                    {diditNotice ? (
+                      <View style={[styles.warningBox, styles.reviewBox]}>
+                        <Text style={styles.warningText}>{diditNotice}</Text>
+                      </View>
+                    ) : null}
+
+                    <View style={[styles.selfieBox, { borderColor: colors.borderStrong }]}>
+                      <Text style={[styles.selfieTitle, { color: colors.text }]}>Verificação instantânea</Text>
+                      <Text style={styles.selfieText}>
+                        Documento e selfie com prova de vida, conferidos automaticamente
+                        em poucos segundos por um parceiro externo especializado.
+                      </Text>
+
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.primaryButton,
+                          { backgroundColor: colors.accent, shadowColor: colors.accent },
+                          (creatingDiditSession || loading) && styles.buttonDisabled,
+                          pressed && !creatingDiditSession && !loading && styles.pressed,
                         ]}
-                      />
-                    );
-                  })}
-                  <Text style={styles.stepLabel}>Etapa {stepIndex + 1} de 3</Text>
-                </View>
+                        onPress={startDiditVerification}
+                        disabled={creatingDiditSession || loading}
+                      >
+                        {creatingDiditSession ? (
+                          <ActivityIndicator color="#FFFFFF" />
+                        ) : (
+                          <Text style={[styles.primaryButtonText, { color: colors.text }]}>
+                            Verificação instantânea
+                          </Text>
+                        )}
+                      </Pressable>
+                    </View>
+
+                    <View style={[styles.selfieBox, { borderColor: colors.borderStrong }]}>
+                      <Text style={[styles.selfieTitle, { color: colors.text }]}>Verificação manual</Text>
+                      <Text style={styles.selfieText}>
+                        Envie a foto do documento e uma selfie; nossa equipe confere
+                        em até 48 horas.
+                      </Text>
+
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.primaryButton,
+                          { backgroundColor: colors.accent, shadowColor: colors.accent },
+                          (creatingDiditSession || loading) && styles.buttonDisabled,
+                          pressed && !creatingDiditSession && !loading && styles.pressed,
+                        ]}
+                        onPress={chooseManual}
+                        disabled={creatingDiditSession || loading}
+                      >
+                        <Text style={[styles.primaryButtonText, { color: colors.text }]}>
+                          Verificação manual
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </>
+                ) : null}
 
                 {currentStep === 'document' && !isLocked ? (
                   <>
