@@ -36,6 +36,7 @@ export default function InterestCardsScreen() {
   const router = useRouter();
   const { user } = useApp();
   const colors = useThemeColors();
+  const isVerified = user?.verified === true || user?.verificationStatus === 'verified';
 
   const [cards, setCards] = useState<InterestCardRow[]>([]);
   const [viewCounts, setViewCounts] = useState<Map<string, number>>(new Map());
@@ -79,6 +80,17 @@ export default function InterestCardsScreen() {
   }
 
   function handleOpenCreate() {
+    // Defesa extra: o botão já fica escondido pra quem não está verificado
+    // (ver isVerified/verifyNotice abaixo), mas repete a checagem aqui
+    // caso a função seja alcançada por outro caminho.
+    if (!isVerified) {
+      Alert.alert(
+        'Verificação necessária',
+        'Verifique sua identidade para criar cards de status.',
+      );
+      return;
+    }
+
     const decision = evaluateCreateInterestCard(planKey, cards.length);
     if (!decision.allowed) {
       Alert.alert('Limite do plano', decision.reason);
@@ -168,12 +180,31 @@ export default function InterestCardsScreen() {
             {viewLevel === 'exact_count' ? 'contagem exata' : 'número agregado'}.
           </Text>
 
-          <Button
-            label="Criar novo card"
-            variant="primary"
-            onPress={handleOpenCreate}
-            containerStyle={styles.createBtn}
-          />
+          {isVerified ? (
+            <Button
+              label="Criar novo card"
+              variant="primary"
+              onPress={handleOpenCreate}
+              containerStyle={styles.createBtn}
+            />
+          ) : (
+            <View
+              style={[
+                styles.verifyNotice,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.verifyNoticeText, { color: colors.textMuted }]}>
+                Verifique sua identidade pra liberar os cards de status.
+              </Text>
+              <Button
+                label="Verificar identidade"
+                variant="secondary"
+                onPress={() => router.push('/verification' as never)}
+                containerStyle={styles.verifyNoticeBtn}
+              />
+            </View>
+          )}
 
           {cards.length === 0 ? (
             <View
@@ -303,6 +334,21 @@ const styles = StyleSheet.create({
   createBtn: {
     marginTop: 4,
     marginBottom: 8,
+  },
+  verifyNotice: {
+    borderWidth: 1,
+    borderRadius: 20,
+    padding: 16,
+    gap: 10,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  verifyNoticeText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  verifyNoticeBtn: {
+    marginTop: 0,
   },
   empty: {
     borderWidth: 1,
