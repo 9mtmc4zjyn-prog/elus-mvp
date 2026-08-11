@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useApp } from '../src/context/AppContext';
 import { Button } from '../src/components/Button';
+import { FREE_ONLY_BUILD } from '../src/data/pricing';
 import { useTheme } from '../src/theme/ThemeContext';
 
 type VerificationPhase = 'verified' | 'in_review' | 'unverified';
@@ -202,8 +203,9 @@ function HeroCard() {
       </View>
 
       <Text style={[styles.heroText, { color: colors.textMuted }]}>
-        Comece simples, valide sua identidade e evolua para recursos de rede,
-        inteligência, presença local e oportunidades reais.
+        {FREE_ONLY_BUILD
+          ? 'Comece pelo plano Essencial, valide sua identidade e use o ELUS para organizar conexões reais.'
+          : 'Comece simples, valide sua identidade e evolua para recursos de rede, inteligência, presença local e oportunidades reais.'}
       </Text>
 
       <View style={styles.heroPills}>
@@ -212,10 +214,12 @@ function HeroCard() {
           <Text style={[styles.heroPillText, { color: colors.textMuted }]}>Pessoa</Text>
         </View>
 
-        <View style={[styles.heroPill, { borderColor: colors.border }]}>
-          <Ionicons name="business-outline" size={14} color={colors.warning} />
-          <Text style={[styles.heroPillText, { color: colors.textMuted }]}>Empresa</Text>
-        </View>
+        {!FREE_ONLY_BUILD ? (
+          <View style={[styles.heroPill, { borderColor: colors.border }]}>
+            <Ionicons name="business-outline" size={14} color={colors.warning} />
+            <Text style={[styles.heroPillText, { color: colors.textMuted }]}>Empresa</Text>
+          </View>
+        ) : null}
 
         <View style={[styles.heroPill, { borderColor: colors.border }]}>
           <Ionicons name="shield-checkmark-outline" size={14} color={colors.success} />
@@ -433,13 +437,18 @@ export default function PlansScreen() {
   const { colors } = useTheme();
   const { user } = useApp() as any;
 
-  const [selectedPlan, setSelectedPlan] = useState<PlanKey>('plus');
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey>(
+    FREE_ONLY_BUILD ? 'essential' : 'plus',
+  );
 
   const verificationPhase = getUserVerificationPhase(user);
-  const plansBlocked = verificationPhase !== 'verified';
+  const plansBlocked = !FREE_ONLY_BUILD && verificationPhase !== 'verified';
 
-  const personalPlans = plans.filter((plan) => plan.group === 'personal');
-  const businessPlans = plans.filter((plan) => plan.group === 'business');
+  const visiblePlans = FREE_ONLY_BUILD
+    ? plans.filter((plan) => plan.key === 'essential')
+    : plans;
+  const personalPlans = visiblePlans.filter((plan) => plan.group === 'personal');
+  const businessPlans = visiblePlans.filter((plan) => plan.group === 'business');
 
   function showBlockedPlanAlert() {
     Alert.alert(
@@ -495,25 +504,35 @@ export default function PlansScreen() {
         <View style={styles.titleBlock}>
           <Text style={[styles.eyebrow, { color: colors.warning }]}>Planos ELUS</Text>
           <Text style={[styles.title, { color: colors.text }]}>
-            {plansBlocked ? 'Verifique sua identidade' : 'Escolha seu plano'}
+            {FREE_ONLY_BUILD
+              ? 'Seu plano atual'
+              : plansBlocked
+                ? 'Verifique sua identidade'
+                : 'Escolha seu plano'}
           </Text>
 
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            {plansBlocked
-              ? 'Planos e recursos pagos ficam disponíveis após aprovação da identidade.'
-              : 'Defina como deseja começar no ELUS.'}
+            {FREE_ONLY_BUILD
+              ? 'Nesta versão o ELUS está disponível no plano Essencial.'
+              : plansBlocked
+                ? 'Planos e recursos pagos ficam disponíveis após aprovação da identidade.'
+                : 'Defina como deseja começar no ELUS.'}
           </Text>
         </View>
 
         <HeroCard />
 
-        {plansBlocked ? (
+        {!FREE_ONLY_BUILD && plansBlocked ? (
           <PlansBlockedNotice verificationPhase={verificationPhase} />
         ) : null}
 
         <SectionTitle
-          title="Planos pessoais"
-          subtitle="Para pessoas que querem organizar vínculos, presença e conexões reais."
+          title={FREE_ONLY_BUILD ? 'Plano disponível' : 'Planos pessoais'}
+          subtitle={
+            FREE_ONLY_BUILD
+              ? 'Organize vínculos, presença e conexões reais no plano Essencial.'
+              : 'Para pessoas que querem organizar vínculos, presença e conexões reais.'
+          }
         />
 
         {personalPlans.map((plan) => (
@@ -526,36 +545,44 @@ export default function PlansScreen() {
           />
         ))}
 
-        <SectionTitle
-          title="Planos para empresas"
-          subtitle="Para empresas, profissionais e serviços que querem presença local confiável."
-        />
+        {FREE_ONLY_BUILD ? (
+          <Text style={[styles.comingSoonText, { color: colors.textSoft }]}>
+            Mais planos em breve
+          </Text>
+        ) : (
+          <>
+            <SectionTitle
+              title="Planos para empresas"
+              subtitle="Para empresas, profissionais e serviços que querem presença local confiável."
+            />
 
-        {businessPlans.map((plan) => (
-          <PlanCard
-            key={plan.key}
-            plan={plan}
-            selected={!plansBlocked && selectedPlan === plan.key}
-            locked={plansBlocked}
-            onPress={() => handlePlanPress(plan.key)}
-          />
-        ))}
+            {businessPlans.map((plan) => (
+              <PlanCard
+                key={plan.key}
+                plan={plan}
+                selected={!plansBlocked && selectedPlan === plan.key}
+                locked={plansBlocked}
+                onPress={() => handlePlanPress(plan.key)}
+              />
+            ))}
 
-        <View style={styles.businessNotice}>
-          <View style={styles.businessNoticeIcon}>
-            <Ionicons name="shield-checkmark-outline" size={20} color={colors.warning} />
-          </View>
+            <View style={styles.businessNotice}>
+              <View style={styles.businessNoticeIcon}>
+                <Ionicons name="shield-checkmark-outline" size={20} color={colors.warning} />
+              </View>
 
-          <View style={styles.businessNoticeTextWrap}>
-            <Text style={[styles.businessNoticeTitle, { color: colors.text }]}>
-              Empresa também precisa de validação
-            </Text>
-            <Text style={[styles.businessNoticeText, { color: colors.textMuted }]}>
-              Planos empresariais devem exigir identidade responsável, dados da empresa
-              e validação para evitar serviços falsos ou perfis anônimos.
-            </Text>
-          </View>
-        </View>
+              <View style={styles.businessNoticeTextWrap}>
+                <Text style={[styles.businessNoticeTitle, { color: colors.text }]}>
+                  Empresa também precisa de validação
+                </Text>
+                <Text style={[styles.businessNoticeText, { color: colors.textMuted }]}>
+                  Planos empresariais devem exigir identidade responsável, dados da empresa
+                  e validação para evitar serviços falsos ou perfis anônimos.
+                </Text>
+              </View>
+            </View>
+          </>
+        )}
 
         <Button
           label={plansBlocked ? 'Verificar identidade agora' : 'Continuar'}
@@ -565,9 +592,11 @@ export default function PlansScreen() {
         />
 
         <Text style={[styles.footerText, { color: colors.textSoft }]}>
-          {plansBlocked
-            ? 'Sua identidade precisa ser aprovada antes de qualquer compra, anúncio ou recurso pago.'
-            : 'Você poderá alterar seu plano futuramente dentro do app.'}
+          {FREE_ONLY_BUILD
+            ? 'O plano Essencial já está disponível nesta versão do ELUS.'
+            : plansBlocked
+              ? 'Sua identidade precisa ser aprovada antes de qualquer compra, anúncio ou recurso pago.'
+              : 'Você poderá alterar seu plano futuramente dentro do app.'}
         </Text>
 
         <View style={styles.bottomSpace} />
@@ -1032,6 +1061,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 17,
     textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+
+  comingSoonText: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 18,
     paddingHorizontal: 20,
   },
 

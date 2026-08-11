@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppProvider, useApp } from '../src/context/AppContext';
+import { FREE_ONLY_BUILD } from '../src/data/pricing';
 import { supabase } from '../src/lib/supabase';
 import { ThemeProvider, useTheme } from '../src/theme/ThemeContext';
 import { Button } from '../src/components/Button';
@@ -81,6 +82,11 @@ function shouldShowGlobalPlansButton({
   segments: readonly string[];
   profileCompleted?: boolean;
 }) {
+  // Build free-only (sem IAP): não expor atalho flutuante de "loja"/planos.
+  if (FREE_ONLY_BUILD) {
+    return false;
+  }
+
   if (isPlansRoute(pathname)) {
     return false;
   }
