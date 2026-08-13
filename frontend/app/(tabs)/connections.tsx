@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useApp } from '../../src/context/AppContext';
@@ -18,6 +18,7 @@ import type { Profile } from '../../src/data/profiles';
 import { Button } from '../../src/components/Button';
 import { useTheme } from '../../src/theme/ThemeContext';
 import type { ThemeColors } from '../../src/theme/theme';
+import { fetchUnreadConversationsCount } from '../../src/utils/messagesApi';
 
 const ELUS_SYMBOL = require('../../assets/brand/elus_symbol_main.png');
 const ELUS_UNVERIFIED_RED = require('../../assets/images/elus-unverified-red.png');
@@ -809,10 +810,12 @@ function RequestsAccessCard({
 function MessagesAccessCard({
   currentUserVerified,
   currentUserStatus,
+  unreadCount,
   onOpenMessages,
 }: {
   currentUserVerified: boolean;
   currentUserStatus: VerificationPhase;
+  unreadCount: number;
   onOpenMessages: () => void;
 }) {
   const { colors } = useTheme();
@@ -840,10 +843,18 @@ function MessagesAccessCard({
         ]}
       >
         <Ionicons name="chatbubbles-outline" size={26} color={statusColor} />
+
+        {unreadCount > 0 ? (
+          <View style={[styles.unreadBadge, { backgroundColor: colors.danger, borderColor: colors.background }]}>
+            <Text style={styles.unreadBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.requestsAccessInfo}>
-        <Text style={[styles.cardKicker, { color: colors.warning }]}>Mensagens</Text>
+        <Text style={[styles.cardKicker, { color: colors.warning }]}>
+          Mensagens{unreadCount > 0 ? ` · ${unreadCount} nova${unreadCount > 1 ? 's' : ''}` : ''}
+        </Text>
 
         <Text
           style={[
@@ -1014,6 +1025,14 @@ export default function ConnectionsScreen() {
   const [retryCount, setRetryCount] = useState(0);
   const [loadError, setLoadError] = useState(false);
   const [connectionBranches, setConnectionBranches] = useState<any[]>([]);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!user?.id) return;
+      fetchUnreadConversationsCount(user.id).then(setUnreadMessagesCount);
+    }, [user?.id])
+  );
 
   useEffect(() => {
     setLoadError(false);
@@ -1131,6 +1150,7 @@ export default function ConnectionsScreen() {
             <MessagesAccessCard
               currentUserVerified={currentUserVerified}
               currentUserStatus={currentUserStatus}
+              unreadCount={unreadMessagesCount}
               onOpenMessages={openMessages}
             />
 
@@ -1402,6 +1422,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
+    position: 'relative',
+  },
+
+  unreadBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+
+  unreadBadgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '800',
   },
 
   requestFlowIcon: {

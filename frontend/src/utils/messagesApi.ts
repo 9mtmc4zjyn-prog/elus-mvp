@@ -20,10 +20,13 @@ export type ConversationListItem = {
   otherUserPhotoUrl: string | null;
   lastMessageAt: string;
   lastMessagePreview: string;
+  unread: boolean;
 };
 
 export type ConversationParticipants = {
   id: string;
+  fromUserId: string;
+  toUserId: string;
   otherUserId: string;
   otherUserName: string;
   otherUserPhotoUrl: string | null;
@@ -58,10 +61,44 @@ export async function fetchConversationParticipants(
 
   return {
     id: conversation.id as string,
+    fromUserId: conversation.from_user_id as string,
+    toUserId: conversation.to_user_id as string,
     otherUserId,
     otherUserName: profile?.name || 'Usuário ELUS',
     otherUserPhotoUrl: profile?.photo_url ?? null,
   };
+}
+
+/**
+ * Marca a conversa como lida pra quem está chamando. Usa uma function no
+ * banco (mark_conversation_read, migration 024) pra gravar com now() do
+ * servidor — gravar com o relógio do aparelho podia ficar atrasado em
+ * relação a last_message_at e o badge de não lida nunca sumir. Falha
+ * silenciosa: não deve travar a tela de chat por causa disso.
+ */
+export async function markConversationRead(conversationId: string): Promise<void> {
+  const { error } = await supabase.rpc('mark_conversation_read', {
+    p_conversation_id: conversationId,
+  });
+
+  if (error) {
+    console.warn('markConversationRead:', error.message);
+  }
+}
+
+function isConversationUnread(row: {
+  from_user_id: string;
+  to_user_id: string;
+  last_message_at: string | null;
+  from_user_read_at: string | null;
+  to_user_read_at: string | null;
+}, userId: string): boolean {
+  if (!row.last_message_at) return false;
+
+  const readAt = row.from_user_id === userId ? row.from_user_read_at : row.to_user_read_at;
+  if (!readAt) return true;
+
+  return new Date(row.last_message_at).getTime() > new Date(readAt).getTime();
 }
 
 /** Conversa com pelo menos 1 mensagem, ordenada por last_message_at desc. */
@@ -70,7 +107,9 @@ export async function fetchConversationsInbox(
 ): Promise<ConversationListItem[]> {
   const { data: conversationRows, error } = await supabase
     .from('conversations')
-    .select('id, connection_id, from_user_id, to_user_id, last_message_at')
+    .select(
+      'id, connection_id, from_user_id, to_user_id, last_message_at, from_user_read_at, to_user_read_at',
+    )
     .not('last_message_at', 'is', null)
     .order('last_message_at', { ascending: false });
 
@@ -123,8 +162,24 @@ export async function fetchConversationsInbox(
       otherUserPhotoUrl: profile?.photo_url ?? null,
       lastMessageAt: c.last_message_at as string,
       lastMessagePreview: lastMessageMap.get(c.id) ?? '',
+      unread: isConversationUnread(c, userId),
     };
   });
+}
+
+/** Quantas conversas têm mensagem não lida (badge no acesso a Mensagens). */
+export async function fetchUnreadConversationsCount(userId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('conversations')
+    .select('from_user_id, to_user_id, last_message_at, from_user_read_at, to_user_read_at')
+    .not('last_message_at', 'is', null);
+
+  if (error) {
+    console.error('fetchUnreadConversationsCount:', error);
+    return 0;
+  }
+
+  return (data ?? []).filter((row: any) => isConversationUnread(row, userId)).length;
 }
 
 /**

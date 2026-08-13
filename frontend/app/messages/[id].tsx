@@ -21,6 +21,7 @@ import {
   MESSAGE_CONTENT_MAX_LENGTH,
   fetchConversationParticipants,
   fetchMessages,
+  markConversationRead,
   sendMessage,
   subscribeToConversationMessages,
   type ConversationParticipants,
@@ -66,6 +67,10 @@ export default function ConversationScreen() {
       setParticipants(participantsData);
       setMessages(messagesData);
       setLoading(false);
+
+      if (participantsData) {
+        markConversationRead(conversationId);
+      }
     })();
 
     const channel = subscribeToConversationMessages(conversationId, (newMessage) => {
@@ -73,6 +78,12 @@ export default function ConversationScreen() {
         if (current.some((m) => m.id === newMessage.id)) return current;
         return [...current, newMessage];
       });
+
+      // Chegou mensagem nova com a tela já aberta — conta como lida na
+      // hora, já que a pessoa está vendo a conversa.
+      if (newMessage.sender_id !== user.id) {
+        markConversationRead(conversationId);
+      }
     });
 
     return () => {

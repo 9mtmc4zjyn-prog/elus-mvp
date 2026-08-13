@@ -65,14 +65,32 @@ function ConversationRow({
 
       <View style={styles.rowInfo}>
         <View style={styles.rowTopLine}>
-          <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-            {item.otherUserName}
-          </Text>
+          <View style={styles.nameRow}>
+            {item.unread ? (
+              <View style={[styles.unreadDot, { backgroundColor: colors.accent }]} />
+            ) : null}
+            <Text
+              style={[
+                styles.name,
+                { color: colors.text },
+                item.unread && styles.nameUnread,
+              ]}
+              numberOfLines={1}
+            >
+              {item.otherUserName}
+            </Text>
+          </View>
           <Text style={[styles.time, { color: colors.textSoft }]}>
             {formatRelativeTime(item.lastMessageAt)}
           </Text>
         </View>
-        <Text style={[styles.preview, { color: colors.textMuted }]} numberOfLines={1}>
+        <Text
+          style={[
+            styles.preview,
+            { color: item.unread ? colors.text : colors.textMuted },
+          ]}
+          numberOfLines={1}
+        >
           {item.lastMessagePreview}
         </Text>
       </View>
@@ -179,7 +197,10 @@ const styles = StyleSheet.create({
   avatarFallbackText: { fontSize: 16, fontWeight: '800' },
   rowInfo: { flex: 1, gap: 4 },
   rowTopLine: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  name: { fontSize: 15, fontWeight: '700', flex: 1, marginRight: 8 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8, minWidth: 0 },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
+  name: { fontSize: 15, fontWeight: '700', flex: 1 },
+  nameUnread: { fontWeight: '900' },
   time: { fontSize: 12, fontWeight: '600' },
   preview: { fontSize: 13 },
   rowPressed: { opacity: 0.7 },
