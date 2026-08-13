@@ -4,6 +4,7 @@ import { Stack, usePathname, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Notifications from 'expo-notifications';
 
 import { AppProvider, useApp } from '../src/context/AppContext';
 import { FREE_ONLY_BUILD } from '../src/data/pricing';
@@ -161,6 +162,34 @@ function AppShell() {
       }
     });
   }, [pathname]);
+
+  // Toque em notificação push (app em background/fechado ou aberto) —
+  // leva pra tela relevante conforme o tipo gravado em push-notify.
+  useEffect(() => {
+    function handleResponse(response: Notifications.NotificationResponse) {
+      const data = response.notification.request.content.data as
+        | { type?: string; conversationId?: string }
+        | undefined;
+
+      if (!data?.type) return;
+
+      if (data.type === 'message' && data.conversationId) {
+        router.push(`/messages/${data.conversationId}` as never);
+        return;
+      }
+
+      if (
+        data.type === 'connection_accepted' ||
+        data.type === 'connection_request' ||
+        data.type === 'contact_request'
+      ) {
+        router.push('/(tabs)/connections' as never);
+      }
+    }
+
+    const subscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
+    return () => subscription.remove();
+  }, [router]);
 
   return (
     <View style={[styles.appShell, { backgroundColor: colors.background }]}>

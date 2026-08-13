@@ -27,6 +27,7 @@ import {
   type ConversationParticipants,
   type MessageRow,
 } from '../../src/utils/messagesApi';
+import { notifyPush } from '../../src/utils/pushNotifications';
 
 function getRouteId(id: string | string[] | undefined): string {
   if (Array.isArray(id)) return id[0] ?? '';
@@ -120,6 +121,7 @@ export default function ConversationScreen() {
       if (current.some((m) => m.id === message.id)) return current;
       return [...current, message];
     });
+    notifyPush({ type: 'message', messageId: message.id });
   }
 
   function handleLongPressMessage(message: MessageRow) {

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState } from 'react-native';
 import { supabase } from '../lib/supabase';
+import { registerForPushNotificationsAsync, notifyPush } from '../utils/pushNotifications';
 
 import { colors } from '../../app/theme';
 
@@ -644,6 +645,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         loadConnectionsFromSupabase(uid);
         loadContactRequestsFromSupabase(uid);
         loadBlockedUsers(uid);
+        registerForPushNotificationsAsync(uid);
       }
     });
 
@@ -674,6 +676,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         loadConnectionsFromSupabase(uid);
         loadContactRequestsFromSupabase(uid);
         loadBlockedUsers(uid);
+        registerForPushNotificationsAsync(uid);
       }
     });
 
@@ -1094,7 +1097,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     supabase
       .from('connection_requests')
       .insert({ from_user_id: user.id, to_user_id: targetUserId, kind, status: 'pending' })
-      .then(() => {});
+      .select('id')
+      .single()
+      .then(({ data }) => {
+        if (data) notifyPush({ type: 'connection_request', requestId: data.id });
+      });
   }
 
   function removeConnection(targetUserId: string, kind: ConnectionKind) {
@@ -1142,7 +1149,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     supabase
       .from('connection_requests')
       .insert({ from_user_id: user.id, to_user_id: targetUserId, kind: 'family', status: 'pending' })
-      .then(() => {});
+      .select('id')
+      .single()
+      .then(({ data }) => {
+        if (data) notifyPush({ type: 'connection_request', requestId: data.id });
+      });
   }
 
   function acceptConnectionRequest(requestId: string) {
@@ -1171,7 +1182,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     supabase
       .from('connections')
       .insert({ from_user_id: user.id, to_user_id: request.fromUserId, kind: request.kind })
-      .then(() => {});
+      .select('id')
+      .single()
+      .then(({ data }) => {
+        if (data) notifyPush({ type: 'connection_accepted', connectionId: data.id });
+      });
   }
 
   function rejectConnectionRequest(requestId: string) {
@@ -1220,7 +1235,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         requested_method_ids: normalizedMethodIds,
         status: 'pending',
       })
-      .then(() => {});
+      .select('id')
+      .single()
+      .then(({ data }) => {
+        if (data) notifyPush({ type: 'contact_request', requestId: data.id });
+      });
   }
 
   function acceptContactInformationRequest(
