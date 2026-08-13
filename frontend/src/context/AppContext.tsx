@@ -501,7 +501,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const { data: profileRows } = await supabase
           .from('profiles')
           .select(
-            'id, name, city, state, surname, origin_city, origin_state, presence_mode, photo_url, last_seen_at'
+            'id, name, city, state, surname, origin_city, origin_state, presence_mode, photo_url, last_seen_at, visibility_status'
           )
           .neq('id', currentUserId)
           .limit(100);
@@ -510,27 +510,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
         const ids = profileRows.map((p: any) => p.id as string);
 
-        const [{ data: userRows }, { data: verificationRows }] = await Promise.all([
-          supabase.from('users').select('id, plan, profile_type').in('id', ids),
-          supabase
-            .from('verifications')
-            .select('user_id, status')
-            .in('user_id', ids)
-            .eq('is_current', true),
-        ]);
+        // Não dá pra ler verifications de outros usuários aqui: a policy de
+        // SELECT (user_select_own_verification) só libera a própria linha
+        // (auth.uid() = user_id), por design — dado de verificação é
+        // privado. profiles.visibility_status é o espelho público desse
+        // status (sincronizado por trigger, migration 022) e é o que
+        // usamos pra saber se OUTRO usuário está verificado.
+        const { data: userRows } = await supabase
+          .from('users')
+          .select('id, plan, profile_type')
+          .in('id', ids);
 
         const userMap: Record<string, any> = {};
         (userRows ?? []).forEach((u: any) => { userMap[u.id] = u; });
-
-        const verMap: Record<string, any> = {};
-        (verificationRows ?? []).forEach((v: any) => { verMap[v.user_id] = v; });
 
         const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
 
         const mapped: AppUser[] = profileRows.map((profile: any) => {
           const userData = userMap[profile.id];
-          const verData = verMap[profile.id];
-          const verStatus: VerificationStatus = (verData?.status as VerificationStatus) || 'unverified';
+          const verStatus: VerificationStatus =
+            (profile.visibility_status as VerificationStatus) || 'unverified';
 
           const lastSeenAt = profile.last_seen_at ? new Date(profile.last_seen_at).getTime() : null;
           const isOnline = lastSeenAt !== null && !Number.isNaN(lastSeenAt)
